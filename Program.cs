@@ -15,12 +15,16 @@ class Program {
 		OrbitalView.distance = 0.4f;
 		cube.thickness = 0.01f;
 
-		while(SK.Step(() => {
-			Matrix orbitMatrix = OrbitalView.transform;
-			cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
-			Default.MaterialHand["color"] = cube.color;
+    ReachCursor reachCursor = new ReachCursor();
 
-			cursor.Draw(Matrix.S(0.1f));
+		while(SK.Step(() => {
+			// Matrix orbitMatrix = OrbitalView.transform;
+			// cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
+			// Default.MaterialHand["color"] = cube.color;
+
+      reachCursor.Step();
+
+			// cursor.Draw(Matrix.S(0.1f));
 		}));
 		SK.Shutdown();
 	}
