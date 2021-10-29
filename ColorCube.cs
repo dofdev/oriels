@@ -7,6 +7,7 @@ class ColorCube {
 	static Model colorCube = Model.FromFile("colorcube.glb", Shader.UIBox);
 	Bounds bounds = new Bounds(Vec3.Zero, Vec3.One * 1.25f);
 	
+	public bool picker = true;
 	public Color color = Color.White * 0.5f;
 	public float thickness {
 		set {
@@ -38,6 +39,9 @@ class ColorCube {
 
 	public void Step(Matrix matrix) {
 		colorCube.Draw(matrix);
+
+		if(!picker)
+			return;
 
 		for (int h = 0; h < (int)Handed.Max; h++) {
 			// Get the pose for the index fingertip
