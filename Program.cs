@@ -8,6 +8,8 @@ class Program {
 		settings.assetsFolder = "Assets";
 		SK.Initialize(settings);
 
+		Model cursor = Model.FromFile("cursor.glb");
+
 		ColorCube cube = new ColorCube();
 		OrbitalView.strength = 4;
 		OrbitalView.distance = 0.4f;
@@ -17,6 +19,8 @@ class Program {
 			Matrix orbitMatrix = OrbitalView.transform;
 			cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
 			Default.MaterialHand["color"] = cube.color;
+
+			cursor.Draw(Matrix.S(0.1f));
 		}));
 		SK.Shutdown();
 	}
