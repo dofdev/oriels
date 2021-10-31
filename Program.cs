@@ -1,14 +1,17 @@
+using System;
 using StereoKit;
 
 class Program {
 	static void Main(string[] args) {
-		// System.Console.WriteLine("Test");
-		SKSettings settings = new SKSettings();
-		settings.appName = "oriels";
-		settings.assetsFolder = "Assets";
-		SK.Initialize(settings);
+		SKSettings settings = new SKSettings
+    {
+      appName = "oriels",
+      assetsFolder = "Assets",
+    };
+		if (!SK.Initialize(settings))
+      Environment.Exit(1);
 
-		Model cursor = Model.FromFile("cursor.glb");
+    Model cursor = Model.FromFile("cursor.glb");
 
 		ColorCube cube = new ColorCube();
 		OrbitalView.strength = 4;
@@ -16,6 +19,8 @@ class Program {
 		cube.thickness = 0.01f;
 
     ReachCursor reachCursor = new ReachCursor();
+
+    Material addMat = new Material(Shader.FromFile("example.hlsl"));
 
 		while(SK.Step(() => {
 			// Matrix orbitMatrix = OrbitalView.transform;
