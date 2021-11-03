@@ -1,27 +1,18 @@
-# oriels
-a dof oriented os
+## oriels 
+*a dof oriented os*  
+
+<img src='oriel.gif'>
+<https://dofdev.org>
+
+<br/>  <br/>  
 
 
-## todo
-green hills blue sky *noise bases, so a seed is all you need to sync peers
+## direction
+- rethink paper paradigm based software for spatial computing
+- networked by default through a federated server model
+- smart contract for handling security and value
 
-connect puncher server to the peer class
-
-make repo public (once its in an orderly state)
-
-make camera and specator cam a prefab?
-
-
-## design
-this smart contract is extensible for all dofdevs
-the 12
-
-multiuser by default
-p2p, share input, and broadcast cubemap oriel streams
-authority is kept local
-and no latency compensation is tolerable
-
-matchmaking? (for now input public ip addresses manually)
-
-taskbar
-...dofs for managing oriels
+## increment
+- implement all dofs from site
+- merge networking prototypes
+- architect interfaces for navigation
