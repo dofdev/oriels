@@ -1,12 +1,11 @@
 #include "stereokit.hlsli"
 
-//--name = sk/unlit
+//--name = dofdev/unlit
 //--color:color = 1, 1, 1, 1
 //--diffuse     = white
 float4       color;
 Texture2D    diffuse   : register(t0);
 SamplerState diffuse_s : register(s0);
-
 
 struct vsIn {
 	float4 pos  : SV_Position;
@@ -31,9 +30,11 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
 
 	o.uv    = input.uv;
 	o.color = input.col * color * sk_inst[id].color;
+  o.color = float4(0, 1, 1, 1);
 	return o;
 }
 float4 ps(psIn input) : SV_TARGET {
+
 	float4 col = diffuse.Sample(diffuse_s, input.uv);
 
 	col = col * input.color;

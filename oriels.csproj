@@ -18,10 +18,12 @@
 
   <ItemGroup>
     <None Remove="Assets/example.hlsl" />
+    <None Remove="Assets/oriel.hlsl" />
   </ItemGroup>
 
   <ItemGroup>
     <SKShader Include="Assets/example.hlsl" />
+    <SKShader Include="Assets/oriel.hlsl" />
   </ItemGroup>
 
 </Project>
