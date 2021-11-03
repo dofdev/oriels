@@ -39,11 +39,10 @@ public class ReachCursor {
 }
 
 public class TwistCursor : SpatialCursor {
-  public void Step() {
-    Quat rel = Quat.LookAt(Vec3.Zero, Mono.mainHand.aim.orientation * Vec3.Forward);
-    float twist = Vec3.Dot(rel * Vec3.Up, Mono.mainHand.aim.orientation * Vec3.Up);
-    twist = MathF.Max(twist - 0.05f, 0);
-    pos = Mono.mainHand.aim.position + Mono.mainHand.aim.orientation * Vec3.Forward * twist;
+  public void Step(Vec3 mainPos, Quat mainQuat) {
+    Quat rel = Quat.LookAt(Vec3.Zero, mainQuat * Vec3.Forward);
+    float twist = (Vec3.Dot(rel * -Vec3.Right, mainQuat * Vec3.Up) + 1) / 2;
+    pos = mainPos + mainQuat * Vec3.Forward * twist;
 
     model.Draw(Matrix.TS(pos, 0.06f));
   }
@@ -52,21 +51,19 @@ public class TwistCursor : SpatialCursor {
 public class SupineCursor : SpatialCursor {
   float calibStr;
   Quat calibQuat;
-
-  public void Step() {
-    // calibration
-    if (Mono.mainHand.IsStickClicked) {
-      Vec3 target = Input.Head.position + Input.Head.Forward;
-      calibStr = Vec3.Distance(Mono.mainHand.aim.position, target) * 2;
-
-      Quat calibAlign = Quat.LookAt(Mono.mainHand.aim.position, target);
-      calibQuat = Mono.mainHand.aim.orientation.Inverse * calibAlign;
-    }
-
-    Quat rel = Quat.LookAt(Vec3.Zero, Mono.offHand.aim.orientation * Vec3.Forward);
-    float twist = (Vec3.Dot(rel * -Vec3.Right, Mono.offHand.aim.orientation * Vec3.Up) + 1) / 2;
+  public void Step(Vec3 mainPos, Quat offQuat, Quat mainQuat, bool calibrate = false) {
+    Quat rel = Quat.LookAt(Vec3.Zero, offQuat * Vec3.Forward);
+    float twist = (Vec3.Dot(rel * -Vec3.Right, offQuat * Vec3.Up) + 1) / 2;
     
-    pos = Mono.mainHand.aim.position + Mono.mainHand.aim.orientation * calibQuat * Vec3.Forward * calibStr * twist;
+    pos = mainPos + mainQuat * calibQuat * Vec3.Forward * calibStr * twist;
+
+    if (calibrate) {   
+      Vec3 target = Input.Head.position + Input.Head.Forward;
+      calibStr = Vec3.Distance(mainPos, target) * 2;
+
+      Quat calibAlign = Quat.LookAt(mainPos, target);
+      calibQuat = mainQuat.Inverse * calibAlign;
+    }
 
     model.Draw(Matrix.TS(pos, 0.06f));
   }

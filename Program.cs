@@ -43,7 +43,12 @@ public static class Mono {
       // Default.MaterialHand["color"] = cube.color;
 
       // reachCursor.Step();
-      supineCursor.Step();
+      supineCursor.Step(
+        mainHand.aim.position,
+        offHand.aim.orientation,
+        mainHand.aim.orientation,
+        Mono.mainHand.IsStickClicked
+      );
       // oriel.Step();
 
       // cursor.Draw(Matrix.S(0.1f));
