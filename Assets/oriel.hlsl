@@ -15,7 +15,7 @@ struct psIn {
 	float4 pos   : SV_POSITION;
   float3 norm  : NORMAL0;
 	float2 uv    : TEXCOORD0;
-  float1 depth : TEXCOORD1;
+  // float1 depth : TEXCOORD1;
 	float4 color : COLOR0;
 	uint view_id : SV_RenderTargetArrayIndex;
 };
@@ -31,11 +31,13 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
 
 	o.uv    = input.uv;
 	o.color = input.col;
-  o.depth = dot(float4(o.norm, 1), normalize(float4(world,1) - sk_camera_pos[o.view_id]));
+  float lighting = dot(o.norm, normalize(float3(0.3, -0.6, -0.1)));
+  o.color.rgb = o.color.rgb * lighting;
+  // o.depth = dot(float4(o.norm, 1), normalize(float4(world,1) - sk_camera_pos[o.view_id]));
 	return o;
 }
 
 float4 ps(psIn input) : SV_TARGET {
-  clip(input.depth);
+  // clip(input.depth);
 	return input.color; 
 }

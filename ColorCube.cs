@@ -11,11 +11,11 @@ class ColorCube {
 	public Color color = Color.White * 0.5f;
 	public float thickness {
 		set {
-			_thickness = value;
+			_thiccness = value;
 			colorCube.RootNode.Material["border_size"] = value;
 		}
 	}
-	float _thickness = 0.01f;
+	float _thiccness = 0.01f;
 
 	public ColorCube() {
 		SetColor(Vec3.Zero);
@@ -59,10 +59,12 @@ class ColorCube {
 
 		Vec3 orbPos = Col2Vec(color);
 
-		Lines.Add(matrix * new Vec3(-0.5f, orbPos.y, orbPos.z), matrix * new Vec3(0.5f, orbPos.y, orbPos.z), new Color(0, color.g, color.b), new Color(1, color.g, color.b), _thickness);
-		Lines.Add(matrix * new Vec3(orbPos.x, -0.5f, orbPos.z), matrix * new Vec3(orbPos.x, 0.5f, orbPos.z), new Color(color.r, 0, color.b), new Color(color.r, 1, color.b), _thickness);
-		Lines.Add(matrix * new Vec3(orbPos.x, orbPos.y, -0.5f), matrix * new Vec3(orbPos.x, orbPos.y, 0.5f), new Color(color.r, color.g, 0), new Color(color.r, color.g, 1), _thickness);
+		Lines.Add(matrix * new Vec3(-0.5f, orbPos.y, orbPos.z), matrix * new Vec3(0.5f, orbPos.y, orbPos.z), new Color(0, color.g, color.b), new Color(1, color.g, color.b), _thiccness);
+		Lines.Add(matrix * new Vec3(orbPos.x, -0.5f, orbPos.z), matrix * new Vec3(orbPos.x, 0.5f, orbPos.z), new Color(color.r, 0, color.b), new Color(color.r, 1, color.b), _thiccness);
+		Lines.Add(matrix * new Vec3(orbPos.x, orbPos.y, -0.5f), matrix * new Vec3(orbPos.x, orbPos.y, 0.5f), new Color(color.r, color.g, 0), new Color(color.r, color.g, 1), _thiccness);
 
-		orb.Draw(Matrix.TS(matrix * orbPos, _thickness * 2));
-	}
+		orb.Draw(Matrix.TS(matrix * orbPos, _thiccness * 2));
+
+    PullRequest.BoundsDraw(bounds, Color.White);
+  }
 }
