@@ -1,12 +1,8 @@
 using System;
 using StereoKit;
-using AutoUpdaterDotNET;
 
 class Program {
 	static void Main(string[] args) {
-    // AutoUpdater.InstalledVersion = new Version("0.0.0.2");
-    // AutoUpdater.Start("https://github.com/dofdev/oriels/blob/main/oriels.xml");
-
     SKSettings settings = new SKSettings {
       appName = "oriels",
       assetsFolder = "Assets",
@@ -68,23 +64,24 @@ public class Oriel {
   public Bounds bounds;
 
   // render
-  Material mat = new Material(Shader.FromFile("oriel.hlsl"));
-  Mesh mesh = Mesh.GenerateCube(new Vec3(1, 1, 1));
-  Model model = Model.FromFile("oriel.glb", Default.ShaderUnlit);
-
+  Model model = Model.FromFile("oriel.glb", Shader.FromFile("oriel.hlsl"));
+  Vec3 _dimensions;
   public void Start() {
     bounds = new Bounds(Vec3.Zero, new Vec3(1f, 0.5f, 0.5f));
-
-    // Vertex[] verts = mesh.GetVerts();
-    // for (int i = 0; i < verts.Length; i++) {
-    //   verts[i].norm *= -1f;
-    // }
-    // mesh.SetVerts(verts); 
+    _dimensions = bounds.dimensions;
   }
   
   public void Step() {
+    // circle around center
+    bounds.center = Quat.FromAngles(0, 0, Time.Totalf * 60) * Vec3.Up * 0.3f;
+
+
+    bounds.dimensions = _dimensions * (1f + (MathF.Sin(Time.Totalf * 3) * 0.3f));
+
+    model.GetMaterial(0).Transparency = Transparency.Blend;
+    model.GetMaterial(0).SetFloat("_height", bounds.dimensions.y);
+    model.GetMaterial(0).SetFloat("_ypos", bounds.center.y);
     model.Draw(Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions));
-    // mesh.Draw(mat, Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions));
   }
 }
 
