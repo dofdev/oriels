@@ -9,31 +9,19 @@ public abstract class SpatialCursor {
   public static Model model = Model.FromFile("cursor.glb", Shader.Default);
 }
 
-// : SpatialCursor
-public class ReachCursor {
-  static Material unlitMat = Default.MaterialUnlit.Copy();
-  static Model modelCursor = Model.FromFile("cursor.glb", Shader.Default);
-  static Model modelSphere = new Model(Default.MeshSphere, unlitMat);
+// this is just a stretch cursor derivative
+public class ReachCursor : SpatialCursor {
+  static Vec3 origin;
+  public void Step(Vec3 mainPos, bool calibrate) {
+    float stretch = (origin - mainPos).Length;
+    Vec3 dir = (mainPos - origin).Normalized;
+    Vec3 pos = mainPos + dir * stretch * 3;
+    model.Draw(Matrix.TS(pos, 0.06f));
+    Lines.Add(origin, pos, Color.White, 0.01f);
+    model.Draw(Matrix.TS(origin, 0.04f));
 
-  static Vec3[] pullPoints = new Vec3[2];
-
-  public void Step() {
-    for (int h = 0; h < (int)Handed.Max; h++) {
-      // Get the pose for the index fingertip
-      Hand hand = Input.Hand((Handed)h);
-      Vec3 indexTip = hand[FingerId.Index, JointId.Tip].Pose.position;
-      Vec3 thumbTip = hand[FingerId.Thumb, JointId.Tip].Pose.position;
-      Vec3 pinchPos = Vec3.Lerp(indexTip, thumbTip, 0.5f);
-      if (hand.IsPinched) {
-        pullPoints[h] = pinchPos;
-      }
-
-      float stretch = (pullPoints[h] - pinchPos).Length;
-      Vec3 dir = (pinchPos - pullPoints[h]).Normalized;
-      Vec3 pos = pinchPos + dir * stretch * 3;
-      modelCursor.Draw(Matrix.TS(pos, 0.06f));
-      Lines.Add(pullPoints[h], pos, Color.White, 0.01f);
-      modelSphere.Draw(Matrix.TS(pullPoints[h], 0.04f));
+    if (calibrate) {
+      origin = mainPos;
     }
   }
 }
@@ -48,75 +36,45 @@ public class TwistCursor : SpatialCursor {
   }
 }
 
+// a more symmetrical one would be cool
 public class SupineCursor : SpatialCursor {
   float calibStr;
   Quat calibQuat;
-  public void Step(Quat offQuat, Vec3 mainPos, Quat mainQuat, bool calibrate = false) {
-    Quat rel = Quat.LookAt(Vec3.Zero, offQuat * Vec3.Forward);
-    float twist = (Vec3.Dot(rel * -Vec3.Right, offQuat * Vec3.Up) + 1) / 2;
+  public void Step(Pose offPose, Pose mainPose, bool calibrate) {
+    Quat rel = Quat.LookAt(Vec3.Zero, offPose.orientation * Vec3.Forward);
+    float twist = (Vec3.Dot(rel * -Vec3.Right, offPose.orientation * Vec3.Up) + 1) / 2;
     
-    pos = mainPos + mainQuat * calibQuat * Vec3.Forward * calibStr * twist;
+    pos = mainPose.position + mainPose.orientation * calibQuat * Vec3.Forward * calibStr * twist;
 
     if (calibrate) {   
       Vec3 target = Input.Head.position + Input.Head.Forward;
-      calibStr = Vec3.Distance(mainPos, target) * 2;
+      calibStr = Vec3.Distance(mainPose.position, target) * 2;
 
-      Quat calibAlign = Quat.LookAt(mainPos, target);
-      calibQuat = mainQuat.Inverse * calibAlign;
+      Quat calibAlign = Quat.LookAt(mainPose.position, target);
+      calibQuat = mainPose.orientation.Inverse * calibAlign;
     }
 
     model.Draw(Matrix.TS(pos, 0.06f));
   }
 }
 
-public class BallsCursor : SpatialCursor {
-  Vec3 offPivot, mainPivot;
-  Quat offBall, mainBall;
-  Quat oldOffQuat, oldMainQuat;
-  float offRadius, mainRadius;
-  bool offPress, mainPress;
-  public void Step(
-    Vec3 offPos, Quat offQuat, 
-    Vec3 mainPos, Quat mainQuat, 
-    bool offGrip, bool mainGrip, bool calibrate = false
-    ) {
+// for fun
+public class ClawCursor : SpatialCursor {
+  Quat calibOff, calibMain;
+  public void Step(Vec3 chest, Pose offPose, Pose mainPose, bool calibrate) {
+    float wingspan = 0.5f;
+    Quat offQuat = calibOff * offPose.orientation;
+    Quat mainQuat = calibMain * mainPose.orientation;
+    Vec3 elbow = chest + mainQuat * mainQuat * Vec3.Forward * wingspan;
+    pos = elbow + offQuat * offQuat * Vec3.Forward * wingspan;
 
-    Function(offPos, ref offPivot, ref offBall, offQuat, ref oldOffQuat, ref offRadius, offGrip, ref offPress);
-    Function(mainPos, ref mainPivot, ref mainBall, mainQuat, ref oldMainQuat, ref mainRadius, mainGrip, ref mainPress);
-
-    void Function(Vec3 handPos, ref Vec3 pivot, ref Quat ball, Quat quat, ref Quat oldQuat, ref float radius, bool grip, ref bool press) {
-      if (grip) {
-        if (!press) {
-          pivot = pos + ball * Vec3.Forward * radius;
-          oldQuat = quat;
-          press = true;
-        }
-        ball = Quat.Difference(oldQuat, quat) * ball;
-        pos = pivot + (ball * -Vec3.Forward * radius);
-
-        oldQuat = quat;
-      }
-      else {
-        press = false;
-      }
-
-      // Sphere sphere = new Sphere(pos, mainDiameter);
-      Default.MeshSphere.Draw(
-        clearMat, 
-        Matrix.TS(pos + ball * Vec3.Forward * radius, radius * 2)
-      );
+    if (calibrate) {
+      calibOff = offPose.orientation.Inverse;
+      calibMain = mainPose.orientation.Inverse;
     }
 
-    if (calibrate)
-    {
-      pos = Vec3.Lerp(offPos, mainPos, 0.5f);
-      offRadius = mainRadius = Vec3.Distance(offPos, mainPos) / 2;
-      offBall = Quat.LookAt(mainPos, offPos);
-      mainBall = Quat.LookAt(offPos, mainPos);
-    }
-
+    Lines.Add(chest, elbow, Color.White, 0.01f);
+    Lines.Add(elbow, pos, Color.White, 0.01f);
     model.Draw(Matrix.TS(pos, 0.06f));
-    clearMat.SetColor("color", new Color(1, 1, 1, 0.1f));
   }
-  Material clearMat = Default.MaterialHand;
 }

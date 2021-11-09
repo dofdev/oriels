@@ -1,5 +1,9 @@
 using System;
 using StereoKit;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
+using System.Threading.Tasks;
 
 class Program {
 	static void Main(string[] args) {
@@ -21,6 +25,25 @@ public static class Mono {
   public static Controller offHand, mainHand;
 
   public static void Run() {
+    void GetIPs()
+    {
+      string localIP;
+      using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0))
+      {
+        socket.Connect("8.8.8.8", 65530);
+        IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
+        localIP = endPoint.Address.ToString();
+      }
+      // Console.WriteLine("Your local IP is: " + localIP);
+      string publicIP = new WebClient().DownloadString("https://ipv4.icanhazip.com/").TrimEnd();
+      // Console.WriteLine("Your IP is: " + publicIP);
+    }
+
+    Peer peer0 = new Peer("peer0");
+    Peer peer1 = new Peer("peer1");
+    peer0.Start(1, true);
+    peer1.Start(2, false);
+
     ColorCube cube = new ColorCube();
     OrbitalView.strength = 4;
     OrbitalView.distance = 0.4f;
@@ -28,11 +51,9 @@ public static class Mono {
 
     ReachCursor reachCursor = new ReachCursor();
     SupineCursor supineCursor = new SupineCursor();
-    BallsCursor ballsCursor = new BallsCursor();
+    ClawCursor clawCursor = new ClawCursor();
 
     Oriel oriel = new Oriel();
-
-    Pose p = new Pose(Vec3.One, Quat.Identity); // ACTUALLY COOL
 
     oriel.Start();
 
@@ -46,17 +67,62 @@ public static class Mono {
 
       // reachCursor.Step();
       // supineCursor.Step(
-      //   offHand.aim.orientation,
-      //   mainHand.aim.position,
-      //   mainHand.aim.orientation,
-      //   Mono.mainHand.IsStickClicked
+      //   new Pose(Vec3.Zero, offHand.aim.orientation),
+      //   new Pose(mainHand.aim.position, mainHand.aim.orientation),
+      //   mainHand.IsStickClicked
       // );
-
-      oriel.Step();
+      // clawCursor.Step(
+      //   Input.Head.position - Vec3.Up * 0.2f,
+      //   new Pose(offHand.aim.position, offHand.aim.orientation),
+      //   new Pose(mainHand.aim.position, mainHand.aim.orientation),
+      //   mainHand.IsStickClicked
+      // );
+      
+      // oriel.Step();
 
       // cursor.Draw(Matrix.S(0.1f));
-    })) ;
+    }));
     SK.Shutdown();
+  }
+}
+
+public class Peer {
+  public string name;
+  public Peer(string name) {
+    this.name = name;
+  }
+
+  public async void Start(int increment, bool log) {
+    int port = 1234;
+    string serverIP = "139.177.201.219";
+    // try connecting to the server
+    if (log) Console.WriteLine("{0} attempting to connect to server...", name);
+
+    // create a new socket
+    Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+    // server endpoint
+    EndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIP), port);
+    socket.Connect(serverEndPoint);
+
+    // send a message to the server
+    if (log) Console.WriteLine("{0} sending message to server...", name);
+
+    int test = 0;
+    // send every 0.1 seconds
+    while (true) {
+      // send a message to the server
+      test += increment;
+      socket.SendTo(BitConverter.GetBytes(test), serverEndPoint);
+
+      // receive a message from the server
+      byte[] data = new byte[1024];
+      socket.ReceiveFrom(data, ref serverEndPoint);
+      if (log) Console.WriteLine("{0} received from server: {1}", name, BitConverter.ToInt32(data, 0));
+
+      // sleep for 0.1 seconds
+      await Task.Delay(100);
+    }
   }
 }
 
@@ -86,16 +152,18 @@ public class Oriel {
 }
 
 public static class PullRequest {
-  public static Vec3 VecMulti(Vec3 a, Vec3 b) { return new Vec3(a.x * b.x, a.y * b.y, a.z * b.z); }
-
-  public static void BoundsDraw(Bounds b, Color color) {
+  public static void BoundsDraw(Bounds b, float thickness, Color color) {
     Vec3 c = Vec3.One / 2;
     Vec3 ds = b.dimensions;
     for (int i = 0; i < 4; i++) {
       Quat q = Quat.FromAngles(i * 90, 0, 0);
-      Lines.Add(q * VecMulti(new Vec3(0, 0, 0) - c, ds), q * VecMulti(new Vec3(0, 1, 0) - c, ds), color, color, 0.01f);
-      Lines.Add(q * VecMulti(new Vec3(0, 1, 0) - c, ds), q * VecMulti(new Vec3(1, 1, 0) - c, ds), color, color, 0.01f);
-      Lines.Add(q * VecMulti(new Vec3(1, 1, 0) - c, ds), q * VecMulti(new Vec3(1, 0, 0) - c, ds), color, color, 0.01f);
+      Lines.Add(q * (new Vec3(0, 0, 0) - c) *  ds, q * (new Vec3(0, 1, 0) - c) *  ds, color, color, thickness);
+      Lines.Add(q * (new Vec3(0, 1, 0) - c) *  ds, q * (new Vec3(1, 1, 0) - c) *  ds, color, color, thickness);
+      Lines.Add(q * (new Vec3(1, 1, 0) - c) *  ds, q * (new Vec3(1, 0, 0) - c) *  ds, color, color, thickness);
+
+      // convert to linepoints
     }
   }
+
+  // amplify quaternions (q * q * lerp(q.i, q, %))
 }

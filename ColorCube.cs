@@ -2,7 +2,8 @@ using System;
 using StereoKit;
 
 class ColorCube {
-	static Material orbMat = Default.MaterialUnlit.Copy();
+  static Shader shaderColorCube = Shader.FromFile("colorcube.hlsl");
+  static Material orbMat = Default.MaterialUnlit.Copy();
 	static Model orb = new Model(Default.MeshSphere, orbMat);
 	static Model colorCube = Model.FromFile("colorcube.glb", Shader.UIBox);
 	Bounds bounds = new Bounds(Vec3.Zero, Vec3.One * 1.25f);
@@ -65,6 +66,11 @@ class ColorCube {
 
 		orb.Draw(Matrix.TS(matrix * orbPos, _thiccness * 2));
 
-    PullRequest.BoundsDraw(bounds, Color.White);
+    PullRequest.BoundsDraw(bounds, _thiccness, Color.White);
+
+    // can't change shader lol
+    // Default.MaterialUnlit.Shader = shaderColorCube;
+    // Rods time it is!
+    // spatialize the stereokit line shader
   }
 }
