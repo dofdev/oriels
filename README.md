@@ -22,9 +22,12 @@
 - ~~claw cursor 30m~~
 - ~~refactor networking code to async based on video 1hr~~
 - ~~haul the networking into stereokit 30m~~
-- finish devtime tool 30m
-- do something spatial with the data
-- make a batch script for niko so he can test things easily
+- ~~devtime tool 30m~~
+- ~~do something spatial with the data 48m~~
+- devtime tool 30m
+
+- why is the latency 20s? (client side?)
+- make a batch script for niko so he can test things easily 32m (+script that does the "install")
 
 - dead simple press to step through dofs
 - gif maker

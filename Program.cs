@@ -24,6 +24,8 @@ public static class Mono {
 
   public static Controller offHand, mainHand;
 
+  public static Model model = Model.FromFile("cursor.glb", Shader.Default);
+
   public static void Run() {
     void GetIPs()
     {
@@ -41,8 +43,8 @@ public static class Mono {
 
     Peer peer0 = new Peer("peer0");
     Peer peer1 = new Peer("peer1");
-    peer0.Start(1, true);
-    peer1.Start(2, false);
+    peer0.Start(false);
+    peer1.Start(false);
 
     ColorCube cube = new ColorCube();
     OrbitalView.strength = 4;
@@ -60,6 +62,12 @@ public static class Mono {
     while (SK.Step(() => {
       offHand = Input.Controller(Handed.Left);
       mainHand = Input.Controller(Handed.Right);
+
+      peer0.cursor = offHand.aim.position * new Vec3(1,1,-1);
+      peer1.cursor = mainHand.aim.position * new Vec3(1,1,-1);
+
+      model.Draw(Matrix.TS(peer0.peerCursor, 0.1f));
+      model.Draw(Matrix.TS(peer1.peerCursor, 0.1f));
 
       // Matrix orbitMatrix = OrbitalView.transform;
       // cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
@@ -92,33 +100,37 @@ public class Peer {
     this.name = name;
   }
 
-  public async void Start(int increment, bool log) {
+  public Vec3 cursor; // is this stored here???
+  public Vec3 peerCursor;
+
+  public async void Start(bool log) {
     int port = 1234;
     string serverIP = "139.177.201.219";
     // try connecting to the server
-    if (log) Console.WriteLine("{0} attempting to connect to server...", name);
+    if (log) Console.WriteLine($"{name} attempting to connect to server...");
 
-    // create a new socket
     Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
-    // server endpoint
     EndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(serverIP), port);
     socket.Connect(serverEndPoint);
-
-    // send a message to the server
-    if (log) Console.WriteLine("{0} sending message to server...", name);
-
-    int test = 0;
+    
     // send every 0.1 seconds
     while (true) {
+      byte[] data = new byte[1024];
+      int dataPos;
+
       // send a message to the server
-      test += increment;
-      socket.SendTo(BitConverter.GetBytes(test), serverEndPoint);
+      dataPos = 0;
+      BitConverter.GetBytes(cursor.x).CopyTo(data, dataPos); dataPos += 4;
+      BitConverter.GetBytes(cursor.y).CopyTo(data, dataPos); dataPos += 4;
+      BitConverter.GetBytes(cursor.z).CopyTo(data, dataPos); dataPos += 4;
+      socket.SendTo(data, serverEndPoint);
 
       // receive a message from the server
-      byte[] data = new byte[1024];
+      dataPos = 0;
       socket.ReceiveFrom(data, ref serverEndPoint);
-      if (log) Console.WriteLine("{0} received from server: {1}", name, BitConverter.ToInt32(data, 0));
+      peerCursor.x = BitConverter.ToSingle(data, dataPos); dataPos += 4;
+      peerCursor.y = BitConverter.ToSingle(data, dataPos); dataPos += 4;
+      peerCursor.z = BitConverter.ToSingle(data, dataPos); dataPos += 4;
 
       // sleep for 0.1 seconds
       await Task.Delay(100);
