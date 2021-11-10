@@ -24,7 +24,7 @@
 - ~~haul the networking into stereokit 30m~~
 - ~~do something spatial with the data 48m~~
 
-- why is the latency 20s? (client side?) // server needs a refactore though *send then receive*
+- why is the latency 20s? (client side?) // though the server needs a refactor pass *send then receive*
 - make a batch script for niko so he can test things easily 32m (+script that does the "install")
 
 - dead simple press to step through dofs
