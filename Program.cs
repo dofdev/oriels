@@ -59,6 +59,8 @@ public static class Mono {
 
     oriel.Start();
 
+    Lerper lerper = new Lerper();
+
     while (SK.Step(() => {
       offHand = Input.Controller(Handed.Left);
       mainHand = Input.Controller(Handed.Right);
@@ -68,6 +70,12 @@ public static class Mono {
 
       model.Draw(Matrix.TS(peer0.peerCursor, 0.1f));
       model.Draw(Matrix.TS(peer1.peerCursor, 0.1f));
+
+      // if (offHand.trigger.) {
+      //   lerper.t = 0;
+      // }
+      // lerper.Step(1, false);
+      // Console.WriteLine(lerper.t);
 
       // Matrix orbitMatrix = OrbitalView.transform;
       // cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
@@ -94,6 +102,43 @@ public static class Mono {
   }
 }
 
+public class Lerper
+{
+  public float t = 0;
+  public float spring = 1;
+  public float dampen = 1;
+  float vel;
+
+  public void Step(float to = 1, bool bounce = false)
+  {
+    float dir = to - t;
+    vel += dir * spring * Time.Elapsedf;
+
+    if (Math.Sign(vel) != Math.Sign(dir))
+    {
+      vel *= 1 - (dampen * Time.Elapsedf);
+    }
+    else
+    {
+      vel *= 1 - (dampen * 0.33f * Time.Elapsedf);
+    }
+
+    float newt = t + vel * Time.Elapsedf;
+    if (bounce && (newt < 0 || newt > 1))
+    {
+      vel *= -0.5f;
+      newt = Math.Clamp(newt, 0, 1);
+    }
+
+    t = newt;
+  }
+
+  public void Reset()
+  {
+    t = vel = 0;
+  }
+}
+
 public class Peer {
   public string name;
   public Peer(string name) {
@@ -106,6 +151,7 @@ public class Peer {
   public async void Start(bool log) {
     int port = 1234;
     string serverIP = "139.177.201.219";
+    serverIP = "192.168.1.70";
     // try connecting to the server
     if (log) Console.WriteLine($"{name} attempting to connect to server...");
 
@@ -126,11 +172,13 @@ public class Peer {
       socket.SendTo(data, serverEndPoint);
 
       // receive a message from the server
-      dataPos = 0;
-      socket.ReceiveFrom(data, ref serverEndPoint);
-      peerCursor.x = BitConverter.ToSingle(data, dataPos); dataPos += 4;
-      peerCursor.y = BitConverter.ToSingle(data, dataPos); dataPos += 4;
-      peerCursor.z = BitConverter.ToSingle(data, dataPos); dataPos += 4;
+      while (socket.Available > 0){
+        dataPos = 0;
+        socket.ReceiveFrom(data, ref serverEndPoint);
+        peerCursor.x = BitConverter.ToSingle(data, dataPos); dataPos += 4;
+        peerCursor.y = BitConverter.ToSingle(data, dataPos); dataPos += 4;
+        peerCursor.z = BitConverter.ToSingle(data, dataPos); dataPos += 4;
+      }
 
       // sleep for 0.1 seconds
       await Task.Delay(100);
