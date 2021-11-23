@@ -9,6 +9,16 @@ public abstract class SpatialCursor {
   public static Model model = Model.FromFile("cursor.glb", Shader.Default);
 }
 
+public class StretchCursor : SpatialCursor {
+  public void Step(Pose offPose, Pose mainPose) {
+    float stretch = (offPose.position - mainPose.position).Magnitude;
+    stretch = Math.Max(stretch - 0.1f, 0);
+    pos = mainPose.position + mainPose.Forward * stretch * 3;
+
+    model.Draw(Matrix.TS(pos, 0.06f));
+  }
+}
+
 // this is just a stretch cursor derivative
 public class ReachCursor : SpatialCursor {
   static Vec3 origin;

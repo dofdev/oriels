@@ -41,19 +41,17 @@ public static class Mono {
       // Console.WriteLine("Your IP is: " + publicIP);
     }
 
-    Peer peer0 = new Peer("peer0");
-    Peer peer1 = new Peer("peer1");
-    peer0.Start(false);
-    peer1.Start(false);
+    Peer peer = new Peer("ego");
 
     ColorCube cube = new ColorCube();
     OrbitalView.strength = 4;
     OrbitalView.distance = 0.4f;
     cube.thickness = 0.01f;
 
-    ReachCursor reachCursor = new ReachCursor();
-    SupineCursor supineCursor = new SupineCursor();
-    ClawCursor clawCursor = new ClawCursor();
+    StretchCursor stretchCursor = new StretchCursor();
+    // ReachCursor reachCursor = new ReachCursor();
+    // SupineCursor supineCursor = new SupineCursor();
+    // ClawCursor clawCursor = new ClawCursor();
 
     Oriel oriel = new Oriel();
 
@@ -65,11 +63,9 @@ public static class Mono {
       offHand = Input.Controller(Handed.Left);
       mainHand = Input.Controller(Handed.Right);
 
-      peer0.cursor = offHand.aim.position * new Vec3(1,1,-1);
-      peer1.cursor = mainHand.aim.position * new Vec3(1,1,-1);
-
-      model.Draw(Matrix.TS(peer0.peerCursor, 0.1f));
-      model.Draw(Matrix.TS(peer1.peerCursor, 0.1f));
+      stretchCursor.Step(offHand.aim, mainHand.aim);
+      peer.cursor = stretchCursor.pos;
+      model.Draw(Matrix.TS(peer.peerCursor, 0.1f));
 
       // if (offHand.trigger.) {
       //   lerper.t = 0;
