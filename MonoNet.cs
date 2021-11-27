@@ -77,7 +77,7 @@ public class MonoNet {
       WriteVec3(me.cursor);
       socket.Send(data);
 
-      await Task.Delay(10);
+      await Task.Delay(1);
     }
     socket.Close();
   }
