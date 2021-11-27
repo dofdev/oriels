@@ -16,10 +16,12 @@ public class MonoNet {
   public Socket socket;
   // public NetworkStream stream;
   byte[] data;
+  int head;
+
   public Peer[] peers;
 
   public Vec3 cursor; // are these stored here???
-  public Pose head;
+  public Pose headset;
   public Pose offHand;
   public Pose mainHand;
 
@@ -52,41 +54,50 @@ public class MonoNet {
     bool running = true;
     while (running) {
       while (socket.Available > 0) {
-        socket.Receive(data, 0, data.Length, SocketFlags.None);
-        ByteBuffer bb = new ByteBuffer(data);
+        try  {socket.Receive(data, 0, data.Length, SocketFlags.None);}
+        catch (Exception e) {
+          Console.WriteLine("can't connect to the server");
+          return;
+        }
+        // ByteBuffer bb = new ByteBuffer(data);
         
-        NetData.Peer peer = NetData.Peer.GetRootAsPeer(bb);
-        int id = peer.Id;
+        // NetData.Peer peer = NetData.Peer.GetRootAsPeer(bb);
+        // int id = peer.Id;
+        head = 0;
+        int id = ReadInt();
         if (id != 0) {
           for (int i = 0; i < peers.Length; i++) {
             if (peers[i] != null) {
               if (peers[i].id == id) {
-                peers[i].cursor = NetVec3(peer.Cursor.Value);
+                // peers[i].cursor = NetVec3(peer.Cursor.Value);
+                peers[i].cursor = ReadVec3();
                 break;
               }
             } else {
-              if (peer.Cursor.HasValue) {
-                peers[i] = new Peer(id, NetVec3(peer.Cursor.Value));
-                break;
-              }
+              // if (peer.Cursor.HasValue) {
+              //   peers[i] = new Peer(id, NetVec3(peer.Cursor.Value));
+              //   break;
+              // }
+              peers[i] = new Peer(id, ReadVec3());
+              break;
             }
           }
         }
       }
       
-      FlatBufferBuilder fbb = new FlatBufferBuilder(1024);
-      NetData.Peer.StartPeer(fbb);
-      // // fbb.AddStruct(NetPose(head.ToNetPose()));
-      // NetData.Peer.AddCursor(fbb, NetVec3(cursor));
-      // NetData.Peer.AddHead(fbb,
-      //   NetPose()
-      //   NetData.Vec3.CreateVec3(fbb, head.)
-      // );
-      NetData.Peer.AddId(fbb, myID);
-      NetData.Peer.AddCursor(fbb, Vec3Net(cursor, ref fbb));
-      var p = NetData.Peer.EndPeer(fbb);
-      fbb.Finish(p.Value);
-      socket.Send(fbb.SizedByteArray());
+      // FlatBufferBuilder fbb = new FlatBufferBuilder(1024);
+      // NetData.Peer.StartPeer(fbb);
+      // NetData.Peer.AddId(fbb, myID);
+      // NetData.Peer.AddCursor(fbb, Vec3Net(cursor, ref fbb));
+      // var p = NetData.Peer.EndPeer(fbb);
+      // fbb.Finish(p.Value);
+      // socket.Send(fbb.SizedByteArray());
+
+      data = new byte[1024];
+      head = 0;
+      WriteInt(myID);
+      WriteVec3(cursor);
+      socket.Send(data);
 
       await Task.Delay(100);
     }
@@ -107,45 +118,55 @@ public class MonoNet {
     return new Pose(NetVec3(p.Pos), NetQuat(p.Rot));
   }
 
-  Vec3 ReadVec3(byte[] data, ref int dataPos) {
-    dataPos += 12;
-    return new Vec3(
-      BitConverter.ToSingle(data, dataPos),
-      BitConverter.ToSingle(data, dataPos + 4),
-      BitConverter.ToSingle(data, dataPos + 8)
-    );
-  } void WriteVec3(ref byte[] data, ref int dataPos, Vec3 vec) {
-    BitConverter.GetBytes(vec.x).CopyTo(data, dataPos);
-    BitConverter.GetBytes(vec.y).CopyTo(data, dataPos + 4);
-    BitConverter.GetBytes(vec.z).CopyTo(data, dataPos + 8);
-    dataPos += 12;
+  int ReadInt() {
+    int value = BitConverter.ToInt32(data, head);
+    head += 4;
+    return value;
+  } void WriteInt(int value) {
+    BitConverter.GetBytes(value).CopyTo(data, head);
+    head += 4;
   }
 
-  Quat ReadQuat(byte[] data, ref int dataPos) {
-    dataPos += 16;
-    return new Quat(
-      BitConverter.ToSingle(data, dataPos),
-      BitConverter.ToSingle(data, dataPos + 4),
-      BitConverter.ToSingle(data, dataPos + 8),
-      BitConverter.ToSingle(data, dataPos + 12)
+  Vec3 ReadVec3() {
+    Vec3 value = new Vec3(
+      BitConverter.ToSingle(data, head),
+      BitConverter.ToSingle(data, head + 4),
+      BitConverter.ToSingle(data, head + 8)
     );
-  } void WriteQuat(ref byte[] data, ref int dataPos, Quat quat) {
-    BitConverter.GetBytes(quat.x).CopyTo(data, dataPos);
-    BitConverter.GetBytes(quat.y).CopyTo(data, dataPos + 4);
-    BitConverter.GetBytes(quat.z).CopyTo(data, dataPos + 8);
-    BitConverter.GetBytes(quat.w).CopyTo(data, dataPos + 12);
-    dataPos += 16;
+    head += 12;
+    return value;
+  } void WriteVec3(Vec3 vec) {
+    BitConverter.GetBytes(vec.x).CopyTo(data, head);
+    BitConverter.GetBytes(vec.y).CopyTo(data, head + 4);
+    BitConverter.GetBytes(vec.z).CopyTo(data, head + 8);
+    head += 12;
   }
 
-  Pose ReadPose(byte[] data, ref int dataPos) {
-    dataPos += 24;
+  Quat ReadQuat() {
+    Quat value = new Quat(
+      BitConverter.ToSingle(data, head),
+      BitConverter.ToSingle(data, head + 4),
+      BitConverter.ToSingle(data, head + 8),
+      BitConverter.ToSingle(data, head + 12)
+    );
+    head += 16;
+    return value;
+  } void WriteQuat(Quat quat) {
+    BitConverter.GetBytes(quat.x).CopyTo(data, head);
+    BitConverter.GetBytes(quat.y).CopyTo(data, head + 4);
+    BitConverter.GetBytes(quat.z).CopyTo(data, head + 8);
+    BitConverter.GetBytes(quat.w).CopyTo(data, head + 12);
+    head += 16;
+  }
+
+  Pose ReadPose() {
     return new Pose(
-      ReadVec3(data, ref dataPos),
-      ReadQuat(data, ref dataPos)
+      ReadVec3(),
+      ReadQuat()
     );
-  } void WritePose(ref byte[] data, ref int dataPos, Pose pose) {
-    WriteVec3(ref data, ref dataPos, pose.position);
-    WriteQuat(ref data, ref dataPos, pose.orientation);
+  } void WritePose(Pose pose) {
+    WriteVec3(pose.position);
+    WriteQuat(pose.orientation);
   }
 
   Mesh meshCube = Default.MeshCube;
