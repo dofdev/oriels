@@ -4,7 +4,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Text;
 
 public class MonoNet {
   public MonoNet() {
@@ -40,34 +39,43 @@ public class MonoNet {
     EndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), 1234);
     socket.Connect(serverEndPoint);
     data = new byte[1024];
-    peers = new Peer[4];
+    peers = new Peer[64];
 
-    Thread.Sleep(1000);
+    Thread.Sleep(1000); // useful?
 
     bool running = true;
     while (running) {
       while (socket.Available > 0) {
         try  {socket.Receive(data, 0, data.Length, SocketFlags.None);}
         catch (Exception e) {
-          Console.WriteLine("can't connect to the server");
+          Console.WriteLine($"can't connect to the server: {e}");
           return;
         }
         
         head = 0;
         int id = ReadInt();
         if (id != 0) {
+          int index = -1;
           for (int i = 0; i < peers.Length; i++) {
             if (peers[i] != null) {
               if (peers[i].id == id) {
-                peers[i].cursor = ReadVec3();
+                index = i;
                 break;
               }
             } else {
               peers[i] = new Peer(id);
-              peers[i].cursor = ReadVec3();
+              index = i;
               break;
             }
           }
+          if (index == -1) {
+            Console.WriteLine("too many peers");
+            return;
+          }
+          peers[index].cursor = ReadVec3();
+          peers[index].headset = ReadPose();
+          peers[index].offHand = ReadPose();
+          peers[index].mainHand = ReadPose();
         }
       }
 
@@ -75,6 +83,9 @@ public class MonoNet {
       head = 0;
       WriteInt(me.id);
       WriteVec3(me.cursor);
+      WritePose(me.headset);
+      WritePose(me.offHand);
+      WritePose(me.mainHand);
       socket.Send(data);
 
       await Task.Delay(1);
@@ -143,9 +154,9 @@ public class MonoNet {
   {
     public int id;
     public Vec3 cursor;
-    // public Pose headset;
-    // public Pose offHand;
-    // public Pose mainHand;
+    public Pose headset;
+    public Pose offHand;
+    public Pose mainHand;
 
     public Peer(int id) {
       this.id = id;

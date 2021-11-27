@@ -23,12 +23,12 @@ public static class Mono {
     MonoNet net = new MonoNet();
     net.Start();
 
-    ColorCube cube = new ColorCube();
-    OrbitalView.strength = 4;
-    OrbitalView.distance = 0.4f;
-    cube.thickness = 0.01f;
+    // ColorCube cube = new ColorCube();
+    // OrbitalView.strength = 4;
+    // OrbitalView.distance = 0.4f;
+    // cube.thickness = 0.01f;
 
-    // StretchCursor stretchCursor = new StretchCursor();
+    StretchCursor stretchCursor = new StretchCursor();
     // ReachCursor reachCursor = new ReachCursor();
     // SupineCursor supineCursor = new SupineCursor();
     // ClawCursor clawCursor = new ClawCursor();
@@ -36,28 +36,28 @@ public static class Mono {
     // Oriel oriel = new Oriel();
     // oriel.Start();
 
-    Lerper lerper = new Lerper();
+    // Lerper lerper = new Lerper();
 
     while (SK.Step(() => {
       offHand = Input.Controller(Handed.Left);
       mainHand = Input.Controller(Handed.Right);
 
-      mainHand.aim = Input.Hand(Handed.Right).palm;
-
-      // stretchCursor.Step(offHand.aim, mainHand.aim);
+      // mainHand.aim = Input.Hand(Handed.Right).palm;
 
 
-      net.me.cursor = Vec3.Up * (float)Math.Sin(Time.Total);
-      // net.me.headset = Input.Head;
-      // net.me.offHand = offHand.aim;
-      // net.me.mainHand = mainHand.aim;
+      stretchCursor.Step(offHand.aim, mainHand.aim);
+      net.me.cursor = stretchCursor.pos;
+      // net.me.cursor = Vec3.Up * (float)Math.Sin(Time.Total);
+      net.me.headset = Input.Head;
+      net.me.offHand = offHand.aim;
+      net.me.mainHand = mainHand.aim;
       for (int i = 0; i < net.peers.Length; i++) {
         MonoNet.Peer peer = net.peers[i];
         if (peer != null) {
           net.Cubee(Matrix.TRS(peer.cursor, Quat.Identity, Vec3.One * 0.05f));
-          // Cubee(NetPose(peer.Head.Value).ToMatrix(Vec3.One * 0.3f));
-          // Cubee(NetPose(peer.LHand.Value).ToMatrix(Vec3.One * 0.1f));
-          // Cubee(NetPose(peer.RHand.Value).ToMatrix(Vec3.One * 0.1f));
+          net.Cubee(peer.headset.ToMatrix(Vec3.One * 0.3f));
+          net.Cubee(peer.offHand.ToMatrix(Vec3.One * 0.1f));
+          net.Cubee(peer.mainHand.ToMatrix(Vec3.One * 0.1f));
         }
       } 
 
