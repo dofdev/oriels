@@ -20,8 +20,7 @@ public static class Mono {
   public static Controller offHand, mainHand;
 
   public static void Run() {
-    Random rnd = new Random();
-    MonoNet net = new MonoNet(rnd.Next(1, 256)); // temp, until unique usernames
+    MonoNet net = new MonoNet();
     net.Start();
 
     ColorCube cube = new ColorCube();
@@ -48,10 +47,10 @@ public static class Mono {
       // stretchCursor.Step(offHand.aim, mainHand.aim);
 
 
-      net.cursor = Vec3.Up * (float)Math.Sin(Time.Total);
-      net.headset = Input.Head;
-      net.offHand = offHand.aim;
-      net.mainHand = mainHand.aim;
+      net.me.cursor = Vec3.Up * (float)Math.Sin(Time.Total);
+      // net.me.headset = Input.Head;
+      // net.me.offHand = offHand.aim;
+      // net.me.mainHand = mainHand.aim;
       for (int i = 0; i < net.peers.Length; i++) {
         MonoNet.Peer peer = net.peers[i];
         if (peer != null) {

@@ -2,28 +2,21 @@ using StereoKit;
 using System;
 using System.Net;
 using System.Net.Sockets;
-using FlatBuffers;
-// using NetData;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Text;
 
 public class MonoNet {
-  public int myID;
-  public MonoNet(int myID) {
-    this.myID = myID;
+  public MonoNet() {
+    Random rnd = new Random();
+    me = new Peer(rnd.Next(1, 256)); // temp, until unique usernames
   }
   public Socket socket;
-  // public NetworkStream stream;
   byte[] data;
   int head;
 
+  public Peer me;
   public Peer[] peers;
-
-  public Vec3 cursor; // are these stored here???
-  public Pose headset;
-  public Pose offHand;
-  public Pose mainHand;
 
   public async void Start() {
     string publicIP, localIP;
@@ -59,63 +52,34 @@ public class MonoNet {
           Console.WriteLine("can't connect to the server");
           return;
         }
-        // ByteBuffer bb = new ByteBuffer(data);
         
-        // NetData.Peer peer = NetData.Peer.GetRootAsPeer(bb);
-        // int id = peer.Id;
         head = 0;
         int id = ReadInt();
         if (id != 0) {
           for (int i = 0; i < peers.Length; i++) {
             if (peers[i] != null) {
               if (peers[i].id == id) {
-                // peers[i].cursor = NetVec3(peer.Cursor.Value);
                 peers[i].cursor = ReadVec3();
                 break;
               }
             } else {
-              // if (peer.Cursor.HasValue) {
-              //   peers[i] = new Peer(id, NetVec3(peer.Cursor.Value));
-              //   break;
-              // }
-              peers[i] = new Peer(id, ReadVec3());
+              peers[i] = new Peer(id);
+              peers[i].cursor = ReadVec3();
               break;
             }
           }
         }
       }
-      
-      // FlatBufferBuilder fbb = new FlatBufferBuilder(1024);
-      // NetData.Peer.StartPeer(fbb);
-      // NetData.Peer.AddId(fbb, myID);
-      // NetData.Peer.AddCursor(fbb, Vec3Net(cursor, ref fbb));
-      // var p = NetData.Peer.EndPeer(fbb);
-      // fbb.Finish(p.Value);
-      // socket.Send(fbb.SizedByteArray());
 
       data = new byte[1024];
       head = 0;
-      WriteInt(myID);
-      WriteVec3(cursor);
+      WriteInt(me.id);
+      WriteVec3(me.cursor);
       socket.Send(data);
 
-      await Task.Delay(100);
+      await Task.Delay(10);
     }
     socket.Close();
-  }
-
-  public Vec3 NetVec3(NetData.Vec3 v) {
-    return new Vec3(v.X, v.Y, v.Z);
-  } Offset<NetData.Vec3> Vec3Net(Vec3 v, ref FlatBufferBuilder fbb) {
-    return NetData.Vec3.CreateVec3(fbb, v.x, v.y, v.z);
-  }
-
-  public Quat NetQuat(NetData.Quat q) {
-    return new Quat(q.X, q.Y, q.Z, q.W);
-  }
-
-  public Pose NetPose(NetData.Pose p) {
-    return new Pose(NetVec3(p.Pos), NetQuat(p.Rot));
   }
 
   int ReadInt() {
@@ -179,10 +143,12 @@ public class MonoNet {
   {
     public int id;
     public Vec3 cursor;
+    // public Pose headset;
+    // public Pose offHand;
+    // public Pose mainHand;
 
-    public Peer(int id, Vec3 cursor) {
+    public Peer(int id) {
       this.id = id;
-      this.cursor = cursor;
     }
   }
 }
