@@ -23,7 +23,7 @@ public class MonoNet {
   public void Start() {
     socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
     string ip = "192.168.1.70";
-    // ip = "139.177.201.219";
+    ip = "139.177.201.219";
     EndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), 1234);
     socket.Connect(serverEndPoint);
     rData = new byte[bufferSize];
@@ -186,8 +186,8 @@ public class MonoNet {
     public Pose headset;
     public Pose offHand;
     public Pose mainHand;
-    public Sound voice;
-    public SoundInst voiceInst; // update position
+    // public Sound voice;
+    // public SoundInst voiceInst; // update position
 
     public Peer(int id) {
       this.id = id;
