@@ -37,12 +37,46 @@ public class ReachCursor : SpatialCursor {
 }
 
 public class TwistCursor : SpatialCursor {
-  public void Step(Vec3 mainPos, Quat mainQuat) {
+  public void Step(Vec3 mainPos, Quat mainQuat, float str = 1) {
     Quat rel = Quat.LookAt(Vec3.Zero, mainQuat * Vec3.Forward);
     float twist = (Vec3.Dot(rel * -Vec3.Right, mainQuat * Vec3.Up) + 1) / 2;
-    pos = mainPos + mainQuat * Vec3.Forward * twist;
+    pos = mainPos + mainQuat * Vec3.Forward * twist * str;
 
-    model.Draw(Matrix.TS(pos, 0.06f));
+    model.Draw(Matrix.TS(pos, 0.02f));
+  }
+}
+
+public class CubicFlow {
+  public Vec3 p0, p1, p2, p3;
+  public TwistCursor offTwist = new TwistCursor();
+  public TwistCursor mainTwist = new TwistCursor();
+  public void Step(Pose offPose, Pose mainPose) {
+    offTwist.Step(offPose.position, offPose.orientation, 3);
+    mainTwist.Step(mainPose.position, mainPose.orientation, 3);
+
+    p0 = offPose.position;
+    p1 = offTwist.pos;
+    p2 = mainTwist.pos;
+    p3 = mainPose.position;
+
+    // if toggle
+  }
+
+  public void DrawSelf() {
+    Draw(this.p0, this.p1, this.p2, this.p3);
+  }
+
+  LinePoint[] bezier = new LinePoint[64];
+  public void Draw(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3) {
+    for (int i = 0; i < bezier.Length; i++) {
+      float t = i / ((float)bezier.Length - 1);
+      Vec3 a = Vec3.Lerp(p0, p1, t);
+      Vec3 b = Vec3.Lerp(p1, p2, t);
+      Vec3 c = Vec3.Lerp(p2, p3, t);
+      Vec3 pos = Vec3.Lerp(Vec3.Lerp(a, b, t), Vec3.Lerp(b, c, t), t);
+      bezier[i] = new LinePoint(pos, Color.White, 0.01f);
+    }
+    Lines.Add(bezier);
   }
 }
 

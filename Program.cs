@@ -2,64 +2,73 @@ using StereoKit;
 using System;
 
 class Program {
-	static void Main(string[] args) {
+  static void Main(string[] args) {
     SKSettings settings = new SKSettings {
       appName = "oriels",
       assetsFolder = "Assets",
     };
-		if (!SK.Initialize(settings))
+    if (!SK.Initialize(settings))
       Environment.Exit(1);
 
     // TextStyle style = Text.MakeStyle(Font.FromFile("DMMono-Regular.ttf"), 0.1f, Color.White);
-    Mono.Run();
-	}
+    Mono mono = new Mono();
+    mono.Run();
+  }
 }
 
-public static class Mono {
+public class Mono {
+  public Mic mic;
+  public Controller offHand, mainHand;
 
-  public static Controller offHand, mainHand;
+  public void Run() {
+    // mic = new Mic();
 
-  public static void Run() {
-    MonoNet net = new MonoNet();
+    MonoNet net = new MonoNet(this);
     net.Start();
+
+    // StretchCursor stretchCursor = new StretchCursor();
+    CubicFlow cubicFlow = new CubicFlow();
+    // ReachCursor reachCursor = new ReachCursor();
+    // SupineCursor supineCursor = new SupineCursor();
+    // ClawCursor clawCursor = new ClawCursor();
+
+    Oriel oriel = new Oriel();
+    oriel.Start();
 
     // ColorCube cube = new ColorCube();
     // OrbitalView.strength = 4;
     // OrbitalView.distance = 0.4f;
     // cube.thickness = 0.01f;
 
-    StretchCursor stretchCursor = new StretchCursor();
-    // ReachCursor reachCursor = new ReachCursor();
-    // SupineCursor supineCursor = new SupineCursor();
-    // ClawCursor clawCursor = new ClawCursor();
-
-    // Oriel oriel = new Oriel();
-    // oriel.Start();
-
     // Lerper lerper = new Lerper();
 
     while (SK.Step(() => {
       offHand = Input.Controller(Handed.Left);
       mainHand = Input.Controller(Handed.Right);
-
       // mainHand.aim = Input.Hand(Handed.Right).palm;
 
-
-      stretchCursor.Step(offHand.aim, mainHand.aim);
-      net.me.cursor = stretchCursor.pos;
-      // net.me.cursor = Vec3.Up * (float)Math.Sin(Time.Total);
+      cubicFlow.Step(offHand.aim, mainHand.aim);
+      cubicFlow.DrawSelf();
+      net.me.cursorA = cubicFlow.p0;
+      net.me.cursorB = cubicFlow.p1;
+      net.me.cursorC = cubicFlow.p2;
+      net.me.cursorD = cubicFlow.p3;
+      // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);
       net.me.headset = Input.Head;
       net.me.offHand = offHand.aim;
       net.me.mainHand = mainHand.aim;
       for (int i = 0; i < net.peers.Length; i++) {
         MonoNet.Peer peer = net.peers[i];
         if (peer != null) {
-          net.Cubee(Matrix.TRS(peer.cursor, Quat.Identity, Vec3.One * 0.05f));
+          net.Cubee(Matrix.TRS(peer.cursorA, Quat.Identity, Vec3.One * 0.05f));
           net.Cubee(peer.headset.ToMatrix(Vec3.One * 0.3f));
           net.Cubee(peer.offHand.ToMatrix(Vec3.One * 0.1f));
           net.Cubee(peer.mainHand.ToMatrix(Vec3.One * 0.1f));
+          cubicFlow.Draw(peer.cursorA, peer.cursorB, peer.cursorC, peer.cursorD);
         }
-      } 
+      }
+
+      oriel.Step();
 
       // domHand subHand ?? :3
 
@@ -85,49 +94,161 @@ public static class Mono {
       //   new Pose(mainHand.aim.position, mainHand.aim.orientation),
       //   mainHand.IsStickClicked
       // );
-      
-      // oriel.Step();
 
       // cursor.Draw(Matrix.S(0.1f));
-    }));
+    })) ;
     SK.Shutdown();
   }
 }
 
-public class DrawKey {
-  public int x, y;
-  public Key key;
-  public DrawKey(int x, int y, Key key) {
-    this.x = x;
-    this.y = y;
-    this.key = key;
+public class Mic {
+  public float[] bufferRaw = new float[0];
+  public int bufferRawSize = 0;
+
+  public int comp = 8;
+  public float[] buffer = new float[0];
+  public int bufferSize = 0;
+
+  FilterButterworth filter;
+  public void Step() {
+    if (Microphone.IsRecording) {
+      // Ensure our buffer of samples is large enough to contain all the
+      // data the mic has ready for us this frame
+      if (Microphone.Sound.UnreadSamples > bufferRaw.Length) {
+        bufferRaw = new float[Microphone.Sound.UnreadSamples];
+        buffer = new float[Microphone.Sound.UnreadSamples / comp];
+      }
+
+      // Read data from the microphone stream into our buffer, and track 
+      // how much was actually read. Since the mic data collection runs in
+      // a separate thread, this will often be a little inconsistent. Some
+      // frames will have nothing ready, and others may have a lot!
+      bufferRawSize = Microphone.Sound.ReadSamples(ref bufferRaw);
+      bufferSize = bufferRawSize / comp;
+
+      if (bufferSize > 0) {
+        // LowPassFilter lowpass = new LowPassFilter(48000 / comp / 2, 2, 48000);
+        for (int i = 0; i < bufferRawSize; i++) {
+          // bufferRaw[i] = (float)lowpass.compute(bufferRaw[i]);
+          filter.Update(bufferRaw[i]);
+          bufferRaw[i] = filter.Value;
+        }
+        // voice.WriteSamples(bufferRaw);
+      
+        buffer[0] = bufferRaw[0];
+        for (int i = 1; i < bufferSize; i++) {
+          buffer[i] = bufferRaw[i * comp - 1];
+        }
+
+        // upsample
+        float[] upsampled = new float[bufferSize * comp];
+        for (int i = 0; i < bufferSize - 1; i++) {
+          upsampled[Math.Max(i * comp - 1, 0)] = buffer[i];
+          for (int j = 1; j < comp; j++) {
+            upsampled[i * comp - 1 + j] = SKMath.Lerp(buffer[i], buffer[i + 1], (float)j / (float)comp);
+          }
+        }
+        voice.WriteSamples(upsampled);
+      }
+    } else {
+      Microphone.Start();
+      voice = Sound.CreateStream(0.5f);
+      voiceInst = voice.Play(Vec3.Zero, 0.5f);
+      filter = new FilterButterworth(48000 / comp / 2, 48000, FilterButterworth.PassType.Lowpass, (float)Math.Sqrt(2));
+    }
   }
+  public Sound voice;
+  public SoundInst voiceInst; // update position
+
+  public class FilterButterworth {
+    /// <summary>
+    /// rez amount, from sqrt(2) to ~ 0.1
+    /// </summary>
+    private readonly float resonance;
+
+    private readonly float frequency;
+    private readonly int sampleRate;
+    private readonly PassType passType;
+
+    private readonly float c, a1, a2, a3, b1, b2;
+
+    /// <summary>
+    /// Array of input values, latest are in front
+    /// </summary>
+    private float[] inputHistory = new float[2];
+
+    /// <summary>
+    /// Array of output values, latest are in front
+    /// </summary>
+    private float[] outputHistory = new float[3];
+
+    public FilterButterworth(float frequency, int sampleRate, PassType passType, float resonance) {
+      this.resonance = resonance;
+      this.frequency = frequency;
+      this.sampleRate = sampleRate;
+      this.passType = passType;
+
+      switch (passType) {
+        case PassType.Lowpass:
+          c = 1.0f / (float)Math.Tan(Math.PI * frequency / sampleRate);
+          a1 = 1.0f / (1.0f + resonance * c + c * c);
+          a2 = 2f * a1;
+          a3 = a1;
+          b1 = 2.0f * (1.0f - c * c) * a1;
+          b2 = (1.0f - resonance * c + c * c) * a1;
+          break;
+        case PassType.Highpass:
+          c = (float)Math.Tan(Math.PI * frequency / sampleRate);
+          a1 = 1.0f / (1.0f + resonance * c + c * c);
+          a2 = -2f * a1;
+          a3 = a1;
+          b1 = 2.0f * (c * c - 1.0f) * a1;
+          b2 = (1.0f - resonance * c + c * c) * a1;
+          break;
+      }
+    }
+
+    public enum PassType {
+      Highpass,
+      Lowpass,
+    }
+
+    public void Update(float newInput) {
+      float newOutput = a1 * newInput + a2 * this.inputHistory[0] + a3 * this.inputHistory[1] - b1 * this.outputHistory[0] - b2 * this.outputHistory[1];
+
+      this.inputHistory[1] = this.inputHistory[0];
+      this.inputHistory[0] = newInput;
+
+      this.outputHistory[2] = this.outputHistory[1];
+      this.outputHistory[1] = this.outputHistory[0];
+      this.outputHistory[0] = newOutput;
+    }
+
+    public float Value {
+      get { return this.outputHistory[0]; }
+    }
+  }
+
 }
 
-public class Lerper
-{
+public class Lerper {
   public float t = 0;
   public float spring = 1;
   public float dampen = 1;
   float vel;
 
-  public void Step(float to = 1, bool bounce = false)
-  {
+  public void Step(float to = 1, bool bounce = false) {
     float dir = to - t;
     vel += dir * spring * Time.Elapsedf;
 
-    if (Math.Sign(vel) != Math.Sign(dir))
-    {
+    if (Math.Sign(vel) != Math.Sign(dir)) {
       vel *= 1 - (dampen * Time.Elapsedf);
-    }
-    else
-    {
+    } else {
       vel *= 1 - (dampen * 0.33f * Time.Elapsedf);
     }
 
     float newt = t + vel * Time.Elapsedf;
-    if (bounce && (newt < 0 || newt > 1))
-    {
+    if (bounce && (newt < 0 || newt > 1)) {
       vel *= -0.5f;
       newt = Math.Clamp(newt, 0, 1);
     }
@@ -135,47 +256,54 @@ public class Lerper
     t = newt;
   }
 
-  public void Reset()
-  {
+  public void Reset() {
     t = vel = 0;
   }
 }
 
-
 public class Oriel {
   public Bounds bounds;
-
-  // render
-  // Model model = Model.FromFile("oriel.glb", Shader.FromFile("oriel.hlsl"));
   Material mat = new Material(Shader.FromFile("oriel.hlsl"));
   Mesh mesh = Default.MeshCube;
+  Mesh quad = Default.MeshQuad;
   Vec3 _dimensions;
   public void Start() {
     bounds = new Bounds(Vec3.Zero, new Vec3(1f, 0.5f, 0.5f));
     _dimensions = bounds.dimensions;
   }
-  
+
   public void Step() {
     // circle around center
     // bounds.center = Quat.FromAngles(0, 0, Time.Totalf * 60) * Vec3.Up * 0.3f;
-
-
     // bounds.dimensions = _dimensions * (1f + (MathF.Sin(Time.Totalf * 3) * 0.3f));
-    
+
     mat.Transparency = Transparency.Blend;
-    // mat.FaceCull = Cull.Front;
     mat.SetFloat("_height", bounds.dimensions.y);
     mat.SetFloat("_ypos", bounds.center.y);
+    // mat.FaceCull = Cull.None;
     mesh.Draw(mat, Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions));
+    Pose head = Input.Head;
+    Vec3 quadPos = head.position + head.Forward * 0.04f;
+    if (bounds.Contains(head.position, quadPos)) {
+      quad.Draw(mat, Matrix.TRS(quadPos, Quat.LookAt(quadPos, head.position), Vec3.One * 0.5f));
+    }
   }
 }
 
 public class Bitting {
-
-  Tex tex = new Tex(TexType.Image, TexFormat.Rgba32);  
+  public class DrawKey {
+    public int x, y;
+    public Key key;
+    public DrawKey(int x, int y, Key key) {
+      this.x = x;
+      this.y = y;
+      this.key = key;
+    }
+  }
+  Tex tex = new Tex(TexType.Image, TexFormat.Rgba32);
   Material material = Default.Material;
   Mesh quad = Default.MeshQuad;
-  int [,] bitchar = new int[,] {
+  int[,] bitchar = new int[,] {
     {0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0},
     {0, 0, 0, 0, 0, 0, 0},
@@ -202,7 +330,7 @@ public class Bitting {
       lastKey = null;
     }
 
-    for (int i = 0; i < drawKeys.Length; i++){
+    for (int i = 0; i < drawKeys.Length; i++) {
       DrawKey drawKey = drawKeys[i];
       if (Input.Key(drawKey.key).IsJustActive()) {
         bitchar[drawKey.x, drawKey.y] = 1;
@@ -252,9 +380,9 @@ public static class PullRequest {
     Vec3 ds = b.dimensions;
     for (int i = 0; i < 4; i++) {
       Quat q = Quat.FromAngles(i * 90, 0, 0);
-      Lines.Add(q * (new Vec3(0, 0, 0) - c) *  ds, q * (new Vec3(0, 1, 0) - c) *  ds, color, color, thickness);
-      Lines.Add(q * (new Vec3(0, 1, 0) - c) *  ds, q * (new Vec3(1, 1, 0) - c) *  ds, color, color, thickness);
-      Lines.Add(q * (new Vec3(1, 1, 0) - c) *  ds, q * (new Vec3(1, 0, 0) - c) *  ds, color, color, thickness);
+      Lines.Add(q * (new Vec3(0, 0, 0) - c) * ds, q * (new Vec3(0, 1, 0) - c) * ds, color, color, thickness);
+      Lines.Add(q * (new Vec3(0, 1, 0) - c) * ds, q * (new Vec3(1, 1, 0) - c) * ds, color, color, thickness);
+      Lines.Add(q * (new Vec3(1, 1, 0) - c) * ds, q * (new Vec3(1, 0, 0) - c) * ds, color, color, thickness);
 
       // convert to linepoints
     }
