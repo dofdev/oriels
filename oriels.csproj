@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="StereoKit" Version="0.3.4" />
+    <PackageReference Include="System.Speech" Version="5.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -23,10 +23,31 @@
 - gif maker
 
 ## override
-15 days left for the sterokit comp
+10 days left for the sterokit comp
 
-1/3 mvp:
+MVP
+switch between cursors with a button (quick press(b) on both hands to switch/cycle through the two handed ones) long press(b) on one hand to swap mainhand
 
-2/3 polish:
+movement:
+	fullstick
+	teleport and drag
+	bezier rails
 
-3/3 accessibility:
+blocks you can manipulate with spatial cursors (trackballer)
++ and color them with the color cube (player colors
+
+see and use a parabolizer (sci fi thingy)
+
+inverse orbital (control a shooty thing with fullstick and spatial cursor)
+
+
+POLISH
+fix (server sending back your data)
+*just show them red when hit* 
+bezier in color cube
+calibrate cubic flow + sensitivity
+press and twist to adjust sensitivity (long press(b) and trigger for value *keep cursor active) (min 1:1)
+
+
+ACCESSIBILITY
+show how the dofs work (debug visuals *CMY)

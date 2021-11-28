@@ -4,13 +4,16 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Speech.Synthesis;
+using System.Speech.Recognition;
+using System.Speech.AudioFormat;
 
 public class MonoNet {
   public Mono mono;
   public MonoNet(Mono mono) {
     this.mono = mono;
     Random rnd = new Random();
-    me = new Peer(rnd.Next(1, 256)); // temp, until unique usernames
+    me = new Peer(rnd.Next(1, 256)); // let the server determine these
   }
   public Socket socket;
   int bufferSize = 1024;
@@ -29,6 +32,17 @@ public class MonoNet {
     rData = new byte[bufferSize];
     wData = new byte[bufferSize];
     peers = new Peer[64];
+
+    // SpeechSynthesizer synth = new SpeechSynthesizer();
+    // synth.Speak("oriels!");
+
+    // SpeechRecognitionEngine reco = new SpeechRecognitionEngine();
+    
+    // System.IO.Stream s;
+    // // s.Write();
+
+    // SpeechAudioFormatInfo info = new SpeechAudioFormatInfo(EncodingFormat.Pcm, 16000, 16, 1, WaveFormatTag.Pcm, 1, 1);
+    // reco.SetInputToAudioStream(s, info);
 
     Thread.Sleep(1000); // useful?
 
