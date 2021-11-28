@@ -53,4 +53,4 @@ ACCESSIBILITY
 show how the dofs work (debug visuals *CMY)
 
 mapped out by:
-@spatialfree, @opendegree
+@spatialfree * @opendegree
