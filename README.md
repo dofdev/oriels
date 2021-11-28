@@ -51,3 +51,6 @@ press and twist to adjust sensitivity (long press(b) and trigger for value *keep
 
 ACCESSIBILITY
 show how the dofs work (debug visuals *CMY)
+
+we did this:
+@spatialfree, @opendegree
