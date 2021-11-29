@@ -83,10 +83,12 @@ public class Mono {
         // pos = closestPoint - (subCon.aim.position - pos);
       }
       if (subCon.IsX1Pressed) {
-        pos = Bezier.Sample(rail, railT) - (subCon.aim.position - pos);
+        pos = Vec3.Lerp(pos, Bezier.Sample(rail, railT) - (subCon.aim.position - pos), Time.Elapsedf * 6f);
         railT += Time.Elapsedf * 0.1f;
-        // how to reliably determine and control which direction to go?
+        // how to reliably determine and control which direction to go? (velocity)
       }
+
+      // Console.WriteLine(World.RefreshInterval.ToString());
 
       if (domCon.IsX1JustPressed) {
         movePress = Time.Totalf;
