@@ -42,8 +42,12 @@ public class Mono {
       else { domCon = Input.Controller(Handed.Right); subCon = Input.Controller(Handed.Left); }
       if (subCon.IsX2JustPressed) { lefty = !lefty; }
 
-      SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
+      Quat rot = Quat.FromAngles(subCon.stick.y * -90, 0, subCon.stick.x * 90);
+      Vec3 dir = Vec3.Up * (subCon.IsStickClicked ? -1 : 1);
+      Vec3 fullstick = subCon.aim.orientation * rot * dir;
+      pos += fullstick * subCon.trigger * Time.Elapsedf;
 
+      SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
       if (domCon.IsX1JustPressed) {
         pos = cursor.p0;
       }
