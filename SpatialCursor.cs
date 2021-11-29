@@ -1,7 +1,6 @@
 using System;
 using StereoKit;
 
-// build this out tentatively
 public abstract class SpatialCursor {
   public Vec3 p0, p1, p2, p3;
   public float min, str, max;
@@ -13,13 +12,15 @@ public abstract class SpatialCursor {
 }
 
 public class Cursors {
-  SpatialCursor[] oneHanded = new SpatialCursor[] { new ReachCursor(), new TwistCursor() }; int oneIndex = 0;
+  Mono mono;
+  public Cursors(Mono mono) {
+    this.mono = mono;
+  }
+  SpatialCursor[] oneHanded = new SpatialCursor[] { new ReachCursor(), new TwistCursor() }; int oneIndex = 1;
   SpatialCursor[] twoHanded = new SpatialCursor[] { new StretchCursor(), new CubicFlow(), new SupineCursor() }; int twoIndex = 0;
 
-  public SpatialCursor Step(Pose lHand, Pose rHand) {
-    Pose domHand = rHand; Pose subHand = lHand;
-
-    SpatialCursor cursor =  oneHanded[oneIndex];
+  public SpatialCursor Step(Pose domHand, Pose subHand) {
+    SpatialCursor cursor = oneHanded[oneIndex];
     cursor.Step(new Pose[] { domHand, subHand });
     return cursor;
   }

@@ -18,13 +18,13 @@ class Program {
 
 public class Mono {
   public Mic mic;
-  public Controller lHand, rHand;
+  public Controller domCon, subCon; public bool lefty;
 
   public void Run() {
     // mic = new Mic();
     Vec3 pos = new Vec3(0, 0, 0);
 
-    Cursors cursors = new Cursors();
+    Cursors cursors = new Cursors(this);
 
     MonoNet net = new MonoNet(this);
     net.Start();
@@ -38,24 +38,24 @@ public class Mono {
     // cube.thickness = 0.01f;
 
     while (SK.Step(() => {
-      lHand = Input.Controller(Handed.Left);
-      rHand = Input.Controller(Handed.Right);
+      if (lefty) { domCon = Input.Controller(Handed.Left); subCon = Input.Controller(Handed.Right); } 
+      else { domCon = Input.Controller(Handed.Right); subCon = Input.Controller(Handed.Left); }
+      if (subCon.IsX2JustPressed) { lefty = !lefty; }
 
-      SpatialCursor cursor = cursors.Step(lHand.aim, rHand.aim);
+      SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
 
-      if (lHand.IsX1JustPressed) {
-        pos = new Vec3(0, 0, 0);
+      if (domCon.IsX1JustPressed) {
+        pos = cursor.p0;
       }
       // pos.x = (float)Math.Sin(Time.Total * 0.1f) * 0.5f;
       Renderer.CameraRoot = Matrix.T(pos);
-
 
       // cursor.Step(lHand.aim, rHand.aim); cursor.DrawSelf();
       // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);
       net.me.cursorA = cursor.p0; net.me.cursorB = cursor.p1;
       net.me.cursorC = cursor.p2; net.me.cursorD = cursor.p3;
       net.me.headset = Input.Head;
-      net.me.offHand = lHand.aim; net.me.mainHand = rHand.aim;
+      net.me.mainHand = domCon.aim; net.me.offHand = subCon.aim; 
       for (int i = 0; i < net.peers.Length; i++) {
         MonoNet.Peer peer = net.peers[i];
         if (peer != null) {
