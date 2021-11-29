@@ -19,7 +19,7 @@
 - implement all dofs from site
 
 ## override
-**10 days left for the sterokit comp**
+**8 days left for the sterokit comp!**
 
 MVP
 switch between cursors with a button (quick press(b) on both hands to switch/cycle through the two handed ones) long press(b) on one hand to swap mainhand
