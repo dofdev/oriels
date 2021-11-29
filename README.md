@@ -21,32 +21,29 @@
 ## override
 **8 days left for the sterokit comp!**
 
-MVP
+### MVP
 switch between cursors with a button (quick press(b) on both hands to switch/cycle through the two handed ones) long press(b) on one hand to swap mainhand
 
 movement:
-	fullstick
-	teleport and drag
-	bezier rails
+- fullstick
+- teleport and drag
+- bezier rails
 
 blocks you can manipulate with spatial cursors (trackballer)
-+ and color them with the color cube (player colors
+and color them with the color cube (player colors
 
-see and use a parabolizer (sci fi thingy)
+oriel + orbital view (control a shooty guy with fullstick and spatial cursor)
 
-inverse orbital (control a shooty thing with fullstick and spatial cursor)
+### POLISH
+- fix (server sending back your data)
+- *just show them red when hit* 
+- bezier in color cube
+- calibrate cubic flow + sensitivity
+- press and twist to adjust sensitivity (long press(b) and trigger for value *keep cursor active) (min 1:1)
 
-
-POLISH
-fix (server sending back your data)
-*just show them red when hit* 
-bezier in color cube
-calibrate cubic flow + sensitivity
-press and twist to adjust sensitivity (long press(b) and trigger for value *keep cursor active) (min 1:1)
-
-
-ACCESSIBILITY
+### ACCESSIBILITY
 show how the dofs work (debug visuals *CMY)
 
+<br><br>
 mapped out by:
 @spatialfree * @opendegree
