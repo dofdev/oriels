@@ -25,8 +25,8 @@
 switch between cursors with a button (quick press(b) on both hands to switch/cycle through the two handed ones) long press(b) on one hand to swap mainhand
 
 movement:
-- fullstick
-- ~~teleport~~ and drag
+- ~~fullstick~~
+- ~~teleport and drag~~
 - bezier rails
 
 blocks you can manipulate with spatial cursors (trackballer)

@@ -19,6 +19,12 @@ class Program {
 public class Mono {
   public Mic mic;
   public Controller domCon, subCon; public bool lefty;
+  public float movePress;
+  public Vec3 dragStart, posStart;
+  public float railT;
+
+  Mesh ball = Default.MeshSphere;
+  Material ballMat = Default.Material;
 
   public void Run() {
     // mic = new Mic();
@@ -42,17 +48,60 @@ public class Mono {
       else { domCon = Input.Controller(Handed.Right); subCon = Input.Controller(Handed.Left); }
       if (subCon.IsX2JustPressed) { lefty = !lefty; }
 
+      // ball.Draw(ballMat, Matrix.TS(pos, 0.1f));
+
+      Renderer.CameraRoot = Matrix.T(pos);
+
+      SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
+
       Quat rot = Quat.FromAngles(subCon.stick.y * -90, 0, subCon.stick.x * 90);
       Vec3 dir = Vec3.Up * (subCon.IsStickClicked ? -1 : 1);
       Vec3 fullstick = subCon.aim.orientation * rot * dir;
       pos += fullstick * subCon.trigger * Time.Elapsedf;
 
-      SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
+      Vec3[] rail = new Vec3[] {
+        new Vec3(0, 0, -1),
+        new Vec3(0, 0, -2),
+        new Vec3(1, 2, -3),
+        new Vec3(0, 1, -4),
+      };
+      Bezier.Draw(rail);
+      if (subCon.IsX1JustPressed) {
+        int closest = 0;
+        float closestDist = float.MaxValue;
+        Vec3 closestPoint = Vec3.Zero;
+        for (int i = 0; i < rail.Length; i++) {
+          Vec3 point = Bezier.Sample(rail, (float)i / (rail.Length - 1f));
+          float dist = Vec3.Distance(point, subCon.aim.position);
+          if (dist < closestDist) {
+            closest = i;
+            closestDist = dist;
+            closestPoint = point;
+            railT = (float)i / (rail.Length - 1f);
+          }
+        }
+        // pos = closestPoint - (subCon.aim.position - pos);
+      }
+      if (subCon.IsX1Pressed) {
+        pos = Bezier.Sample(rail, railT) - (subCon.aim.position - pos);
+        railT += Time.Elapsedf * 0.1f;
+        // how to reliably determine and control which direction to go?
+      }
+
       if (domCon.IsX1JustPressed) {
-        pos = cursor.p0;
+        movePress = Time.Totalf;
+        dragStart = cursor.p0;
+        posStart = pos;
+      }
+      if (domCon.IsX1Pressed) {
+        pos -= cursor.p0 - dragStart;
+        dragStart = cursor.p0;
+      }
+      if (domCon.IsX1JustUnPressed && Time.Totalf - movePress < 0.2f) {
+        pos = cursor.p0 - (Input.Head.position - pos);
       }
       // pos.x = (float)Math.Sin(Time.Total * 0.1f) * 0.5f;
-      Renderer.CameraRoot = Matrix.T(pos);
+      
 
       // cursor.Step(lHand.aim, rHand.aim); cursor.DrawSelf();
       // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);
