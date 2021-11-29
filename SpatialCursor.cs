@@ -3,66 +3,109 @@ using StereoKit;
 
 // build this out tentatively
 public abstract class SpatialCursor {
-  public Vec3 pos;
-  public Quat rot;
+  public Vec3 p0, p1, p2, p3;
+  public float min, str, max;
 
-  public static Model model = Model.FromFile("cursor.glb", Shader.Default);
+  public Model model = Model.FromFile("cursor.glb", Shader.Default);
+
+  public abstract void Step(Pose[] poses);
+  public abstract void Calibrate();
+}
+
+public class Cursors {
+  SpatialCursor[] oneHanded = new SpatialCursor[] { new ReachCursor(), new TwistCursor() }; int oneIndex = 0;
+  SpatialCursor[] twoHanded = new SpatialCursor[] { new StretchCursor(), new CubicFlow(), new SupineCursor() }; int twoIndex = 0;
+
+  public SpatialCursor Step(Pose lHand, Pose rHand) {
+    Pose domHand = rHand; Pose subHand = lHand;
+
+    SpatialCursor cursor =  oneHanded[oneIndex];
+    cursor.Step(new Pose[] { domHand, subHand });
+    return cursor;
+  }
 }
 
 public class StretchCursor : SpatialCursor {
-  public void Step(Pose offPose, Pose mainPose) {
-    float stretch = (offPose.position - mainPose.position).Magnitude;
-    stretch = Math.Max(stretch - 0.1f, 0);
-    pos = mainPose.position + mainPose.Forward * stretch * 3;
-
-    model.Draw(Matrix.TS(pos, 0.06f));
+  public StretchCursor() {
+    this.min = 1f;
+    this.str = 3f;
+    this.max = 10f;
   }
+  public override void Step(Pose[] poses) {
+    Pose dom = poses[0];
+    Pose sub = poses[1];
+    float stretch = (sub.position - dom.position).Magnitude;
+    stretch = Math.Max(stretch - 0.1f, 0);
+    p0 = dom.position + dom.Forward * stretch * 3;
+
+    model.Draw(Matrix.TS(p0, 0.06f));
+  }
+  public override void Calibrate() {}
 }
 
 // this is just a stretch cursor derivative
 public class ReachCursor : SpatialCursor {
-  static Vec3 origin;
-  public void Step(Vec3 mainPos, bool calibrate) {
-    float stretch = (origin - mainPos).Length;
-    Vec3 dir = (mainPos - origin).Normalized;
-    Vec3 pos = mainPos + dir * stretch * 3;
+  public ReachCursor() {
+    this.min = 1f;
+    this.str = 3f;
+    this.max = 10f;
+  }
+  Vec3 pos;
+  Vec3 origin;
+  public override void Step(Pose[] poses) {
+    pos = poses[0].position;
+    float stretch = (origin - pos).Length;
+    Vec3 dir = (pos - origin).Normalized;
+    p0 = pos + dir * stretch * 3;
+
     model.Draw(Matrix.TS(pos, 0.06f));
     Lines.Add(origin, pos, Color.White, 0.01f);
     model.Draw(Matrix.TS(origin, 0.04f));
-
-    if (calibrate) {
-      origin = mainPos;
-    }
+  }
+  public override void Calibrate() {
+    origin = pos;
   }
 }
 
 public class TwistCursor : SpatialCursor {
-  public void Step(Vec3 mainPos, Quat mainQuat, float str = 1) {
-    Quat rel = Quat.LookAt(Vec3.Zero, mainQuat * Vec3.Forward);
-    float twist = (Vec3.Dot(rel * -Vec3.Right, mainQuat * Vec3.Up) + 1) / 2;
-    pos = mainPos + mainQuat * Vec3.Forward * twist * str;
-
-    model.Draw(Matrix.TS(pos, 0.02f));
+  public TwistCursor() {
+    this.min = 1f;
+    this.str = 3f;
+    this.max = 10f;
   }
+  public override void Step(Pose[] poses) {
+    Vec3 pos = poses[0].position;
+    Quat quat = poses[0].orientation;
+    Quat rel = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward);
+    float twist = (Vec3.Dot(rel * -Vec3.Right, quat * Vec3.Up) + 1) / 2;
+    p0 = pos + quat * Vec3.Forward * twist * str;
+
+    model.Draw(Matrix.TS(p0, 0.02f));
+  }
+  public override void Calibrate() { }
 }
 
-public class CubicFlow {
-  public Vec3 p0, p1, p2, p3;
-  public TwistCursor offTwist = new TwistCursor();
-  public TwistCursor mainTwist = new TwistCursor();
-  public void Step(Pose offPose, Pose mainPose) {
-    offTwist.Step(offPose.position, offPose.orientation, 3);
-    mainTwist.Step(mainPose.position, mainPose.orientation, 3);
+public class CubicFlow : SpatialCursor {
+  public CubicFlow() {
+    this.min = 1f;
+    this.str = 3f;
+    this.max = 10f;
+  }
+  TwistCursor domTwist = new TwistCursor();
+  TwistCursor subTwist = new TwistCursor();
+  public override void Step(Pose[] poses) {
+    Pose dom = poses[0];
+    Pose sub = poses[1];
+    domTwist.Step(new Pose[] { dom });
+    subTwist.Step(new Pose[] { sub });
 
-    p0 = offPose.position;
-    p1 = offTwist.pos;
-    p2 = mainTwist.pos;
-    p3 = mainPose.position;
+    p0 = dom.position;
+    p1 = domTwist.p0;
+    p2 = subTwist.p0;
+    p3 = sub.position;
 
     // if toggle
-  }
 
-  public void DrawSelf() {
     Draw(this.p0, this.p1, this.p2, this.p3);
   }
 
@@ -78,47 +121,57 @@ public class CubicFlow {
     }
     Lines.Add(bezier);
   }
+
+  public override void Calibrate() {}
 }
 
 // a more symmetrical one would be cool
 public class SupineCursor : SpatialCursor {
+  public SupineCursor() {
+    // this.min = 1f;
+    // this.str = 3f;
+    // this.max = 10f;
+  }
   float calibStr;
   Quat calibQuat;
-  public void Step(Pose offPose, Pose mainPose, bool calibrate) {
-    Quat rel = Quat.LookAt(Vec3.Zero, offPose.orientation * Vec3.Forward);
-    float twist = (Vec3.Dot(rel * -Vec3.Right, offPose.orientation * Vec3.Up) + 1) / 2;
-    
-    pos = mainPose.position + mainPose.orientation * calibQuat * Vec3.Forward * calibStr * twist;
+  Pose dom, sub;
+  public override void Step(Pose[] poses) {
+    dom = poses[0];
+    sub = poses[1];
 
-    if (calibrate) {   
-      Vec3 target = Input.Head.position + Input.Head.Forward;
-      calibStr = Vec3.Distance(mainPose.position, target) * 2;
+    Quat rel = Quat.LookAt(Vec3.Zero, sub.orientation * Vec3.Forward);
+    float twist = (Vec3.Dot(rel * -Vec3.Right, sub.orientation * Vec3.Up) + 1) / 2;
+    p0 = dom.position + dom.orientation * calibQuat * Vec3.Forward * calibStr * twist;
 
-      Quat calibAlign = Quat.LookAt(mainPose.position, target);
-      calibQuat = mainPose.orientation.Inverse * calibAlign;
-    }
+    model.Draw(Matrix.TS(p0, 0.06f));
+  }
+  public override void Calibrate() {
+    Vec3 target = Input.Head.position + Input.Head.Forward;
+    calibStr = Vec3.Distance(dom.position, target) * 2;
 
-    model.Draw(Matrix.TS(pos, 0.06f));
+    Quat calibAlign = Quat.LookAt(dom.position, target);
+    calibQuat = dom.orientation.Inverse * calibAlign;
   }
 }
 
 // for fun
-public class ClawCursor : SpatialCursor {
-  Quat calibOff, calibMain;
-  public void Step(Vec3 chest, Pose offPose, Pose mainPose, bool calibrate) {
-    float wingspan = 0.5f;
-    Quat offQuat = calibOff * offPose.orientation;
-    Quat mainQuat = calibMain * mainPose.orientation;
-    Vec3 elbow = chest + mainQuat * mainQuat * Vec3.Forward * wingspan;
-    pos = elbow + offQuat * offQuat * Vec3.Forward * wingspan;
+// public class ClawCursor : SpatialCursor {
 
-    if (calibrate) {
-      calibOff = offPose.orientation.Inverse;
-      calibMain = mainPose.orientation.Inverse;
-    }
+//   Quat calibOff, calibMain;
+//   public void Step(Vec3 chest, Pose offPose, Pose mainPose, bool calibrate) {
+//     float wingspan = 0.5f;
+//     Quat offQuat = calibOff * offPose.orientation;
+//     Quat mainQuat = calibMain * mainPose.orientation;
+//     Vec3 elbow = chest + mainQuat * mainQuat * Vec3.Forward * wingspan;
+//     p0 = elbow + offQuat * offQuat * Vec3.Forward * wingspan;
 
-    Lines.Add(chest, elbow, Color.White, 0.01f);
-    Lines.Add(elbow, pos, Color.White, 0.01f);
-    model.Draw(Matrix.TS(pos, 0.06f));
-  }
-}
+//     if (calibrate) {
+//       calibOff = offPose.orientation.Inverse;
+//       calibMain = mainPose.orientation.Inverse;
+//     }
+
+//     Lines.Add(chest, elbow, Color.White, 0.01f);
+//     Lines.Add(elbow, p0, Color.White, 0.01f);
+//     model.Draw(Matrix.TS(p0, 0.06f));
+//   }
+// }

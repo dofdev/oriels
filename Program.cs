@@ -18,19 +18,16 @@ class Program {
 
 public class Mono {
   public Mic mic;
-  public Controller offHand, mainHand;
+  public Controller lHand, rHand;
 
   public void Run() {
     // mic = new Mic();
+    Vec3 pos = new Vec3(0, 0, 0);
+
+    Cursors cursors = new Cursors();
 
     MonoNet net = new MonoNet(this);
     net.Start();
-
-    // StretchCursor stretchCursor = new StretchCursor();
-    CubicFlow cubicFlow = new CubicFlow();
-    // ReachCursor reachCursor = new ReachCursor();
-    // SupineCursor supineCursor = new SupineCursor();
-    // ClawCursor clawCursor = new ClawCursor();
 
     Oriel oriel = new Oriel();
     oriel.Start();
@@ -40,23 +37,25 @@ public class Mono {
     // OrbitalView.distance = 0.4f;
     // cube.thickness = 0.01f;
 
-    // Lerper lerper = new Lerper();
-
     while (SK.Step(() => {
-      offHand = Input.Controller(Handed.Left);
-      mainHand = Input.Controller(Handed.Right);
-      // mainHand.aim = Input.Hand(Handed.Right).palm;
+      lHand = Input.Controller(Handed.Left);
+      rHand = Input.Controller(Handed.Right);
 
-      cubicFlow.Step(offHand.aim, mainHand.aim);
-      cubicFlow.DrawSelf();
-      net.me.cursorA = cubicFlow.p0;
-      net.me.cursorB = cubicFlow.p1;
-      net.me.cursorC = cubicFlow.p2;
-      net.me.cursorD = cubicFlow.p3;
+      SpatialCursor cursor = cursors.Step(lHand.aim, rHand.aim);
+
+      if (lHand.IsX1JustPressed) {
+        pos = new Vec3(0, 0, 0);
+      }
+      // pos.x = (float)Math.Sin(Time.Total * 0.1f) * 0.5f;
+      Renderer.CameraRoot = Matrix.T(pos);
+
+
+      // cursor.Step(lHand.aim, rHand.aim); cursor.DrawSelf();
       // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);
+      net.me.cursorA = cursor.p0; net.me.cursorB = cursor.p1;
+      net.me.cursorC = cursor.p2; net.me.cursorD = cursor.p3;
       net.me.headset = Input.Head;
-      net.me.offHand = offHand.aim;
-      net.me.mainHand = mainHand.aim;
+      net.me.offHand = lHand.aim; net.me.mainHand = rHand.aim;
       for (int i = 0; i < net.peers.Length; i++) {
         MonoNet.Peer peer = net.peers[i];
         if (peer != null) {
@@ -64,36 +63,15 @@ public class Mono {
           net.Cubee(peer.headset.ToMatrix(Vec3.One * 0.3f));
           net.Cubee(peer.offHand.ToMatrix(Vec3.One * 0.1f));
           net.Cubee(peer.mainHand.ToMatrix(Vec3.One * 0.1f));
-          cubicFlow.Draw(peer.cursorA, peer.cursorB, peer.cursorC, peer.cursorD);
+          // cubicFlow.Draw(peer.cursorA, peer.cursorB, peer.cursorC, peer.cursorD);
         }
       }
 
       oriel.Step();
 
-      // domHand subHand ?? :3
-
-      // if (offHand.trigger.) {
-      //   lerper.t = 0;
-      // }
-      // lerper.Step(1, false);
-      // Console.WriteLine(lerper.t);
-
       // Matrix orbitMatrix = OrbitalView.transform;
       // cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
       // Default.MaterialHand["color"] = cube.color;
-
-      // reachCursor.Step();
-      // supineCursor.Step(
-      //   new Pose(Vec3.Zero, offHand.aim.orientation),
-      //   new Pose(mainHand.aim.position, mainHand.aim.orientation),
-      //   mainHand.IsStickClicked
-      // );
-      // clawCursor.Step(
-      //   Input.Head.position - Vec3.Up * 0.2f,
-      //   new Pose(offHand.aim.position, offHand.aim.orientation),
-      //   new Pose(mainHand.aim.position, mainHand.aim.orientation),
-      //   mainHand.IsStickClicked
-      // );
 
       // cursor.Draw(Matrix.S(0.1f));
     })) ;
