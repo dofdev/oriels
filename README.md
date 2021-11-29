@@ -1,5 +1,5 @@
 ## oriels 
-*a dof driven os*  
+*a dof driven space*  
 
 <img src='oriel.gif'>
 <https://dofdev.org>
@@ -14,16 +14,12 @@
 
 ## increment
 - ~~merge networking prototypes~~
-- fixed latency, now for multiple clients
-- architect interfaces for navigation
+- ~~fixed latency, now for multiple clients~~
+- ~~architect interfaces for navigation~~
 - implement all dofs from site
 
-## stream
-- dead simple press to step through dofs
-- gif maker
-
 ## override
-10 days left for the sterokit comp
+**10 days left for the sterokit comp**
 
 MVP
 switch between cursors with a button (quick press(b) on both hands to switch/cycle through the two handed ones) long press(b) on one hand to swap mainhand
