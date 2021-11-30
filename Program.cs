@@ -23,8 +23,11 @@ public class Mono {
   public Vec3 dragStart, posStart;
   public float railT;
 
+  Bounds[] blocks;
+
   Mesh ball = Default.MeshSphere;
-  Material ballMat = Default.Material;
+  Material mat = Default.Material;
+  Mesh cube = Default.MeshCube;
 
   public void Run() {
     // mic = new Mic();
@@ -32,11 +35,19 @@ public class Mono {
 
     Cursors cursors = new Cursors(this);
 
-    MonoNet net = new MonoNet(this);
-    net.Start();
-
     Oriel oriel = new Oriel();
     oriel.Start();
+
+    blocks = new Bounds[] { 
+      new Bounds(new Vec3(-1, 0, -4), Vec3.One * 0.5f), 
+      new Bounds(new Vec3(0, 0, -4), Vec3.One * 0.5f),
+      new Bounds(new Vec3(1, 0, -4), Vec3.One * 0.5f),
+    };
+    int blockIndex = -1;
+    Vec3 blockOffset = Vec3.Zero;
+
+    MonoNet net = new MonoNet(this);
+    net.Start();
 
     // ColorCube cube = new ColorCube();
     // OrbitalView.strength = 4;
@@ -93,7 +104,6 @@ public class Mono {
       if (domCon.IsX1JustPressed) {
         movePress = Time.Totalf;
         dragStart = cursor.p0;
-        posStart = pos;
       }
       if (domCon.IsX1Pressed) {
         pos -= cursor.p0 - dragStart;
@@ -103,7 +113,28 @@ public class Mono {
         pos = cursor.p0 - (Input.Head.position - pos);
       }
       // pos.x = (float)Math.Sin(Time.Total * 0.1f) * 0.5f;
-      
+
+      // Solid solid = new Solid(Vec3.Up * -2, Quat.Identity, SolidType.Immovable);
+      // make some blocks you can move around with cursor.p0
+      // no collision detection, just a visual example
+      if (domCon.grip > 0.5f) {
+        if (blockIndex < 0) {
+          for (int i = 0; i < blocks.Length; i++) {
+            if (blocks[i].Contains(cursor.p0)) {
+              blockIndex = i;
+              blockOffset = cursor.p0 - blocks[i].center;
+              break;
+            }
+          }
+        } else {
+          blocks[blockIndex].center = cursor.p0 - blockOffset;
+        }
+      } else {
+        blockIndex = -1;
+      }
+      for (int i = 0; i < blocks.Length; i++) {
+        cube.Draw(mat, Matrix.TS(blocks[i].center, blocks[i].dimensions));
+      }
 
       // cursor.Step(lHand.aim, rHand.aim); cursor.DrawSelf();
       // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);

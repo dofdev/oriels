@@ -27,7 +27,7 @@ switch between cursors with a button (quick press(b) on both hands to switch/cyc
 movement:
 - ~~fullstick~~
 - ~~teleport and drag~~
-- bezier rails
+- ~~bezier rails~~
 
 blocks you can manipulate with spatial cursors (trackballer)
 and color them with the color cube (player colors
