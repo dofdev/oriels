@@ -23,7 +23,7 @@ public class Mono {
   public Vec3 dragStart, posStart;
   public float railT;
 
-  Bounds[] blocks;
+  Block[] blocks;
 
   Mesh ball = Default.MeshSphere;
   Material mat = Default.Material;
@@ -38,10 +38,10 @@ public class Mono {
     Oriel oriel = new Oriel();
     oriel.Start();
 
-    blocks = new Bounds[] { 
-      new Bounds(new Vec3(-1, 0, -4), Vec3.One * 0.5f), 
-      new Bounds(new Vec3(0, 0, -4), Vec3.One * 0.5f),
-      new Bounds(new Vec3(1, 0, -4), Vec3.One * 0.5f),
+    blocks = new Block[] { 
+      new Block(new Bounds(new Vec3(-1, 0, -4), Vec3.One * 0.5f), Color.White),
+      new Block(new Bounds(new Vec3(0, 0, -4), Vec3.One * 0.5f), Color.White),
+      new Block(new Bounds(new Vec3(1, 0, -4), Vec3.One * 0.5f), Color.White),
     };
     int blockIndex = -1;
     Vec3 blockOffset = Vec3.Zero;
@@ -49,10 +49,8 @@ public class Mono {
     MonoNet net = new MonoNet(this);
     net.Start();
 
-    // ColorCube cube = new ColorCube();
-    // OrbitalView.strength = 4;
-    // OrbitalView.distance = 0.4f;
-    // cube.thickness = 0.01f;
+    ColorCube colorCube = new ColorCube();
+    Vec3 oldSubPos = Vec3.Zero;
 
     while (SK.Step(() => {
       if (lefty) { domCon = Input.Controller(Handed.Left); subCon = Input.Controller(Handed.Right); } 
@@ -114,26 +112,48 @@ public class Mono {
       }
       // pos.x = (float)Math.Sin(Time.Total * 0.1f) * 0.5f;
 
+      // reveal when palm up
+      float reveal = subCon.pose.Right.y * 2;
+      colorCube.size = colorCube.ogSize * Math.Clamp(reveal, 0, 1);
+      colorCube.center = subCon.pose.position + subCon.pose.Right * 0.0666f;
+      // move with grip
+      if (reveal > colorCube.thicc) {
+        if (reveal > 1f && subCon.grip > 0.5f) {
+          colorCube.p0 -= (subCon.pose.position - oldSubPos) / colorCube.ogSize * 2;
+        } else {
+          // clamp 0 - 1
+          colorCube.p0.x = Math.Clamp(colorCube.p0.x, -1, 1);
+          colorCube.p0.y = Math.Clamp(colorCube.p0.y, -1, 1);
+          colorCube.p0.z = Math.Clamp(colorCube.p0.z, -1, 1);
+        }
+        colorCube.Step();
+      }
+      oldSubPos = subCon.pose.position;
+
+      // how to extend the buttons!!! as we only have 2 T-T
+
+      // BLOCKS
       // Solid solid = new Solid(Vec3.Up * -2, Quat.Identity, SolidType.Immovable);
       // make some blocks you can move around with cursor.p0
       // no collision detection, just a visual example
       if (domCon.grip > 0.5f) {
         if (blockIndex < 0) {
           for (int i = 0; i < blocks.Length; i++) {
-            if (blocks[i].Contains(cursor.p0)) {
+            if (blocks[i].bounds.Contains(cursor.p0)) {
               blockIndex = i;
-              blockOffset = cursor.p0 - blocks[i].center;
+              blockOffset = cursor.p0 - blocks[i].bounds.center;
+              blocks[i].color = colorCube.color;
               break;
             }
           }
         } else {
-          blocks[blockIndex].center = cursor.p0 - blockOffset;
+          blocks[blockIndex].bounds.center = cursor.p0 - blockOffset;
         }
       } else {
         blockIndex = -1;
       }
       for (int i = 0; i < blocks.Length; i++) {
-        cube.Draw(mat, Matrix.TS(blocks[i].center, blocks[i].dimensions));
+        cube.Draw(mat, Matrix.TS(blocks[i].bounds.center, blocks[i].bounds.dimensions), blocks[i].color);
       }
 
       // cursor.Step(lHand.aim, rHand.aim); cursor.DrawSelf();
@@ -162,6 +182,16 @@ public class Mono {
       // cursor.Draw(Matrix.S(0.1f));
     })) ;
     SK.Shutdown();
+  }
+}
+
+public class Block {
+  public Bounds bounds;
+  public Color color;
+
+  public Block(Bounds bounds, Color color) {
+    this.bounds = bounds;
+    this.color = color;
   }
 }
 

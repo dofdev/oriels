@@ -29,8 +29,8 @@ movement:
 - ~~teleport and drag~~
 - ~~bezier rails~~
 
-blocks you can manipulate with spatial cursors (trackballer)
-and color them with the color cube (player colors
+~~blocks you can manipulate with spatial cursors~~ (trackballer) 
+color them with the color cube (player colors 
 
 oriel + orbital view (control a shooty guy with fullstick and spatial cursor)
 

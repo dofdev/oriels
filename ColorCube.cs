@@ -2,75 +2,60 @@ using System;
 using StereoKit;
 
 class ColorCube {
-  static Shader shaderColorCube = Shader.FromFile("colorcube.hlsl");
-  static Material orbMat = Default.MaterialUnlit.Copy();
-	static Model orb = new Model(Default.MeshSphere, orbMat);
-	static Model colorCube = Model.FromFile("colorcube.glb", Shader.UIBox);
-	Bounds bounds = new Bounds(Vec3.Zero, Vec3.One * 1.25f);
-	
-	public bool picker = true;
-	public Color color = Color.White * 0.5f;
-	public float thickness {
-		set {
-			_thiccness = value;
-			colorCube.RootNode.Material["border_size"] = value;
-		}
-	}
-	float _thiccness = 0.01f;
+  static Mesh orb = Default.MeshSphere;
+  static Mesh cube = Default.MeshCube;
+  static Material mat = new Material(Shader.FromFile("colorcube.hlsl"));
+  static Material unlit = Default.MaterialUnlit;
+  public float thicc = 0.0025f;
+  public float ogSize = 0.05f;
+  public float size = 0.05f;
+  public Vec3 center = Vec3.Zero;
+  public Vec3 p0 = Vec3.Zero;
+
+  public Color color = Color.White * 0.5f;
 
 	public ColorCube() {
-		SetColor(Vec3.Zero);
+    // SetColor(Vec3.Zero);
 	}
 
-	void SetColor(Vec3 axes) {
-		Color col = Vec2Col(axes);
-		orbMat["color"] = col;
-		color = col;
-	}
-	Color Vec2Col(Vec3 vec) {
-		Vec3 normalVec = vec;
-		normalVec += Vec3.One * 0.5f;
-		return new Color(normalVec.x, normalVec.y, normalVec.z);
-	}
-	Vec3 Col2Vec(Color color) {
-		Vec3 colVec = new Vec3(color.r, color.g, color.b);
-		colVec -= (Vec3.One * 0.5f);
-		return colVec;
-	}
+  public void Step() {
+    mat.SetVector("_pos", center);
+    mat.SetFloat("_size", size);
+    Vec3 c = Vec3.One / 2;
+    float offset = (size / 2) - (thicc / 2);
+    for (int i = 0; i < 4; i++) {
+      Quat q = Quat.FromAngles(i * 90, 0, 0);
+      cube.Draw(mat, Matrix.TS(center + q * new Vec3(0, offset, offset), new Vec3(size, thicc, thicc)));
+      for (int j = -1; j <= 1; j+=2) {
+        Vec3 scale = q * new Vec3(thicc, size, thicc);
+        scale = new Vec3(Math.Abs(scale.x), Math.Abs(scale.y), Math.Abs(scale.z));
+        cube.Draw(mat, Matrix.TS(center + q * new Vec3(offset * j, 0, offset), scale));
+      }
+    }
 
-	public void Step(Matrix matrix) {
-		colorCube.Draw(matrix);
+    float thinn = thicc / 3;
+    // Vec3 p0s = pos + new Vec3((float)Math.Sin(Time.Totalf) * offset, (float)Math.Sin(Time.Totalf* 2) * offset, (float)Math.Sin(Time.Totalf * 4) * offset);
+    Vec3 raw = center + (p0 * offset);
+    Vec3 p00 = p0;
+    p00.x = Math.Clamp(p00.x, -1, 1);
+    p00.y = Math.Clamp(p00.y, -1, 1);
+    p00.z = Math.Clamp(p00.z, -1, 1);
+    Vec3 p0s = center + (p00 * offset);
+    cube.Draw(mat, Matrix.TS(new Vec3(center.x, p0s.y, p0s.z), new Vec3(size, thinn, thinn)));
+    cube.Draw(mat, Matrix.TS(new Vec3(p0s.x, center.y, p0s.z), new Vec3(thinn, size, thinn)));
+    cube.Draw(mat, Matrix.TS(new Vec3(p0s.x, p0s.y, center.z), new Vec3(thinn, thinn, size)));
 
-		if(!picker)
-			return;
-
-		for (int h = 0; h < (int)Handed.Max; h++) {
-			// Get the pose for the index fingertip
-			Hand hand      = Input.Hand((Handed)h);
-			Pose fingertip = hand[FingerId.Index, JointId.Tip].Pose;
-
-			Vec3 localFingerPos = matrix.Inverse * fingertip.position;
-			if(hand.IsPinched && bounds.Contains(localFingerPos)) {
-				localFingerPos.x = Math.Clamp(localFingerPos.x, -0.5f, 0.5f);
-				localFingerPos.y = Math.Clamp(localFingerPos.y, -0.5f, 0.5f);
-				localFingerPos.z = Math.Clamp(localFingerPos.z, -0.5f, 0.5f);
-				SetColor(localFingerPos);
-			}
-		}
-
-		Vec3 orbPos = Col2Vec(color);
-
-		Lines.Add(matrix * new Vec3(-0.5f, orbPos.y, orbPos.z), matrix * new Vec3(0.5f, orbPos.y, orbPos.z), new Color(0, color.g, color.b), new Color(1, color.g, color.b), _thiccness);
-		Lines.Add(matrix * new Vec3(orbPos.x, -0.5f, orbPos.z), matrix * new Vec3(orbPos.x, 0.5f, orbPos.z), new Color(color.r, 0, color.b), new Color(color.r, 1, color.b), _thiccness);
-		Lines.Add(matrix * new Vec3(orbPos.x, orbPos.y, -0.5f), matrix * new Vec3(orbPos.x, orbPos.y, 0.5f), new Color(color.r, color.g, 0), new Color(color.r, color.g, 1), _thiccness);
-
-		orb.Draw(Matrix.TS(matrix * orbPos, _thiccness * 2));
-
-    PullRequest.BoundsDraw(bounds, _thiccness, Color.White);
-
-    // can't change shader lol
-    // Default.MaterialUnlit.Shader = shaderColorCube;
-    // Rods time it is!
-    // spatialize the stereokit line shader
+    Vec3 col = (p00 + Vec3.One) / 2;
+    color = new Color(col.x, col.y, col.z);
+    cube.Draw(unlit, Matrix.TS(p0s, Vec3.One * thicc * 2), color);
+    cube.Draw(unlit, Matrix.TS(raw, Vec3.One * thicc), Color.White);
   }
 }
+
+
+// everyone get their own color cube? * held in sub hand *
+// or just one?
+// or context sensitive?
+// can it be networked effectively? well its just a bounds with a shader and cursor, should be easy enough :)
+
+// set your color and when you move blocks around, it changes the color of the blocks * you leave your mark *

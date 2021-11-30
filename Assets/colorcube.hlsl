@@ -2,8 +2,8 @@
 
 //--name = dofdev/colorcube
 // float4       color;
-float _height;
-float _ypos;
+float3   _pos;
+float    _size;
 
 struct vsIn {
   float4 pos  : SV_POSITION;
@@ -31,13 +31,16 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
 
   o.uv    = input.uv;
   o.color = input.col;
-  float lighting = dot(o.norm, normalize(float3(-0.3, 0.6, 0.1)));
-  lighting = (clamp(lighting, 0, 1) * 0.8) + 0.2;
-  o.color.rgb = o.color.rgb * lighting;
+  // float lighting = dot(o.norm, normalize(float3(-0.3, 0.6, 0.1)));
+  // lighting = (clamp(lighting, 0, 1) * 0.8) + 0.2;
+  // o.color.rgb = o.color.rgb * lighting;
   return o;
 }
 
 float4 ps(psIn input) : SV_TARGET {
-  input.color.r = 1;
-  return input.color;
+  // input.color.r = 1;
+  float3 pos = input.world - _pos;
+  pos /= _size;
+  pos += float3(0.5, 0.5, 0.5);
+  return float4(pos.x, pos.y, pos.z, 1); // clamp values to 0..1
 }
