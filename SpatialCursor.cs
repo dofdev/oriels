@@ -16,7 +16,7 @@ public class Cursors {
   public Cursors(Mono mono) {
     this.mono = mono;
   }
-  SpatialCursor[] oneHanded = new SpatialCursor[] { new ReachCursor(), new TwistCursor() }; int oneIndex = 1;
+  SpatialCursor[] oneHanded = new SpatialCursor[] { new ReachCursor(), new TwistCursor() }; int oneIndex = 0;
   SpatialCursor[] twoHanded = new SpatialCursor[] { new StretchCursor(), new CubicFlow(), new SupineCursor() }; int twoIndex = 0;
 
   public SpatialCursor Step(Pose domHand, Pose subHand) {
@@ -55,12 +55,12 @@ public class ReachCursor : SpatialCursor {
   Vec3 origin;
   public override void Step(Pose[] poses) {
     pos = poses[0].position;
-    float stretch = (origin - pos).Length;
+    float stretch = Vec3.Distance(origin, pos);
     Vec3 dir = (pos - origin).Normalized;
-    p0 = pos + dir * stretch * 3;
+    p0 = pos + dir * stretch * str;
 
-    model.Draw(Matrix.TS(pos, 0.06f));
-    Lines.Add(origin, pos, Color.White, 0.01f);
+    model.Draw(Matrix.TS(p0, 0.06f));
+    Lines.Add(origin, p0, Color.White, 0.01f);
     model.Draw(Matrix.TS(origin, 0.04f));
   }
   public override void Calibrate() {

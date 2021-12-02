@@ -294,47 +294,78 @@ public class MonoNet {
       // voiceInst = voice.Play(Vec3.Zero, 0.5f);
     }
 
-    int blockIndex = -1;
-    Vec3 blockOffset = Vec3.Zero;
-    public void Step(Controller domCon) {
-      if (domCon.IsX2JustPressed) {
-        if (blockIndex < 0) {
+    BlockCon dBlock = new BlockCon();
+    BlockCon sBlock = new BlockCon();
+
+    public void Step(Controller domCon, Controller subCon) {
+      Blocks(domCon, cursorA, ref dBlock, ref sBlock);
+      Blocks(subCon, cursorB, ref sBlock, ref dBlock);
+      
+      Draw(false);
+    }
+
+    class BlockCon {
+      public int index = -1;
+      public Vec3 offset = Vec3.Zero;
+      public Quat heldRot = Quat.Identity, spinRot = Quat.Identity, spinDelta = Quat.Identity;
+      public Quat oldConRot = Quat.Identity;
+    }
+    void Blocks(Controller con, Vec3 cursor, ref BlockCon blockCon, ref BlockCon otherBlockCon) {
+      if (con.IsX2JustPressed) {
+        if (blockCon.index < 0) {
           for (int i = 0; i < blocks.Length; i++) {
             if (!blocks[i].active) {
-              blockIndex = i;
-              blocks[i].Enable(cursorA, Quat.Identity);
-              // blockOffset = blocks[i].solid.GetPose().position;
+              blocks[i].Enable(cursor, Quat.Identity);
               break;
             }
           }
         } else {
-          blocks[blockIndex].Disable();
-          blockIndex = -1;
+          blocks[blockCon.index].Disable();
+          blockCon.index = -1;
         }
       }
 
-      if (domCon.grip > 0.5f) {
-        if (blockIndex < 0) {
+      Quat conRotDelta = con.aim.orientation * blockCon.oldConRot.Inverse;
+
+      if (con.grip > 0.5f) {
+        if (blockCon.index < 0) {
           for (int i = 0; i < blocks.Length; i++) {
             Pose blockPose = blocks[i].solid.GetPose();
             Bounds bounds = new Bounds(Vec3.Zero, Vec3.One);
-            if (blocks[i].active && bounds.Contains(blockPose.orientation.Inverse * (cursorA - blockPose.position))) {
-              blockOffset = cursorA - blockPose.position;
+            if (blocks[i].active && bounds.Contains(blockPose.orientation.Inverse * (cursor - blockPose.position))) {
+              blockCon.offset = cursor - blockPose.position;
               // block.color = colorCube.color;
-              blockIndex = i;
+              blockCon.index = i;
+              if (otherBlockCon.index == i) {
+                otherBlockCon.index = -1;
+              }
+
+              blockCon.heldRot = blockCon.spinRot = blockCon.spinDelta = Quat.Identity;
               break;
             }
           }
-        } 
-        
-        if (blockIndex >= 0) {
+        }
+
+        if (blockCon.index >= 0) {
+          Quat newRot = con.aim.orientation * blockCon.heldRot * blockCon.spinRot;
           // trackballer
-          blocks[blockIndex].solid.Move(cursorA - blockOffset, blocks[blockIndex].solid.GetPose().orientation);
+          if (con.trigger > 0.5f) {
+            blockCon.spinDelta = Quat.Slerp(
+              blockCon.spinDelta,
+              ((newRot.Inverse * conRotDelta) * newRot).Normalized,
+              Time.Elapsedf / 0.1f
+            );
+          }
+          blockCon.spinRot *= blockCon.spinDelta;
+          Quat toRot = con.aim.orientation * blockCon.heldRot * blockCon.spinRot;
+          
+          blocks[blockCon.index].solid.Move(cursor - blockCon.offset, toRot);
         }
       } else {
-        blockIndex = -1;
+        blockCon.index = -1;
       }
-      Draw(false);
+
+      blockCon.oldConRot = con.aim.orientation;
     }
 
     public void Draw(bool body) {

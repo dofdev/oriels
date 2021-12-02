@@ -46,21 +46,38 @@ public class Mono {
     ColorCube colorCube = new ColorCube();
     Vec3 oldSubPos = Vec3.Zero;
 
+    SpatialCursor cursor = new ReachCursor();
+    SpatialCursor subCursor = new ReachCursor();
+
+    Solid solidTest = new Solid(Vec3.Forward * 2, Quat.Identity, SolidType.Normal);
+    solidTest.AddBox(Vec3.One);
+    Quat quatTest = Quat.Identity;
+
+
     while (SK.Step(() => {
       if (lefty) { domCon = Input.Controller(Handed.Left); subCon = Input.Controller(Handed.Right); } 
       else { domCon = Input.Controller(Handed.Right); subCon = Input.Controller(Handed.Left); }
-      if (subCon.IsX2JustPressed) { lefty = !lefty; }
+                              // if (subCon.IsX2JustPressed) { lefty = !lefty; }
 
       // ball.Draw(ballMat, Matrix.TS(pos, 0.1f));
 
       Renderer.CameraRoot = Matrix.T(pos);
 
-      SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
+      // SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
+      cursor.Step(new Pose[] { domCon.aim });
+      if (domCon.IsStickJustClicked) {
+        cursor.Calibrate();
+      }
+      subCursor.Step(new Pose[] { subCon.aim });
+      if (subCon.IsStickJustClicked) {
+        subCursor.Calibrate();
+      } cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 
-      Quat rot = Quat.FromAngles(subCon.stick.y * -90, 0, subCon.stick.x * 90);
-      Vec3 dir = Vec3.Up * (subCon.IsStickClicked ? -1 : 1);
-      Vec3 fullstick = subCon.aim.orientation * rot * dir;
-      pos += fullstick * subCon.trigger * Time.Elapsedf;
+      // fullstick
+      // Quat rot = Quat.FromAngles(subCon.stick.y * -90, 0, subCon.stick.x * 90);
+      // Vec3 dir = Vec3.Up * (subCon.IsStickClicked ? -1 : 1);
+      // Vec3 fullstick = subCon.aim.orientation * rot * dir;
+      // pos += fullstick * subCon.trigger * Time.Elapsedf;
 
       Vec3[] rail = new Vec3[] {
         new Vec3(0, 0, -1),
@@ -128,6 +145,14 @@ public class Mono {
 
 
       cube.Draw(mat, floor.GetPose().ToMatrix(floorScale));
+
+      quatTest *= Quat.FromAngles(
+        (float)Math.Sin(Time.Total + 0),
+        (float)Math.Sin(Time.Total + 6),
+        (float)Math.Sin(Time.Total + 9)
+      );
+      solidTest.Move(Vec3.Forward * 2, quatTest);
+      cube.Draw(mat, solidTest.GetPose().ToMatrix());
       // for (int i = 0; i < net.me.blocks.Length; i++) {
       //   cube.Draw(mat, net.me.blocks[i].solid.GetPose().ToMatrix(), net.me.blocks[i].color);
       // }
@@ -145,8 +170,8 @@ public class Mono {
         }
       }
 
-      net.me.Step(domCon);
-      
+      net.me.Step(domCon, subCon);
+
       // oriel.Step();
 
       // Matrix orbitMatrix = OrbitalView.transform;
