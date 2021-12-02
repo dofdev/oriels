@@ -14,6 +14,7 @@ public class MonoNet {
     this.mono = mono;
     Random rnd = new Random();
     me = new Peer(rnd.Next(1, 256)); // let the server determine these
+    me.block = new Block(new Vec3((float)rnd.NextDouble() * 0.5f, 10, -4), Quat.Identity, SolidType.Normal, Color.White);
   }
   public Socket socket;
   int bufferSize = 1024;
@@ -51,6 +52,7 @@ public class MonoNet {
     Thread writeThread = new Thread(Write);
     writeThread.Start();
 
+    
     // socket.Close();
   }
 
@@ -65,7 +67,7 @@ public class MonoNet {
 
         rHead = 0;
         int id = ReadInt();
-        if (id != 0) {
+        if (id != 0 && id != me.id) {
           int index = -1;
           for (int i = 0; i < peers.Length; i++) {
             if (peers[i] != null) {
@@ -90,6 +92,7 @@ public class MonoNet {
           peers[index].headset = ReadPose();
           peers[index].offHand = ReadPose();
           peers[index].mainHand = ReadPose();
+          ReadBlock(ref peers[index].block);
         }
       }
     }
@@ -107,6 +110,7 @@ public class MonoNet {
       WritePose(me.headset);
       WritePose(me.offHand);
       WritePose(me.mainHand);
+      WriteBlock(me.block);
       socket.Send(wData);
 
       Thread.Sleep(60);
@@ -178,6 +182,20 @@ public class MonoNet {
     WriteQuat(pose.orientation);
   }
 
+  void ReadBlock(ref Block b) { // update instead of replace
+    Pose pose = ReadPose();
+    if (b == null) {
+      b = new Block(pose.position, pose.orientation, SolidType.Immovable, Color.White * 0.5f); // read up on unaffected
+      // b.solid.Enabled = false;
+    } else {
+      b.solid.Teleport(pose.position, pose.orientation);
+      // b.solid.Enabled = false;
+    }
+  }
+  void WriteBlock(Block block) {
+    WritePose(block.solid.GetPose());
+  }
+
   string localIP, publicIP;
   void GetIPs() {
     using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0)) {
@@ -194,18 +212,51 @@ public class MonoNet {
     meshCube.Draw(matCube, m);
   }
 
+  public class Block {
+    public static Mesh mesh = Default.MeshCube;
+    public static Material mat = Default.Material;
+
+    public Solid solid;
+
+    public Color color;
+
+    // if you grab someone else's it becomes your own
+    // how to communicate to the other peer that you have grabbed it?
+    // public int request; // request ownership
+    // public int owner; // then if owner continue as usual
+    // public bool busy; // marked as held so no fighting
+
+    public Block(Vec3 pos, Quat rot, SolidType type, Color color) {
+      this.solid = new Solid(pos, rot, type);
+      this.solid.AddBox(Vec3.One, 1);
+      this.color = color;
+    }
+
+    public void Draw() {
+      mesh.Draw(mat, solid.GetPose().ToMatrix(), color);
+    }
+  }
+
   public class Peer {
+
+
+
+    // to do this we need to assign fixed id's to each peer from the server
+    // ++ make a peer timeout on the client side as well
+
+
+
     public int id;
     public Vec3 cursorA, cursorB, cursorC, cursorD;
     public Pose headset;
     public Pose offHand;
     public Pose mainHand;
+    public Block block;
     // public Sound voice;
     // public SoundInst voiceInst; // update position
 
     public Peer(int id) {
       this.id = id;
-
       // voice = Sound.CreateStream(0.5f);
       // voiceInst = voice.Play(Vec3.Zero, 0.5f);
     }

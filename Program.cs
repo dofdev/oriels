@@ -23,8 +23,6 @@ public class Mono {
   public Vec3 dragStart, posStart;
   public float railT;
 
-  Block[] blocks;
-
   Mesh ball = Default.MeshSphere;
   Material mat = Default.Material;
   Mesh cube = Default.MeshCube;
@@ -33,18 +31,17 @@ public class Mono {
     // mic = new Mic();
     Vec3 pos = new Vec3(0, 0, 0);
 
+    Solid floor = new Solid(Vec3.Up * -1.5f, Quat.Identity, SolidType.Immovable);
+    Vec3 floorScale = new Vec3(10, 0.1f, 10);
+    floor.AddBox(floorScale);
+
     Cursors cursors = new Cursors(this);
 
     Oriel oriel = new Oriel();
     oriel.Start();
 
-    blocks = new Block[] { 
-      new Block(new Bounds(new Vec3(-1, 0, -4), Vec3.One * 0.5f), Color.White),
-      new Block(new Bounds(new Vec3(0, 0, -4), Vec3.One * 0.5f), Color.White),
-      new Block(new Bounds(new Vec3(1, 0, -4), Vec3.One * 0.5f), Color.White),
-    };
-    int blockIndex = -1;
-    Vec3 blockOffset = Vec3.Zero;
+    // int blockIndex = -1;
+    // Vec3 blockOffset = Vec3.Zero;
 
     MonoNet net = new MonoNet(this);
     net.Start();
@@ -136,25 +133,27 @@ public class Mono {
       // Solid solid = new Solid(Vec3.Up * -2, Quat.Identity, SolidType.Immovable);
       // make some blocks you can move around with cursor.p0
       // no collision detection, just a visual example
-      if (domCon.grip > 0.5f) {
-        if (blockIndex < 0) {
-          for (int i = 0; i < blocks.Length; i++) {
-            if (blocks[i].bounds.Contains(cursor.p0)) {
-              blockIndex = i;
-              blockOffset = cursor.p0 - blocks[i].bounds.center;
-              blocks[i].color = colorCube.color;
-              break;
-            }
-          }
-        } else {
-          blocks[blockIndex].bounds.center = cursor.p0 - blockOffset;
-        }
-      } else {
-        blockIndex = -1;
-      }
-      for (int i = 0; i < blocks.Length; i++) {
-        cube.Draw(mat, Matrix.TS(blocks[i].bounds.center, blocks[i].bounds.dimensions), blocks[i].color);
-      }
+      // if (domCon.grip > 0.5f) {
+      //   if (blockIndex < 0) {
+      //     for (int i = 0; i < net.me.blocks.Length; i++) {
+      //       if (net.me.blocks[i].bounds.Contains(cursor.p0)) {
+      //         blockIndex = i;
+      //         blockOffset = cursor.p0 - net.me.blocks[i].bounds.center;
+      //         net.me.blocks[i].color = colorCube.color;
+      //         break;
+      //       }
+      //     }
+      //   } else {
+      //     net.me.blocks[blockIndex].bounds.center = cursor.p0 - blockOffset;
+      //   }
+      // } else {
+      //   blockIndex = -1;
+      // }
+      cube.Draw(mat, floor.GetPose().ToMatrix(floorScale));
+      // for (int i = 0; i < net.me.blocks.Length; i++) {
+      //   cube.Draw(mat, net.me.blocks[i].solid.GetPose().ToMatrix(), net.me.blocks[i].color);
+      // }
+      net.me.block.Draw();
 
       // cursor.Step(lHand.aim, rHand.aim); cursor.DrawSelf();
       // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);
@@ -170,10 +169,11 @@ public class Mono {
           net.Cubee(peer.offHand.ToMatrix(Vec3.One * 0.1f));
           net.Cubee(peer.mainHand.ToMatrix(Vec3.One * 0.1f));
           // cubicFlow.Draw(peer.cursorA, peer.cursorB, peer.cursorC, peer.cursorD);
+          if (peer.block != null){ peer.block.Draw(); }
         }
       }
 
-      oriel.Step();
+      // oriel.Step();
 
       // Matrix orbitMatrix = OrbitalView.transform;
       // cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
@@ -182,16 +182,6 @@ public class Mono {
       // cursor.Draw(Matrix.S(0.1f));
     })) ;
     SK.Shutdown();
-  }
-}
-
-public class Block {
-  public Bounds bounds;
-  public Color color;
-
-  public Block(Bounds bounds, Color color) {
-    this.bounds = bounds;
-    this.color = color;
   }
 }
 
@@ -381,6 +371,34 @@ public class Oriel {
     if (bounds.Contains(head.position, quadPos)) {
       quad.Draw(mat, Matrix.TRS(quadPos, Quat.LookAt(quadPos, head.position), Vec3.One * 0.5f));
     }
+
+    // instead of a quad, just slap the rendered cube mesh to the head
+
+    Vec3 vertex = new Vec3(0, ((float)Math.Sin(Time.Totalf) + 1) / 3, 0);
+
+    int w = 3, h = 1;
+    Tex tex = new Tex(TexType.ImageNomips, TexFormat.Rgba32);
+    tex.SampleMode = TexSample.Point;
+    tex.SetSize(w, h);
+    Color32[] colors = new Color32[w * h];
+    // tex.GetColors(ref colors);
+    for (int i = 0; i < colors.Length; i++) {
+      // convert vertex to color
+      int vv = (int)Math.Floor(vertex.y * 255);
+      
+      colors[i] = new Color(
+        Math.Clamp(vv, 0, 255),
+        Math.Clamp(vv - 256, 0, 255),
+        Math.Clamp(vv - 256 - 256, 0, 255),
+        Math.Clamp(vv - 256 - 256 - 256, 0, 255)
+      );
+      // colors[i] = new Color32(0, 128, 0, 0);
+    }
+    tex.SetColors(w, h, colors);
+    
+    mat.SetTexture("tex", tex);
+    // mat.SetMatrix("_matrix", Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions));
+    // mat.Wireframe
   }
 }
 

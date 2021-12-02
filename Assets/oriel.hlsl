@@ -4,6 +4,8 @@
 // float4       color;
 float _height;
 float _ypos;
+Texture2D tex : register(t0);
+SamplerState tex_s : register(s0);
 
 struct vsIn {
   float4 pos  : SV_POSITION;
@@ -35,7 +37,7 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
   o.color = input.col;
   float lighting = dot(o.norm, normalize(float3(-0.3, 0.6, 0.1)));
   lighting = (clamp(lighting, 0, 1) * 0.8) + 0.2;
-  o.color.rgb = o.color.rgb * lighting;
+  o.color.rgb = o.color.rgb * lighting; // * sk_inst[id].color;
   return o;
 }
 
@@ -47,9 +49,8 @@ float dot(float3 a, float3 b) {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
-float tri_raycast(float3 origin, float3 dir) {
+float tri_raycast(float3 origin, float3 dir, float3 v0) {
   float final = -1;
-  float3 v0 = float3(0, 0, 0);
   float3 v1 = float3(0, 0, 1);
   float3 v2 = float3(1, 0, 0);
   float3 e1 = v1 - v0;
@@ -89,8 +90,10 @@ float4 ps(psIn input) : SV_TARGET {
   // input.color.a = 0.5;
 
   // raycast or raymarch
+  float4 col = tex.Sample(tex_s, float2(0.01, 0.01));
+  float3 v0 = float3(0, col.r, 0);
   float3 ray = normalize(input.world - input.campos);
-  input.color = float4(float3(1,1,1) * max(tri_raycast(input.world, ray), 0.0), 1);
+  input.color = float4(float3(1,1,1) * max(tri_raycast(input.world, ray, v0), 0.0), 1);
   
 
   return input.color;
