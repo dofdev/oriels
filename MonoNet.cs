@@ -13,8 +13,8 @@ public class MonoNet {
   public MonoNet(Mono mono) {
     this.mono = mono;
     Random rnd = new Random();
-    me = new Peer(rnd.Next(1, 256)); // let the server determine these
-    me.block = new Block(new Vec3((float)rnd.NextDouble() * 0.5f, 10, -4), Quat.Identity, SolidType.Normal, Color.White);
+    me = new Peer(rnd.Next(1, 1024 * 8), SolidType.Normal, Color.White); // let the server determine the id
+    // me.block = new Block(new Vec3((float)rnd.NextDouble() * 0.5f, 10, -4), Quat.Identity, SolidType.Normal, Color.White);
   }
   public Socket socket;
   int bufferSize = 1024;
@@ -38,7 +38,7 @@ public class MonoNet {
     // synth.Speak("oriels!");
 
     // SpeechRecognitionEngine reco = new SpeechRecognitionEngine();
-    
+
     // System.IO.Stream s;
     // // s.Write();
 
@@ -52,7 +52,7 @@ public class MonoNet {
     Thread writeThread = new Thread(Write);
     writeThread.Start();
 
-    
+
     // socket.Close();
   }
 
@@ -76,7 +76,7 @@ public class MonoNet {
                 break;
               }
             } else {
-              peers[i] = new Peer(id);
+              peers[i] = new Peer(id, SolidType.Immovable, Color.White * 0.5f);
               index = i;
               break;
             }
@@ -92,7 +92,7 @@ public class MonoNet {
           peers[index].headset = ReadPose();
           peers[index].offHand = ReadPose();
           peers[index].mainHand = ReadPose();
-          ReadBlock(ref peers[index].block);
+          ReadBlock(ref peers[index].blocks);
         }
       }
     }
@@ -110,11 +110,21 @@ public class MonoNet {
       WritePose(me.headset);
       WritePose(me.offHand);
       WritePose(me.mainHand);
-      WriteBlock(me.block);
+      WriteBlock(me.blocks);
       socket.Send(wData);
 
       Thread.Sleep(60);
     }
+  }
+
+  bool ReadBool() {
+    bool result = rData[rHead] == 1;
+    rHead++;
+    return result;
+  }
+  void WriteBool(bool value) {
+    wData[wHead] = (byte)(value ? 1 : 0);
+    wHead++;
   }
 
   int ReadInt() {
@@ -182,18 +192,22 @@ public class MonoNet {
     WriteQuat(pose.orientation);
   }
 
-  void ReadBlock(ref Block b) { // update instead of replace
-    Pose pose = ReadPose();
-    if (b == null) {
-      b = new Block(pose.position, pose.orientation, SolidType.Immovable, Color.White * 0.5f); // read up on unaffected
-      // b.solid.Enabled = false;
-    } else {
-      b.solid.Teleport(pose.position, pose.orientation);
-      // b.solid.Enabled = false;
+  void ReadBlock(ref Block[] blocks) {
+    for (int i = 0; i < blocks.Length; i++) {
+      bool bActive = ReadBool();
+      Pose pose = ReadPose();
+      if (bActive) {
+        blocks[i].Enable(pose.position, pose.orientation);
+      } else {
+        blocks[i].Disable();
+      }
     }
   }
-  void WriteBlock(Block block) {
-    WritePose(block.solid.GetPose());
+  void WriteBlock(Block[] blocks) {
+    for (int i = 0; i < blocks.Length; i++) {
+      WriteBool(blocks[i].active);
+      WritePose(blocks[i].solid.GetPose());
+    }
   }
 
   string localIP, publicIP;
@@ -206,16 +220,11 @@ public class MonoNet {
     publicIP = new WebClient().DownloadString("https://ipv4.icanhazip.com/").TrimEnd();
   }
 
-  Mesh meshCube = Default.MeshCube;
-  Material matCube = Default.Material;
-  public void Cubee(Matrix m) {
-    meshCube.Draw(matCube, m);
-  }
-
   public class Block {
     public static Mesh mesh = Default.MeshCube;
     public static Material mat = Default.Material;
 
+    public bool active = false;
     public Solid solid;
 
     public Color color;
@@ -225,15 +234,34 @@ public class MonoNet {
     // public int request; // request ownership
     // public int owner; // then if owner continue as usual
     // public bool busy; // marked as held so no fighting
-
-    public Block(Vec3 pos, Quat rot, SolidType type, Color color) {
-      this.solid = new Solid(pos, rot, type);
+    public Block(SolidType type, Color color) {
+      this.solid = new Solid(Vec3.Zero, Quat.Identity, type);
       this.solid.AddBox(Vec3.One, 1);
       this.color = color;
+      Disable();
+    }
+
+    // public Block(Vec3 pos, Quat rot, SolidType type, Color color) {
+    //   this.solid = new Solid(pos, rot, type);
+    //   this.solid.AddBox(Vec3.One, 1);
+    //   this.color = color;
+    // }
+
+    public void Enable(Vec3 pos, Quat rot) {
+      solid.SetAngularVelocity(Vec3.Zero);
+      solid.SetVelocity(Vec3.Zero);
+      solid.Teleport(pos, rot);
+      solid.Enabled = active = true;
+    }
+
+    public void Disable() {
+      solid.Enabled = active = false;
     }
 
     public void Draw() {
-      mesh.Draw(mat, solid.GetPose().ToMatrix(), color);
+      if (active) {
+        mesh.Draw(mat, solid.GetPose().ToMatrix(), color);
+      }
     }
   }
 
@@ -251,14 +279,82 @@ public class MonoNet {
     public Pose headset;
     public Pose offHand;
     public Pose mainHand;
-    public Block block;
+    public Block[] blocks;
     // public Sound voice;
     // public SoundInst voiceInst; // update position
 
-    public Peer(int id) {
+    public Peer(int id, SolidType type, Color color) {
       this.id = id;
+      blocks = new Block[] {
+        new Block(type, color),
+        new Block(type, color),
+        new Block(type, color)
+      };
       // voice = Sound.CreateStream(0.5f);
       // voiceInst = voice.Play(Vec3.Zero, 0.5f);
+    }
+
+    int blockIndex = -1;
+    Vec3 blockOffset = Vec3.Zero;
+    public void Step(Controller domCon) {
+      if (domCon.IsX2JustPressed) {
+        if (blockIndex < 0) {
+          for (int i = 0; i < blocks.Length; i++) {
+            if (!blocks[i].active) {
+              blockIndex = i;
+              blocks[i].Enable(cursorA, Quat.Identity);
+              // blockOffset = blocks[i].solid.GetPose().position;
+              break;
+            }
+          }
+        } else {
+          blocks[blockIndex].Disable();
+          blockIndex = -1;
+        }
+      }
+
+      if (domCon.grip > 0.5f) {
+        if (blockIndex < 0) {
+          for (int i = 0; i < blocks.Length; i++) {
+            Pose blockPose = blocks[i].solid.GetPose();
+            Bounds bounds = new Bounds(Vec3.Zero, Vec3.One);
+            if (blocks[i].active && bounds.Contains(blockPose.orientation.Inverse * (cursorA - blockPose.position))) {
+              blockOffset = cursorA - blockPose.position;
+              // block.color = colorCube.color;
+              blockIndex = i;
+              break;
+            }
+          }
+        } 
+        
+        if (blockIndex >= 0) {
+          // trackballer
+          blocks[blockIndex].solid.Move(cursorA - blockOffset, blocks[blockIndex].solid.GetPose().orientation);
+        }
+      } else {
+        blockIndex = -1;
+      }
+      Draw(false);
+    }
+
+    public void Draw(bool body) {
+      if (body){
+        Cube(Matrix.TRS(cursorA, Quat.Identity, Vec3.One * 0.05f));
+        Cube(headset.ToMatrix(Vec3.One * 0.3f));
+        Cube(offHand.ToMatrix(Vec3.One * 0.1f));
+        Cube(mainHand.ToMatrix(Vec3.One * 0.1f));
+      }
+      // cubicFlow.Draw(peer.cursorA, peer.cursorB, peer.cursorC, peer.cursorD);
+
+      for (int i = 0; i < blocks.Length; i++) {
+        blocks[i].Draw();
+      }
+    }
+
+    static Mesh meshCube = Default.MeshCube;
+    static Material matCube = Default.Material;
+    public void Cube(Matrix m) {
+      meshCube.Draw(matCube, m);
     }
   }
 }

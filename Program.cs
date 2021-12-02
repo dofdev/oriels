@@ -40,9 +40,6 @@ public class Mono {
     Oriel oriel = new Oriel();
     oriel.Start();
 
-    // int blockIndex = -1;
-    // Vec3 blockOffset = Vec3.Zero;
-
     MonoNet net = new MonoNet(this);
     net.Start();
 
@@ -129,31 +126,11 @@ public class Mono {
 
       // how to extend the buttons!!! as we only have 2 T-T
 
-      // BLOCKS
-      // Solid solid = new Solid(Vec3.Up * -2, Quat.Identity, SolidType.Immovable);
-      // make some blocks you can move around with cursor.p0
-      // no collision detection, just a visual example
-      // if (domCon.grip > 0.5f) {
-      //   if (blockIndex < 0) {
-      //     for (int i = 0; i < net.me.blocks.Length; i++) {
-      //       if (net.me.blocks[i].bounds.Contains(cursor.p0)) {
-      //         blockIndex = i;
-      //         blockOffset = cursor.p0 - net.me.blocks[i].bounds.center;
-      //         net.me.blocks[i].color = colorCube.color;
-      //         break;
-      //       }
-      //     }
-      //   } else {
-      //     net.me.blocks[blockIndex].bounds.center = cursor.p0 - blockOffset;
-      //   }
-      // } else {
-      //   blockIndex = -1;
-      // }
+
       cube.Draw(mat, floor.GetPose().ToMatrix(floorScale));
       // for (int i = 0; i < net.me.blocks.Length; i++) {
       //   cube.Draw(mat, net.me.blocks[i].solid.GetPose().ToMatrix(), net.me.blocks[i].color);
       // }
-      net.me.block.Draw();
 
       // cursor.Step(lHand.aim, rHand.aim); cursor.DrawSelf();
       // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);
@@ -164,15 +141,12 @@ public class Mono {
       for (int i = 0; i < net.peers.Length; i++) {
         MonoNet.Peer peer = net.peers[i];
         if (peer != null) {
-          net.Cubee(Matrix.TRS(peer.cursorA, Quat.Identity, Vec3.One * 0.05f));
-          net.Cubee(peer.headset.ToMatrix(Vec3.One * 0.3f));
-          net.Cubee(peer.offHand.ToMatrix(Vec3.One * 0.1f));
-          net.Cubee(peer.mainHand.ToMatrix(Vec3.One * 0.1f));
-          // cubicFlow.Draw(peer.cursorA, peer.cursorB, peer.cursorC, peer.cursorD);
-          if (peer.block != null){ peer.block.Draw(); }
+          peer.Draw(true);
         }
       }
 
+      net.me.Step(domCon);
+      
       // oriel.Step();
 
       // Matrix orbitMatrix = OrbitalView.transform;
