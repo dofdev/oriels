@@ -162,7 +162,7 @@ public class Mono {
         domDragStart = domPos;
       }
       if (domCon.IsX1Pressed) {
-        vel += -(domPos - domDragStart) * 6;
+        vel += -(domPos - domDragStart) * 10;
         domDragStart = domPos;
       }
 
@@ -172,7 +172,7 @@ public class Mono {
         subDragStart = subPos;
       }
       if (subCon.IsX1Pressed) {
-        vel += -(subPos - subDragStart) * 6;
+        vel += -(subPos - subDragStart) * 10;
         subDragStart = subPos;
       }
 
