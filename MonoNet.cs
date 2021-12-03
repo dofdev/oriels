@@ -308,7 +308,8 @@ public class MonoNet {
       public int index = -1;
       public Vec3 offset = Vec3.Zero;
       public Quat heldRot = Quat.Identity, spinRot = Quat.Identity, spinDelta = Quat.Identity;
-      public Quat oldConRot = Quat.Identity;
+      public Quat oldConRot = Quat.Identity, oldHeldRot = Quat.Identity;
+      public Vec3 delta = Vec3.Zero, momentum = Vec3.Zero, angularMomentum = Vec3.Zero;
     }
     void Blocks(Controller con, Vec3 cursor, ref BlockCon blockCon, ref BlockCon otherBlockCon) {
       if (con.IsX2JustPressed) {
@@ -332,15 +333,20 @@ public class MonoNet {
           for (int i = 0; i < blocks.Length; i++) {
             Pose blockPose = blocks[i].solid.GetPose();
             Bounds bounds = new Bounds(Vec3.Zero, Vec3.One);
+            // Quat.Difference() !! this is useful **delta**
             if (blocks[i].active && bounds.Contains(blockPose.orientation.Inverse * (cursor - blockPose.position))) {
-              blockCon.offset = cursor - blockPose.position;
-              // block.color = colorCube.color;
               blockCon.index = i;
               if (otherBlockCon.index == i) {
                 otherBlockCon.index = -1;
               }
+              // block.color = colorCube.color;
+              // clear
+              blockCon.spinRot = blockCon.spinDelta = Quat.Identity;
+              // set
+              blockCon.heldRot = Quat.Difference(con.aim.orientation, blockPose.orientation);
+              blockCon.offset = blockPose.orientation.Inverse * (blockPose.position - cursor);
 
-              blockCon.heldRot = blockCon.spinRot = blockCon.spinDelta = Quat.Identity;
+              // 
               break;
             }
           }
@@ -349,7 +355,7 @@ public class MonoNet {
         if (blockCon.index >= 0) {
           Quat newRot = con.aim.orientation * blockCon.heldRot * blockCon.spinRot;
           // trackballer
-          if (con.trigger > 0.5f) {
+          if (con.trigger > 0.75f) {
             blockCon.spinDelta = Quat.Slerp(
               blockCon.spinDelta,
               ((newRot.Inverse * conRotDelta) * newRot).Normalized,
@@ -358,14 +364,50 @@ public class MonoNet {
           }
           blockCon.spinRot *= blockCon.spinDelta;
           Quat toRot = con.aim.orientation * blockCon.heldRot * blockCon.spinRot;
-          
-          blocks[blockCon.index].solid.Move(cursor - blockCon.offset, toRot);
+          Vec3 toPos = cursor + con.aim.orientation * blockCon.heldRot * blockCon.spinRot * blockCon.offset;
+          // cursor - blockCon.offset;
+          blocks[blockCon.index].solid.Move(toPos, toRot);
+
+          Quat newHeldRot = blocks[blockCon.index].solid.GetPose().orientation;
+          blockCon.angularMomentum = Vec3.Lerp(blockCon.angularMomentum, AngularDisplacement(Quat.Difference(blockCon.oldHeldRot, newHeldRot)), Time.Elapsedf / 0.1f);
+          blockCon.oldHeldRot = newHeldRot;
+
+          blockCon.delta = (cursor + con.aim.orientation * blockCon.heldRot * blockCon.spinRot * blockCon.offset) - blocks[blockCon.index].solid.GetPose().position;
+          blockCon.momentum = Vec3.Lerp(blockCon.momentum, blockCon.delta, Time.Elapsedf / 0.1f);
         }
       } else {
+        if (blockCon.index > 0) {
+          blocks[blockCon.index].solid.SetAngularVelocity(blockCon.angularMomentum / Time.Elapsedf);
+          blocks[blockCon.index].solid.SetVelocity(blockCon.momentum / Time.Elapsedf);
+        }
         blockCon.index = -1;
       }
 
       blockCon.oldConRot = con.aim.orientation;
+    }
+
+    Vec3 AngularDisplacement(Quat rotDelta) {
+      float angleInDegrees;
+      Vec3 rotationAxis;
+      ToAngleAxis(rotDelta, out angleInDegrees, out rotationAxis);
+      return rotationAxis * angleInDegrees * (float)(Math.PI / 180);
+    }
+
+    public void ToAngleAxis(Quat q1, out float angle, out Vec3 axis) {
+      if (q1.w > 1) q1.Normalize(); // if w>1 acos and sqrt will produce errors, this cant happen if quaternion is normalised
+      angle = 2 * (float)Math.Acos(q1.w);
+      float s = (float)Math.Sqrt(1 - q1.w * q1.w); // assuming quaternion normalised then w is less than 1, so term always positive.
+      axis = Vec3.Zero;
+      if (s < 0.001) { // test to avoid divide by zero, s is always positive due to sqrt
+                       // if s close to zero then direction of axis not important
+        axis.x = q1.x; // if it is important that axis is normalised then replace with x=1; y=z=0;
+        axis.y = q1.y;
+        axis.z = q1.z;
+      } else {
+        axis.x = q1.x / s; // normalise axis
+        axis.y = q1.y / s;
+        axis.z = q1.z / s;
+      }
     }
 
     public void Draw(bool body) {

@@ -30,10 +30,19 @@ public class Mono {
   public void Run() {
     // mic = new Mic();
     Vec3 pos = new Vec3(0, 0, 0);
+    Vec3 vel = new Vec3(0, 0, 0);
 
     Solid floor = new Solid(Vec3.Up * -1.5f, Quat.Identity, SolidType.Immovable);
-    Vec3 floorScale = new Vec3(10, 0.1f, 10);
+    Vec3 floorScale = new Vec3(32f, 0.1f, 32f);
     floor.AddBox(floorScale);
+    // box on each side
+    floor.AddBox(new Vec3(32f, 16f, 0.1f), 1, new Vec3(0, 8f, -16f));
+    floor.AddBox(new Vec3(32f, 16f, 0.1f), 1, new Vec3(0, 8f, 16f));
+    floor.AddBox(new Vec3(0.1f, 16f, 32f), 1, new Vec3(-16f, 8f, 0));
+    floor.AddBox(new Vec3(0.1f, 16f, 32f), 1, new Vec3(16f, 8f, 0));
+    // and ceiling
+    floor.AddBox(new Vec3(32f, 0.1f, 32f), 1, new Vec3(0, 16f, 0));
+    
 
     Cursors cursors = new Cursors(this);
 
@@ -49,10 +58,6 @@ public class Mono {
     SpatialCursor cursor = new ReachCursor();
     SpatialCursor subCursor = new ReachCursor();
 
-    Solid solidTest = new Solid(Vec3.Forward * 2, Quat.Identity, SolidType.Normal);
-    solidTest.AddBox(Vec3.One);
-    Quat quatTest = Quat.Identity;
-
 
     while (SK.Step(() => {
       if (lefty) { domCon = Input.Controller(Handed.Left); subCon = Input.Controller(Handed.Right); } 
@@ -61,14 +66,12 @@ public class Mono {
 
       // ball.Draw(ballMat, Matrix.TS(pos, 0.1f));
 
-      Renderer.CameraRoot = Matrix.T(pos);
-
       // SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
-      cursor.Step(new Pose[] { domCon.aim });
+      cursor.Step(new Pose[] { domCon.aim, Input.Head });
       if (domCon.IsStickJustClicked) {
         cursor.Calibrate();
       }
-      subCursor.Step(new Pose[] { subCon.aim });
+      subCursor.Step(new Pose[] { subCon.aim, Input.Head });
       if (subCon.IsStickJustClicked) {
         subCursor.Calibrate();
       } cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
@@ -85,7 +88,7 @@ public class Mono {
         new Vec3(1, 2, -3),
         new Vec3(0, 1, -4),
       };
-      Bezier.Draw(rail);
+      // Bezier.Draw(rail);
       if (subCon.IsX1JustPressed) {
         int closest = 0;
         float closestDist = float.MaxValue;
@@ -110,18 +113,33 @@ public class Mono {
 
       // Console.WriteLine(World.RefreshInterval.ToString());
 
+      Vec3 p00 = domCon.aim.position;
       if (domCon.IsX1JustPressed) {
-        movePress = Time.Totalf;
-        dragStart = cursor.p0;
+        // movePress = Time.Totalf;
+        dragStart = p00;
       }
       if (domCon.IsX1Pressed) {
-        pos -= cursor.p0 - dragStart;
-        dragStart = cursor.p0;
+        vel = -((p00 - dragStart) / Time.Elapsedf);
+        dragStart = p00;
       }
-      if (domCon.IsX1JustUnPressed && Time.Totalf - movePress < 0.2f) {
-        pos = cursor.p0 - (Input.Head.position - pos);
-      }
+      // if (domCon.IsX1JustUnPressed && Time.Totalf - movePress < 0.2f) {
+      //   pos = p00 - (Input.Head.position - pos);
+      // }
+
+      // just push off of the air lol better than teleporting
+      // not cursor dependent
+
       // pos.x = (float)Math.Sin(Time.Total * 0.1f) * 0.5f;
+
+      pos += vel * Time.Elapsedf;
+      float preX = pos.x; pos.x = Math.Clamp(pos.x, -16f, 16f); if (pos.x != preX) { vel.x = 0; }
+      float preY = pos.y; pos.y = Math.Clamp(pos.y, 0f, 16f); if (pos.y != preY) { vel.y = 0; }
+      float preZ = pos.z; pos.z = Math.Clamp(pos.z, -16f, 16f); if (pos.z != preZ) { vel.z = 0; }
+      Renderer.CameraRoot = Matrix.T(pos);
+
+      float friction = 1 - Math.Clamp(vel.Magnitude / Time.Elapsedf / 45f, 0f, 1f);
+      friction = friction * friction * friction;
+      vel = Vec3.Lerp(Vec3.Zero, vel, 1 - (friction * Time.Elapsedf));
 
       // reveal when palm up
       float reveal = subCon.pose.Right.y * 2;
@@ -146,13 +164,6 @@ public class Mono {
 
       cube.Draw(mat, floor.GetPose().ToMatrix(floorScale));
 
-      quatTest *= Quat.FromAngles(
-        (float)Math.Sin(Time.Total + 0),
-        (float)Math.Sin(Time.Total + 6),
-        (float)Math.Sin(Time.Total + 9)
-      );
-      solidTest.Move(Vec3.Forward * 2, quatTest);
-      cube.Draw(mat, solidTest.GetPose().ToMatrix());
       // for (int i = 0; i < net.me.blocks.Length; i++) {
       //   cube.Draw(mat, net.me.blocks[i].solid.GetPose().ToMatrix(), net.me.blocks[i].color);
       // }
