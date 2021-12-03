@@ -314,7 +314,7 @@ public class MonoNet {
       public Vec3 delta = Vec3.Zero, momentum = Vec3.Zero, angularMomentum = Vec3.Zero;
     }
     void Blocks(Controller con, Vec3 cursor, ref BlockCon blockCon, ref BlockCon otherBlockCon) {
-      if (con.IsX2JustPressed) {
+      if (con.stickClick.IsJustActive()) {
         if (blockCon.index < 0) {
           for (int i = 0; i < blocks.Length; i++) {
             if (!blocks[i].active) {
