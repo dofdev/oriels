@@ -288,6 +288,8 @@ public class MonoNet {
       blocks = new Block[] {
         new Block(type, color),
         new Block(type, color),
+        new Block(type, color),
+        new Block(type, color),
         new Block(type, color)
       };
       // voice = Sound.CreateStream(0.5f);
@@ -382,7 +384,7 @@ public class MonoNet {
           blockCon.momentum = Vec3.Lerp(blockCon.momentum, blockCon.delta, Time.Elapsedf / 0.1f);
         }
       } else {
-        if (blockCon.index > 0) {
+        if (blockCon.index >= 0) {
           blocks[blockCon.index].solid.SetAngularVelocity(blockCon.angularMomentum / Time.Elapsedf);
           blocks[blockCon.index].solid.SetVelocity(blockCon.momentum / Time.Elapsedf);
         }

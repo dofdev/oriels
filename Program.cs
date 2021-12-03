@@ -106,6 +106,16 @@ public class Mono {
         subCursor.Calibrate();
       } cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 
+      for (int i = 0; i < net.me.blocks.Length; i++) {
+        Pose blockPose = net.me.blocks[i].solid.GetPose();
+        Bounds bounds = new Bounds(Vec3.Zero, Vec3.One);
+        if (net.me.blocks[i].active && (bounds.Contains(blockPose.orientation.Inverse * (cursor.p0 - blockPose.position)) || bounds.Contains(blockPose.orientation.Inverse * (cursor.p1 - blockPose.position)))) {
+          net.me.blocks[i].color = new Color(0.8f, 1, 1);
+        } else {
+          net.me.blocks[i].color = new Color(1, 1, 1);
+        }
+      }
+
 
       // FULLSTICK
       // Quat rot = Quat.FromAngles(subCon.stick.y * -90, 0, subCon.stick.x * 90);
@@ -185,22 +195,22 @@ public class Mono {
 
       // COLOR CUBE
       // reveal when palm up
-      float reveal = subCon.pose.Right.y * 2;
-      colorCube.size = colorCube.ogSize * Math.Clamp(reveal, 0, 1);
-      colorCube.center = subCon.pose.position + subCon.pose.Right * 0.0666f;
-      // move with grip
-      if (reveal > colorCube.thicc) {
-        if (reveal > 1f && subCon.grip > 0.5f) {
-          colorCube.p0 -= (subCon.pose.position - oldSubPos) / colorCube.ogSize * 2;
-        } else {
-          // clamp 0 - 1
-          colorCube.p0.x = Math.Clamp(colorCube.p0.x, -1, 1);
-          colorCube.p0.y = Math.Clamp(colorCube.p0.y, -1, 1);
-          colorCube.p0.z = Math.Clamp(colorCube.p0.z, -1, 1);
-        }
-        colorCube.Step();
-      }
-      oldSubPos = subCon.pose.position;
+      // float reveal = subCon.pose.Right.y * 2;
+      // colorCube.size = colorCube.ogSize * Math.Clamp(reveal, 0, 1);
+      // colorCube.center = subCon.pose.position + subCon.pose.Right * 0.0666f;
+      // // move with grip
+      // if (reveal > colorCube.thicc) {
+      //   if (reveal > 1f && subCon.grip > 0.5f) {
+      //     colorCube.p0 -= (subCon.pose.position - oldSubPos) / colorCube.ogSize * 2;
+      //   } else {
+      //     // clamp 0 - 1
+      //     colorCube.p0.x = Math.Clamp(colorCube.p0.x, -1, 1);
+      //     colorCube.p0.y = Math.Clamp(colorCube.p0.y, -1, 1);
+      //     colorCube.p0.z = Math.Clamp(colorCube.p0.z, -1, 1);
+      //   }
+      //   colorCube.Step();
+      // }
+      // oldSubPos = subCon.pose.position;
 
       // for (int i = 0; i < net.me.blocks.Length; i++) {
       //   cube.Draw(mat, net.me.blocks[i].solid.GetPose().ToMatrix(), net.me.blocks[i].color);
