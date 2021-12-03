@@ -69,8 +69,8 @@ public class ReachCursor : SpatialCursor {
     Vec3 dir = (pos - from).Normalized;
     p0 = pos + dir * stretch * str;
 
-    model.Draw(Matrix.TS(p0, 0.06f));
-    model.Draw(Matrix.TS(shoulder.position, 0.06f));
+    model.Draw(Matrix.TS(p0, 0.1f));
+    // model.Draw(Matrix.TS(shoulder.position, 0.06f));
     Lines.Add(from, p0, Color.White, 0.005f);
 
     // model.Draw(Matrix.TS(from, 0.04f));

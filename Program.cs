@@ -93,8 +93,8 @@ public class Mono {
       Vec3 rShoulder = headPos + Quat.LookDir(middl) * new Vec3(0.2f, -0.2f, 0);
       Vec3 lShoulder = headPos + Quat.LookDir(middl) * new Vec3(-0.2f, -0.2f, 0);
       // cube.Draw(mat, Matrix.TRS(headPos, Input.Head.orientation, new Vec3(0.25f, 0.3f, 0.3f)), new Color(1,0,0));
-      Lines.Add(headPos + Vec3.Up * -0.2f, rShoulder, new Color(1, 0, 0), 0.01f);
-      Lines.Add(headPos + Vec3.Up * -0.2f, lShoulder, new Color(1, 0, 0), 0.01f);
+      // Lines.Add(headPos + Vec3.Up * -0.2f, rShoulder, new Color(1, 0, 0), 0.01f);
+      // Lines.Add(headPos + Vec3.Up * -0.2f, lShoulder, new Color(1, 0, 0), 0.01f);
 
 
       cursor.Step(new Pose[] { domCon.aim, new Pose(rShoulder, Quat.LookDir(middl)) }, ((Input.Controller(Handed.Right).stick.y + 1) / 2));
