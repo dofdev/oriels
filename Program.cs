@@ -19,8 +19,8 @@ class Program {
 public class Mono {
   public Mic mic;
   public Controller domCon, subCon; public bool lefty;
-  public float movePress;
-  public Vec3 dragStart, posStart;
+
+  public Vec3 domDragStart, subDragStart;
   public float railT;
 
   Mesh ball = Default.MeshSphere;
@@ -58,70 +58,114 @@ public class Mono {
     SpatialCursor cursor = new ReachCursor();
     SpatialCursor subCursor = new ReachCursor();
 
+    Tex camTex = new Tex(TexType.Rendertarget);
+    camTex.SetSize(600, 400);
+    Material camMat = new Material(Shader.Unlit);
+    camMat.SetTexture("diffuse", camTex);
+    Mesh quad = Default.MeshQuad;
+
 
     while (SK.Step(() => {
       if (lefty) { domCon = Input.Controller(Handed.Left); subCon = Input.Controller(Handed.Right); } 
       else { domCon = Input.Controller(Handed.Right); subCon = Input.Controller(Handed.Left); }
-                              // if (subCon.IsX2JustPressed) { lefty = !lefty; }
+      // if (subCon.IsX2JustPressed) { lefty = !lefty; }
 
       // ball.Draw(ballMat, Matrix.TS(pos, 0.1f));
 
       // SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
-      cursor.Step(new Pose[] { domCon.aim, Input.Head });
-      if (domCon.IsStickJustClicked) {
+
+      // Shoulders
+      Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f;
+      Vec3 toSub = (subCon.aim.position.X0Z - headPos.X0Z).Normalized;
+      Vec3 toDom = (domCon.aim.position.X0Z - headPos.X0Z).Normalized;
+      Vec3 middl = (toSub + toDom).Normalized;
+
+      if (Vec3.Dot(middl, Input.Head.Forward) < 0) {
+        middl = -middl;
+      }
+
+      // Lines.Add(headPos.X0Z, headPos.X0Z + toSub.X0Z, Color.White, 0.005f);
+      // Lines.Add(headPos.X0Z, headPos.X0Z + toDom.X0Z, Color.White, 0.005f);
+      // Lines.Add(headPos.X0Z, headPos.X0Z + middl.X0Z, Color.White, 0.005f);
+
+      // cube.Draw(mat, Matrix.TRS(headPos, Input.Head.orientation, new Vec3(0.3f, 0.3f, 0.3f)));
+
+      Vec3 rShoulder = headPos + Quat.LookDir(middl) * new Vec3(0.2f, -0.2f, 0);
+      Vec3 lShoulder = headPos + Quat.LookDir(middl) * new Vec3(-0.2f, -0.2f, 0);
+      // cube.Draw(mat, Matrix.TRS(headPos, Input.Head.orientation, new Vec3(0.25f, 0.3f, 0.3f)), new Color(1,0,0));
+      Lines.Add(headPos + Vec3.Up * -0.2f, rShoulder, new Color(1, 0, 0), 0.01f);
+      Lines.Add(headPos + Vec3.Up * -0.2f, lShoulder, new Color(1, 0, 0), 0.01f);
+
+
+      cursor.Step(new Pose[] { domCon.aim, new Pose(rShoulder, Quat.LookDir(middl)) }, ((Input.Controller(Handed.Right).stick.y + 1) / 2));
+      if (domCon.trigger > 0.5f) {
         cursor.Calibrate();
       }
-      subCursor.Step(new Pose[] { subCon.aim, Input.Head });
-      if (subCon.IsStickJustClicked) {
+      subCursor.Step(new Pose[] { subCon.aim, new Pose(lShoulder, Quat.LookDir(middl)) }, ((Input.Controller(Handed.Left).stick.y + 1) / 2));
+      if (subCon.trigger > 0.5f) {
         subCursor.Calibrate();
       } cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 
-      // fullstick
+
+      // FULLSTICK
       // Quat rot = Quat.FromAngles(subCon.stick.y * -90, 0, subCon.stick.x * 90);
       // Vec3 dir = Vec3.Up * (subCon.IsStickClicked ? -1 : 1);
       // Vec3 fullstick = subCon.aim.orientation * rot * dir;
       // pos += fullstick * subCon.trigger * Time.Elapsedf;
 
-      Vec3[] rail = new Vec3[] {
-        new Vec3(0, 0, -1),
-        new Vec3(0, 0, -2),
-        new Vec3(1, 2, -3),
-        new Vec3(0, 1, -4),
-      };
+      // CUBIC BEZIER RAIL
+      // Vec3[] rail = new Vec3[] {
+      //   new Vec3(0, 0, -1),
+      //   new Vec3(0, 0, -2),
+      //   new Vec3(1, 2, -3),
+      //   new Vec3(0, 1, -4),
+      // };
       // Bezier.Draw(rail);
-      if (subCon.IsX1JustPressed) {
-        int closest = 0;
-        float closestDist = float.MaxValue;
-        Vec3 closestPoint = Vec3.Zero;
-        for (int i = 0; i < rail.Length; i++) {
-          Vec3 point = Bezier.Sample(rail, (float)i / (rail.Length - 1f));
-          float dist = Vec3.Distance(point, subCon.aim.position);
-          if (dist < closestDist) {
-            closest = i;
-            closestDist = dist;
-            closestPoint = point;
-            railT = (float)i / (rail.Length - 1f);
-          }
-        }
-        // pos = closestPoint - (subCon.aim.position - pos);
-      }
-      if (subCon.IsX1Pressed) {
-        pos = Vec3.Lerp(pos, Bezier.Sample(rail, railT) - (subCon.aim.position - pos), Time.Elapsedf * 6f);
-        railT += Time.Elapsedf * 0.1f;
-        // how to reliably determine and control which direction to go? (velocity)
-      }
+      // if (subCon.IsX1JustPressed) {
+      //   int closest = 0;
+      //   float closestDist = float.MaxValue;
+      //   Vec3 closestPoint = Vec3.Zero;
+      //   for (int i = 0; i < rail.Length; i++) {
+      //     Vec3 point = Bezier.Sample(rail, (float)i / (rail.Length - 1f));
+      //     float dist = Vec3.Distance(point, subCon.aim.position);
+      //     if (dist < closestDist) {
+      //       closest = i;
+      //       closestDist = dist;
+      //       closestPoint = point;
+      //       railT = (float)i / (rail.Length - 1f);
+      //     }
+      //   }
+      //   // pos = closestPoint - (subCon.aim.position - pos);
+      // }
+      // if (subCon.IsX1Pressed) {
+      //   pos = Vec3.Lerp(pos, Bezier.Sample(rail, railT) - (subCon.aim.position - pos), Time.Elapsedf * 6f);
+      //   railT += Time.Elapsedf * 0.1f;
+      //   // how to reliably determine and control which direction to go? (velocity)
+      // }
 
       // Console.WriteLine(World.RefreshInterval.ToString());
 
-      Vec3 p00 = domCon.aim.position;
+      // DRAG DRIFT
+      Vec3 domPos = domCon.aim.position;
       if (domCon.IsX1JustPressed) {
         // movePress = Time.Totalf;
-        dragStart = p00;
+        domDragStart = domPos;
       }
       if (domCon.IsX1Pressed) {
-        vel = -((p00 - dragStart) / Time.Elapsedf);
-        dragStart = p00;
+        vel += -(domPos - domDragStart) * 6;
+        domDragStart = domPos;
       }
+
+      Vec3 subPos = subCon.aim.position;
+      if (subCon.IsX1JustPressed) {
+        // movePress = Time.Totalf;
+        subDragStart = subPos;
+      }
+      if (subCon.IsX1Pressed) {
+        vel += -(subPos - subDragStart) * 6;
+        subDragStart = subPos;
+      }
+
       // if (domCon.IsX1JustUnPressed && Time.Totalf - movePress < 0.2f) {
       //   pos = p00 - (Input.Head.position - pos);
       // }
@@ -137,10 +181,9 @@ public class Mono {
       float preZ = pos.z; pos.z = Math.Clamp(pos.z, -16f, 16f); if (pos.z != preZ) { vel.z = 0; }
       Renderer.CameraRoot = Matrix.T(pos);
 
-      float friction = 1 - Math.Clamp(vel.Magnitude / Time.Elapsedf / 45f, 0f, 1f);
-      friction = friction * friction * friction;
-      vel = Vec3.Lerp(Vec3.Zero, vel, 1 - (friction * Time.Elapsedf));
+      vel *= 1 - Time.Elapsedf;
 
+      // COLOR CUBE
       // reveal when palm up
       float reveal = subCon.pose.Right.y * 2;
       colorCube.size = colorCube.ogSize * Math.Clamp(reveal, 0, 1);
@@ -158,11 +201,6 @@ public class Mono {
         colorCube.Step();
       }
       oldSubPos = subCon.pose.position;
-
-      // how to extend the buttons!!! as we only have 2 T-T
-
-
-      cube.Draw(mat, floor.GetPose().ToMatrix(floorScale));
 
       // for (int i = 0; i < net.me.blocks.Length; i++) {
       //   cube.Draw(mat, net.me.blocks[i].solid.GetPose().ToMatrix(), net.me.blocks[i].color);
@@ -190,6 +228,12 @@ public class Mono {
       // Default.MaterialHand["color"] = cube.color;
 
       // cursor.Draw(Matrix.S(0.1f));
+
+      cube.Draw(mat, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
+
+      
+      // Renderer.RenderTo(camTex, Matrix.TR(Input.Head.position + Vec3.Up * 10, Quat.FromAngles(-90f, 0, 0)), Matrix.Orthographic(2f, 2f, 0.1f, 100f), RenderLayer.All, RenderClear.All);
+      // quad.Draw(camMat, Matrix.TR(Input.Head.Forward, Quat.FromAngles(0, 180, 0)));
     })) ;
     SK.Shutdown();
   }

@@ -7,7 +7,7 @@ public abstract class SpatialCursor {
 
   public Model model = Model.FromFile("cursor.glb", Shader.Default);
 
-  public abstract void Step(Pose[] poses);
+  public abstract void Step(Pose[] poses, float scalar);
   public abstract void Calibrate();
 }
 
@@ -21,7 +21,7 @@ public class Cursors {
 
   public SpatialCursor Step(Pose domHand, Pose subHand) {
     SpatialCursor cursor = oneHanded[oneIndex];
-    cursor.Step(new Pose[] { domHand, subHand });
+    cursor.Step(new Pose[] { domHand, subHand }, 0);
     return cursor;
   }
 }
@@ -32,7 +32,7 @@ public class StretchCursor : SpatialCursor {
     this.str = 3f;
     this.max = 10f;
   }
-  public override void Step(Pose[] poses) {
+  public override void Step(Pose[] poses, float scalar) {
     Pose dom = poses[0];
     Pose sub = poses[1];
     float stretch = (sub.position - dom.position).Magnitude;
@@ -53,18 +53,41 @@ public class ReachCursor : SpatialCursor {
   }
   Vec3 pos;
   Vec3 origin;
-  public override void Step(Pose[] poses) {
+  Pose shoulder;
+  // Vec3 yaw;
+  public override void Step(Pose[] poses, float scalar) {
     pos = poses[0].position;
-    float stretch = Vec3.Distance(origin, pos);
-    Vec3 dir = (pos - origin).Normalized;
+    shoulder = poses[1];
+    // just the yaw of the head Quaternion
+    // yaw = Input.Head.Forward; yaw.y = 0; yaw = yaw.Normalized;
+    // Quat q = Quat.LookDir(yaw);
+    Vec3 from = (shoulder.orientation * origin) + shoulder.position;
+
+    str = min + (scalar * max);
+
+    float stretch = Vec3.Distance(from, pos);
+    Vec3 dir = (pos - from).Normalized;
     p0 = pos + dir * stretch * str;
 
     model.Draw(Matrix.TS(p0, 0.06f));
-    Lines.Add(origin, p0, Color.White, 0.01f);
-    model.Draw(Matrix.TS(origin, 0.04f));
+    model.Draw(Matrix.TS(shoulder.position, 0.06f));
+    Lines.Add(from, p0, Color.White, 0.005f);
+
+    // model.Draw(Matrix.TS(from, 0.04f));
+    // Pose mainHand = poses[0];
+    // Pose offHand = poses[1];
+
+    // Vec2 mid = Vec2.Lerp(lHand.position.XZ, rHand.position.XZ, 0.5f);
+
+    Lines.Add(from, p0, Color.White, 0.005f);
+
+    // Vec3 calib = shoulder.orientation.Inverse * (pos - shoulder.position);
+    // if (calib.z > origin.z) {
+    //   Calibrate();
+    // }
   }
   public override void Calibrate() {
-    origin = pos;
+    origin = shoulder.orientation.Inverse * (pos - shoulder.position);
   }
 }
 
@@ -74,7 +97,7 @@ public class TwistCursor : SpatialCursor {
     this.str = 3f;
     this.max = 10f;
   }
-  public override void Step(Pose[] poses) {
+  public override void Step(Pose[] poses, float scalar) {
     Vec3 pos = poses[0].position;
     Quat quat = poses[0].orientation;
     Quat rel = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward);
@@ -94,11 +117,11 @@ public class CubicFlow : SpatialCursor {
   }
   TwistCursor domTwist = new TwistCursor();
   TwistCursor subTwist = new TwistCursor();
-  public override void Step(Pose[] poses) {
+  public override void Step(Pose[] poses, float scalar) {
     Pose dom = poses[0];
     Pose sub = poses[1];
-    domTwist.Step(new Pose[] { dom });
-    subTwist.Step(new Pose[] { sub });
+    domTwist.Step(new Pose[] { dom }, scalar);
+    subTwist.Step(new Pose[] { sub }, scalar);
 
     p0 = dom.position;
     p1 = domTwist.p0;
@@ -123,7 +146,7 @@ public class SupineCursor : SpatialCursor {
   float calibStr;
   Quat calibQuat;
   Pose dom, sub;
-  public override void Step(Pose[] poses) {
+  public override void Step(Pose[] poses, float scalar) {
     dom = poses[0];
     sub = poses[1];
 

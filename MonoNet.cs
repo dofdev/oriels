@@ -326,14 +326,18 @@ public class MonoNet {
         }
       }
 
-      Quat conRotDelta = con.aim.orientation * blockCon.oldConRot.Inverse;
+      Quat conRotDelta = (con.aim.orientation * blockCon.oldConRot.Inverse).Normalized;
 
       if (con.grip > 0.5f) {
         if (blockCon.index < 0) {
+              // loop over peer blocks as well
+              // disable theirs ? (id of the peer, index of block)
+              // wait for their block to be disabled
+              // recycle one of yours to replace it
+
           for (int i = 0; i < blocks.Length; i++) {
             Pose blockPose = blocks[i].solid.GetPose();
             Bounds bounds = new Bounds(Vec3.Zero, Vec3.One);
-            // Quat.Difference() !! this is useful **delta**
             if (blocks[i].active && bounds.Contains(blockPose.orientation.Inverse * (cursor - blockPose.position))) {
               blockCon.index = i;
               if (otherBlockCon.index == i) {
@@ -342,8 +346,10 @@ public class MonoNet {
               // block.color = colorCube.color;
               // clear
               blockCon.spinRot = blockCon.spinDelta = Quat.Identity;
+              blocks[i].solid.SetAngularVelocity(Vec3.Zero);
+              blocks[i].solid.SetVelocity(Vec3.Zero);
               // set
-              blockCon.heldRot = Quat.Difference(con.aim.orientation, blockPose.orientation);
+              blockCon.heldRot = (con.aim.orientation.Inverse * blockPose.orientation).Normalized;
               blockCon.offset = blockPose.orientation.Inverse * (blockPose.position - cursor);
 
               // 
@@ -353,26 +359,26 @@ public class MonoNet {
         }
 
         if (blockCon.index >= 0) {
-          Quat newRot = con.aim.orientation * blockCon.heldRot * blockCon.spinRot;
+          Quat newRot = (con.aim.orientation * blockCon.heldRot * blockCon.spinRot).Normalized;
           // trackballer
           if (con.trigger > 0.75f) {
             blockCon.spinDelta = Quat.Slerp(
-              blockCon.spinDelta,
-              ((newRot.Inverse * conRotDelta) * newRot).Normalized,
+              blockCon.spinDelta.Normalized,
+              (newRot.Inverse * conRotDelta * newRot).Normalized,
               Time.Elapsedf / 0.1f
             );
           }
           blockCon.spinRot *= blockCon.spinDelta;
-          Quat toRot = con.aim.orientation * blockCon.heldRot * blockCon.spinRot;
-          Vec3 toPos = cursor + con.aim.orientation * blockCon.heldRot * blockCon.spinRot * blockCon.offset;
+          Quat toRot = (con.aim.orientation * blockCon.heldRot * blockCon.spinRot).Normalized;
+          Vec3 toPos = cursor + (con.aim.orientation * blockCon.heldRot * blockCon.spinRot).Normalized * blockCon.offset;
           // cursor - blockCon.offset;
           blocks[blockCon.index].solid.Move(toPos, toRot);
 
           Quat newHeldRot = blocks[blockCon.index].solid.GetPose().orientation;
-          blockCon.angularMomentum = Vec3.Lerp(blockCon.angularMomentum, AngularDisplacement(Quat.Difference(blockCon.oldHeldRot, newHeldRot)), Time.Elapsedf / 0.1f);
+          blockCon.angularMomentum = Vec3.Lerp(blockCon.angularMomentum, AngularDisplacement((newHeldRot * blockCon.oldHeldRot.Inverse).Normalized), Time.Elapsedf / 0.1f);
           blockCon.oldHeldRot = newHeldRot;
 
-          blockCon.delta = (cursor + con.aim.orientation * blockCon.heldRot * blockCon.spinRot * blockCon.offset) - blocks[blockCon.index].solid.GetPose().position;
+          blockCon.delta = (cursor + (con.aim.orientation * blockCon.heldRot * blockCon.spinRot).Normalized * blockCon.offset) - blocks[blockCon.index].solid.GetPose().position;
           blockCon.momentum = Vec3.Lerp(blockCon.momentum, blockCon.delta, Time.Elapsedf / 0.1f);
         }
       } else {
@@ -390,7 +396,8 @@ public class MonoNet {
       float angleInDegrees;
       Vec3 rotationAxis;
       ToAngleAxis(rotDelta, out angleInDegrees, out rotationAxis);
-      return rotationAxis * angleInDegrees * (float)(Math.PI / 180);
+      return rotationAxis * angleInDegrees; 
+      // (float)(Math.PI / 180);
     }
 
     public void ToAngleAxis(Quat q1, out float angle, out Vec3 axis) {
