@@ -363,7 +363,7 @@ public class MonoNet {
         if (blockCon.index >= 0) {
           Quat newRot = (con.aim.orientation * blockCon.heldRot * blockCon.spinRot).Normalized;
           // trackballer
-          if (con.trigger > 0.75f) {
+          if (con.IsX2Pressed) {
             blockCon.spinDelta = Quat.Slerp(
               blockCon.spinDelta.Normalized,
               (newRot.Inverse * conRotDelta * newRot).Normalized,
