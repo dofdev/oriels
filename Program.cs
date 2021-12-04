@@ -66,7 +66,9 @@ public class Mono {
 
 
     while (SK.Step(() => {
-      if (lefty) { domCon = Input.Controller(Handed.Left); subCon = Input.Controller(Handed.Right); } 
+      Renderer.CameraRoot = Matrix.T(pos);
+
+      if (lefty) { domCon = Input.Controller(Handed.Left); subCon = Input.Controller(Handed.Right); }
       else { domCon = Input.Controller(Handed.Right); subCon = Input.Controller(Handed.Left); }
       // if (subCon.IsX2JustPressed) { lefty = !lefty; }
 
@@ -189,7 +191,6 @@ public class Mono {
       float preX = pos.x; pos.x = Math.Clamp(pos.x, -16f, 16f); if (pos.x != preX) { vel.x = 0; }
       float preY = pos.y; pos.y = Math.Clamp(pos.y, 0f, 16f); if (pos.y != preY) { vel.y = 0; }
       float preZ = pos.z; pos.z = Math.Clamp(pos.z, -16f, 16f); if (pos.z != preZ) { vel.z = 0; }
-      Renderer.CameraRoot = Matrix.T(pos);
 
       vel *= 1 - Time.Elapsedf;
 
@@ -565,4 +566,26 @@ public static class PullRequest {
   }
 
   // amplify quaternions (q * q * lerp(q.i, q, %))
+
+  public static Vec3 AngularDisplacement(Quat q) {
+    float angle; Vec3 axis;
+    ToAngleAxis(q, out angle, out axis);
+    return axis * angle;
+    // * (float)(Math.PI / 180); // radians -> degrees
+    // / Time.Elapsedf; // delta -> velocity
+  }
+
+  public static void ToAngleAxis(Quat q, out float angle, out Vec3 axis) {
+    q = q.Normalized;
+    angle = 2 * (float)Math.Acos(q.w);
+    float s = (float)Math.Sqrt(1 - q.w * q.w);
+    axis = Vec3.Right;
+    // avoid divide by zero
+    // + if s is close to zero then direction of axis not important
+    if (s > 0.001) {
+      axis.x = q.x / s;
+      axis.y = q.y / s;
+      axis.z = q.z / s;
+    }
+  }
 }

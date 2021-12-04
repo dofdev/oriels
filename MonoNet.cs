@@ -85,6 +85,7 @@ public class MonoNet {
             Console.WriteLine("too many peers");
             return;
           }
+          peers[index].lastPing = Time.Totalf;
           peers[index].cursorA = ReadVec3();
           peers[index].cursorB = ReadVec3();
           peers[index].cursorC = ReadVec3();
@@ -93,6 +94,14 @@ public class MonoNet {
           peers[index].offHand = ReadPose();
           peers[index].mainHand = ReadPose();
           ReadBlock(ref peers[index].blocks);
+        }
+      }
+
+      for (int i = 0; i < peers.Length; i++) {
+        if (peers[i] != null) {
+          if (Time.Totalf - peers[i].lastPing > 6) {
+            peers[i] = null;
+          }
         }
       }
     }
@@ -272,7 +281,7 @@ public class MonoNet {
     // to do this we need to assign fixed id's to each peer from the server
     // ++ make a peer timeout on the client side as well
 
-
+    public float lastPing;
 
     public int id;
     public Vec3 cursorA, cursorB, cursorC, cursorD;
@@ -300,8 +309,8 @@ public class MonoNet {
     BlockCon sBlock = new BlockCon();
 
     public void Step(Controller domCon, Controller subCon) {
-      Blocks(domCon, cursorA, ref dBlock, ref sBlock);
-      Blocks(subCon, cursorB, ref sBlock, ref dBlock);
+      dBlock.Step(domCon, cursorA, ref sBlock, ref blocks);
+      sBlock.Step(subCon, cursorB, ref dBlock, ref blocks);
       
       Draw(false);
     }
@@ -312,110 +321,87 @@ public class MonoNet {
       public Quat heldRot = Quat.Identity, spinRot = Quat.Identity, spinDelta = Quat.Identity;
       public Quat oldConRot = Quat.Identity, oldHeldRot = Quat.Identity;
       public Vec3 delta = Vec3.Zero, momentum = Vec3.Zero, angularMomentum = Vec3.Zero;
-    }
-    void Blocks(Controller con, Vec3 cursor, ref BlockCon blockCon, ref BlockCon otherBlockCon) {
-      if (con.stickClick.IsJustActive()) {
-        if (blockCon.index < 0) {
-          for (int i = 0; i < blocks.Length; i++) {
-            if (!blocks[i].active) {
-              blocks[i].Enable(cursor, Quat.Identity);
-              break;
+
+      public void Step(Controller con, Vec3 cursor, ref BlockCon otherBlockCon, ref Block[] blocks) {
+        if (con.stickClick.IsJustActive()) {
+          if (index < 0) {
+            for (int i = 0; i < blocks.Length; i++) {
+              if (!blocks[i].active) {
+                blocks[i].Enable(cursor, Quat.Identity);
+                break;
+              }
             }
+          } else {
+            blocks[index].Disable();
+            index = -1;
+          }
+        }
+
+        Quat conRotDelta = (con.aim.orientation * oldConRot.Inverse).Normalized;
+
+        if (con.grip > 0.5f) {
+          if (index < 0) {
+            // BLOCK EXCHANGE
+            // loop over peer blocks as well
+            // disable theirs ? (id of the peer, index of block)
+            // wait for their block to be disabled
+            // recycle one of yours to replace it
+
+            for (int i = 0; i < blocks.Length; i++) {
+              Pose blockPose = blocks[i].solid.GetPose();
+              Bounds bounds = new Bounds(Vec3.Zero, Vec3.One);
+              if (blocks[i].active && bounds.Contains(blockPose.orientation.Inverse * (cursor - blockPose.position))) {
+                index = i;
+                if (otherBlockCon.index == i) {
+                  otherBlockCon.index = -1;
+                }
+                // block.color = colorCube.color;
+                // clear
+                spinRot = spinDelta = Quat.Identity;
+                blocks[i].solid.SetAngularVelocity(Vec3.Zero);
+                blocks[i].solid.SetVelocity(Vec3.Zero);
+                // set
+                heldRot = (con.aim.orientation.Inverse * blockPose.orientation).Normalized;
+                offset = blockPose.orientation.Inverse * (blockPose.position - cursor);
+
+                // 
+                break;
+              }
+            }
+          }
+
+          if (index >= 0) {
+            Quat newRot = (con.aim.orientation * heldRot * spinRot).Normalized;
+            // trackballer
+            if (con.IsX2Pressed) {
+              spinDelta = Quat.Slerp(
+                spinDelta.Normalized,
+                (newRot.Inverse * conRotDelta * newRot).Normalized,
+                Time.Elapsedf / 0.1f
+              );
+            }
+            spinRot *= spinDelta;
+            Quat toRot = (con.aim.orientation * heldRot * spinRot).Normalized;
+            Vec3 toPos = cursor + (con.aim.orientation * heldRot * spinRot).Normalized * offset;
+            // cursor - offset;
+            blocks[index].solid.Move(toPos, toRot);
+
+            Quat newHeldRot = blocks[index].solid.GetPose().orientation;
+            angularMomentum = Vec3.Lerp(angularMomentum, PullRequest.AngularDisplacement((newHeldRot * oldHeldRot.Inverse).Normalized), Time.Elapsedf / 0.1f);
+            oldHeldRot = newHeldRot;
+
+            delta = (cursor + (con.aim.orientation * heldRot * spinRot).Normalized * offset) - blocks[index].solid.GetPose().position;
+            momentum = Vec3.Lerp(momentum, delta, Time.Elapsedf / 0.1f);
           }
         } else {
-          blocks[blockCon.index].Disable();
-          blockCon.index = -1;
-        }
-      }
-
-      Quat conRotDelta = (con.aim.orientation * blockCon.oldConRot.Inverse).Normalized;
-
-      if (con.grip > 0.5f) {
-        if (blockCon.index < 0) {
-              // loop over peer blocks as well
-              // disable theirs ? (id of the peer, index of block)
-              // wait for their block to be disabled
-              // recycle one of yours to replace it
-
-          for (int i = 0; i < blocks.Length; i++) {
-            Pose blockPose = blocks[i].solid.GetPose();
-            Bounds bounds = new Bounds(Vec3.Zero, Vec3.One);
-            if (blocks[i].active && bounds.Contains(blockPose.orientation.Inverse * (cursor - blockPose.position))) {
-              blockCon.index = i;
-              if (otherBlockCon.index == i) {
-                otherBlockCon.index = -1;
-              }
-              // block.color = colorCube.color;
-              // clear
-              blockCon.spinRot = blockCon.spinDelta = Quat.Identity;
-              blocks[i].solid.SetAngularVelocity(Vec3.Zero);
-              blocks[i].solid.SetVelocity(Vec3.Zero);
-              // set
-              blockCon.heldRot = (con.aim.orientation.Inverse * blockPose.orientation).Normalized;
-              blockCon.offset = blockPose.orientation.Inverse * (blockPose.position - cursor);
-
-              // 
-              break;
-            }
+          if (index >= 0) {
+            blocks[index].solid.SetAngularVelocity(angularMomentum / Time.Elapsedf);
+            blocks[index].solid.SetVelocity(momentum / Time.Elapsedf);
           }
+          index = -1;
         }
 
-        if (blockCon.index >= 0) {
-          Quat newRot = (con.aim.orientation * blockCon.heldRot * blockCon.spinRot).Normalized;
-          // trackballer
-          if (con.IsX2Pressed) {
-            blockCon.spinDelta = Quat.Slerp(
-              blockCon.spinDelta.Normalized,
-              (newRot.Inverse * conRotDelta * newRot).Normalized,
-              Time.Elapsedf / 0.1f
-            );
-          }
-          blockCon.spinRot *= blockCon.spinDelta;
-          Quat toRot = (con.aim.orientation * blockCon.heldRot * blockCon.spinRot).Normalized;
-          Vec3 toPos = cursor + (con.aim.orientation * blockCon.heldRot * blockCon.spinRot).Normalized * blockCon.offset;
-          // cursor - blockCon.offset;
-          blocks[blockCon.index].solid.Move(toPos, toRot);
-
-          Quat newHeldRot = blocks[blockCon.index].solid.GetPose().orientation;
-          blockCon.angularMomentum = Vec3.Lerp(blockCon.angularMomentum, AngularDisplacement((newHeldRot * blockCon.oldHeldRot.Inverse).Normalized), Time.Elapsedf / 0.1f);
-          blockCon.oldHeldRot = newHeldRot;
-
-          blockCon.delta = (cursor + (con.aim.orientation * blockCon.heldRot * blockCon.spinRot).Normalized * blockCon.offset) - blocks[blockCon.index].solid.GetPose().position;
-          blockCon.momentum = Vec3.Lerp(blockCon.momentum, blockCon.delta, Time.Elapsedf / 0.1f);
-        }
-      } else {
-        if (blockCon.index >= 0) {
-          blocks[blockCon.index].solid.SetAngularVelocity(blockCon.angularMomentum / Time.Elapsedf);
-          blocks[blockCon.index].solid.SetVelocity(blockCon.momentum / Time.Elapsedf);
-        }
-        blockCon.index = -1;
-      }
-
-      blockCon.oldConRot = con.aim.orientation;
-    }
-
-    Vec3 AngularDisplacement(Quat rotDelta) {
-      float angleInDegrees;
-      Vec3 rotationAxis;
-      ToAngleAxis(rotDelta, out angleInDegrees, out rotationAxis);
-      return rotationAxis * angleInDegrees; 
-      // (float)(Math.PI / 180);
-    }
-
-    public void ToAngleAxis(Quat q1, out float angle, out Vec3 axis) {
-      if (q1.w > 1) q1.Normalize(); // if w>1 acos and sqrt will produce errors, this cant happen if quaternion is normalised
-      angle = 2 * (float)Math.Acos(q1.w);
-      float s = (float)Math.Sqrt(1 - q1.w * q1.w); // assuming quaternion normalised then w is less than 1, so term always positive.
-      axis = Vec3.Zero;
-      if (s < 0.001) { // test to avoid divide by zero, s is always positive due to sqrt
-                       // if s close to zero then direction of axis not important
-        axis.x = q1.x; // if it is important that axis is normalised then replace with x=1; y=z=0;
-        axis.y = q1.y;
-        axis.z = q1.z;
-      } else {
-        axis.x = q1.x / s; // normalise axis
-        axis.y = q1.y / s;
-        axis.z = q1.z / s;
+        oldConRot = con.aim.orientation;
       }
     }
 
