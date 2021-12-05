@@ -69,9 +69,9 @@ public class ReachCursor : SpatialCursor {
     Vec3 dir = (pos - from).Normalized;
     p0 = pos + dir * stretch * str;
 
-    model.Draw(Matrix.TS(p0, 0.1f));
+    // model.Draw(Matrix.TS(p0, 0.1f));
     // model.Draw(Matrix.TS(shoulder.position, 0.06f));
-    Lines.Add(from, p0, Color.White, 0.005f);
+    // Lines.Add(from, p0, Color.White, 0.005f);
 
     // model.Draw(Matrix.TS(from, 0.04f));
     // Pose mainHand = poses[0];
@@ -79,7 +79,7 @@ public class ReachCursor : SpatialCursor {
 
     // Vec2 mid = Vec2.Lerp(lHand.position.XZ, rHand.position.XZ, 0.5f);
 
-    Lines.Add(from, p0, Color.White, 0.005f);
+    // Lines.Add(from, p0, Color.White, 0.005f);
 
     // Vec3 calib = shoulder.orientation.Inverse * (pos - shoulder.position);
     // if (calib.z > origin.z) {
@@ -94,19 +94,21 @@ public class ReachCursor : SpatialCursor {
 public class TwistCursor : SpatialCursor {
   public TwistCursor() {
     this.min = 1f;
-    this.str = 3f;
+    this.str = 6f;
     this.max = 10f;
   }
   public override void Step(Pose[] poses, float scalar) {
     Vec3 pos = poses[0].position;
     Quat quat = poses[0].orientation;
     Quat rel = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward);
-    float twist = (Vec3.Dot(rel * -Vec3.Right, quat * Vec3.Up) + 1) / 2;
+    float twist = (Vec3.Dot(rel * -Vec3.Right * scalar, quat * Vec3.Up) + 1) / 2;
     p0 = pos + quat * Vec3.Forward * twist * str;
 
-    model.Draw(Matrix.TS(p0, 0.02f));
+    // model.Draw(Matrix.TS(p0, 0.02f));
   }
   public override void Calibrate() { }
+
+  public bool outty;
 }
 
 public class CubicFlow : SpatialCursor {
@@ -121,16 +123,29 @@ public class CubicFlow : SpatialCursor {
     Pose dom = poses[0];
     Pose sub = poses[1];
     domTwist.Step(new Pose[] { dom }, scalar);
-    subTwist.Step(new Pose[] { sub }, scalar);
+    subTwist.Step(new Pose[] { sub }, -scalar);
+
 
     p0 = dom.position;
     p1 = domTwist.p0;
     p2 = subTwist.p0;
     p3 = sub.position;
 
+    Controller domCon = Input.Controller(Handed.Right);
+    Controller subCon = Input.Controller(Handed.Left);
+
+    Vec3 np0 = Vec3.Lerp(p0, p1, (1 + domCon.stick.y) / 2);
+    Vec3 np1 = Vec3.Lerp(p1, p0, (1 + domCon.stick.y) / 2);
+    Vec3 np2 = Vec3.Lerp(p2, p3, (1 + subCon.stick.y) / 2);
+    Vec3 np3 = Vec3.Lerp(p3, p2, (1 + subCon.stick.y) / 2);
+
+    p0 = np0;
+    p1 = np1;
+    p2 = np2;
+    p3 = np3;
     // if toggle
 
-    Bezier.Draw(this.p0, this.p1, this.p2, this.p3);
+    Bezier.Draw(this.p0, this.p1, this.p2, this.p3, Color.White);
   }
 
   public override void Calibrate() {}
@@ -167,7 +182,7 @@ public class SupineCursor : SpatialCursor {
 
 public static class Bezier {
   static int detail = 64;
-  public static void Draw(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3) {
+  public static void Draw(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, Color color) {
     LinePoint[] bezier = new LinePoint[detail];
     for (int i = 0; i < bezier.Length; i++) {
       float t = i / ((float)bezier.Length - 1);
@@ -175,12 +190,9 @@ public static class Bezier {
       Vec3 b = Vec3.Lerp(p1, p2, t);
       Vec3 c = Vec3.Lerp(p2, p3, t);
       Vec3 pos = Vec3.Lerp(Vec3.Lerp(a, b, t), Vec3.Lerp(b, c, t), t);
-      bezier[i] = new LinePoint(pos, Color.White, 0.01f);
+      bezier[i] = new LinePoint(pos, color, 0.01f);
     }
     Lines.Add(bezier);
-  }
-  public static void Draw(Vec3[] points) {
-    Draw(points[0], points[1], points[2], points[3]);
   }
 
   public static Vec3 Sample(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, float t) {

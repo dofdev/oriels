@@ -85,15 +85,17 @@ public class MonoNet {
             Console.WriteLine("too many peers");
             return;
           }
-          peers[index].lastPing = Time.Totalf;
-          peers[index].cursorA = ReadVec3();
-          peers[index].cursorB = ReadVec3();
-          peers[index].cursorC = ReadVec3();
-          peers[index].cursorD = ReadVec3();
+          peers[index].color = ReadColor();
+          peers[index].cursor0 = ReadVec3();
+          peers[index].cursor1 = ReadVec3();
+          peers[index].cursor2 = ReadVec3();
+          peers[index].cursor3 = ReadVec3();
           peers[index].headset = ReadPose();
           peers[index].offHand = ReadPose();
           peers[index].mainHand = ReadPose();
           ReadBlock(ref peers[index].blocks);
+
+          peers[index].lastPing = Time.Totalf;
         }
       }
 
@@ -112,10 +114,11 @@ public class MonoNet {
     while (running) {
       wHead = 0;
       WriteInt(me.id);
-      WriteVec3(me.cursorA);
-      WriteVec3(me.cursorB);
-      WriteVec3(me.cursorC);
-      WriteVec3(me.cursorD);
+      WriteColor(me.color);
+      WriteVec3(me.cursor0);
+      WriteVec3(me.cursor1);
+      WriteVec3(me.cursor2);
+      WriteVec3(me.cursor3);
       WritePose(me.headset);
       WritePose(me.offHand);
       WritePose(me.mainHand);
@@ -201,6 +204,24 @@ public class MonoNet {
     WriteQuat(pose.orientation);
   }
 
+  Color ReadColor() {
+    Color color = new Color(
+      BitConverter.ToSingle(rData, rHead),
+      BitConverter.ToSingle(rData, rHead + 4),
+      BitConverter.ToSingle(rData, rHead + 8),
+      BitConverter.ToSingle(rData, rHead + 12)
+    );
+    rHead += 16;
+    return color;
+  }
+  void WriteColor(Color color) {
+    BitConverter.GetBytes(color.r).CopyTo(wData, wHead);
+    BitConverter.GetBytes(color.g).CopyTo(wData, wHead + 4);
+    BitConverter.GetBytes(color.b).CopyTo(wData, wHead + 8);
+    BitConverter.GetBytes(color.a).CopyTo(wData, wHead + 12);
+    wHead += 16;
+  }
+
   void ReadBlock(ref Block[] blocks) {
     for (int i = 0; i < blocks.Length; i++) {
       bool bActive = ReadBool();
@@ -219,6 +240,32 @@ public class MonoNet {
     }
   }
 
+  void ReadCubic(ref Cubic[] cubics) {
+    for (int i = 0; i < cubics.Length; i++) {
+      bool bActive = ReadBool();
+      Color color = ReadColor();
+      Vec3 p0 = ReadVec3();
+      Vec3 p1 = ReadVec3();
+      Vec3 p2 = ReadVec3();
+      Vec3 p3 = ReadVec3();
+      if (bActive) {
+        cubics[i].Enable(p0, p1, p2, p3, color);
+      } else {
+        cubics[i].Disable();
+      }
+    }
+  }
+  void WriteBlock(Cubic[] cubics) {
+    for (int i = 0; i < cubics.Length; i++) {
+      WriteBool(cubics[i].active);
+      WriteColor(cubics[i].color);
+      WriteVec3(cubics[i].p0);
+      WriteVec3(cubics[i].p1);
+      WriteVec3(cubics[i].p2);
+      WriteVec3(cubics[i].p3);
+    }
+  }
+
   string localIP, publicIP;
   void GetIPs() {
     using (Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, 0)) {
@@ -227,51 +274,6 @@ public class MonoNet {
       localIP = endPoint.Address.ToString();
     }
     publicIP = new WebClient().DownloadString("https://ipv4.icanhazip.com/").TrimEnd();
-  }
-
-  public class Block {
-    public static Mesh mesh = Default.MeshCube;
-    public static Material mat = Default.Material;
-
-    public bool active = false;
-    public Solid solid;
-
-    public Color color;
-
-    // if you grab someone else's it becomes your own
-    // how to communicate to the other peer that you have grabbed it?
-    // public int request; // request ownership
-    // public int owner; // then if owner continue as usual
-    // public bool busy; // marked as held so no fighting
-    public Block(SolidType type, Color color) {
-      this.solid = new Solid(Vec3.Zero, Quat.Identity, type);
-      this.solid.AddBox(Vec3.One, 1);
-      this.color = color;
-      Disable();
-    }
-
-    // public Block(Vec3 pos, Quat rot, SolidType type, Color color) {
-    //   this.solid = new Solid(pos, rot, type);
-    //   this.solid.AddBox(Vec3.One, 1);
-    //   this.color = color;
-    // }
-
-    public void Enable(Vec3 pos, Quat rot) {
-      solid.SetAngularVelocity(Vec3.Zero);
-      solid.SetVelocity(Vec3.Zero);
-      solid.Teleport(pos, rot);
-      solid.Enabled = active = true;
-    }
-
-    public void Disable() {
-      solid.Enabled = active = false;
-    }
-
-    public void Draw() {
-      if (active) {
-        mesh.Draw(mat, solid.GetPose().ToMatrix(), color);
-      }
-    }
   }
 
   public class Peer {
@@ -284,11 +286,13 @@ public class MonoNet {
     public float lastPing;
 
     public int id;
-    public Vec3 cursorA, cursorB, cursorC, cursorD;
+    public Color color;
+    public Vec3 cursor0, cursor1, cursor2, cursor3;
     public Pose headset;
     public Pose offHand;
     public Pose mainHand;
     public Block[] blocks;
+    public Cubic[] cubics;
     // public Sound voice;
     // public SoundInst voiceInst; // update position
 
@@ -299,7 +303,16 @@ public class MonoNet {
         new Block(type, color),
         new Block(type, color),
         new Block(type, color),
+        new Block(type, color),
         new Block(type, color)
+      };
+      cubics = new Cubic[] {
+        new Cubic(),
+        new Cubic(),
+        new Cubic(),
+        new Cubic(),
+        new Cubic(),
+        new Cubic()
       };
       // voice = Sound.CreateStream(0.5f);
       // voiceInst = voice.Play(Vec3.Zero, 0.5f);
@@ -308,10 +321,14 @@ public class MonoNet {
     BlockCon dBlock = new BlockCon();
     BlockCon sBlock = new BlockCon();
 
+    CubicCon cubicCon = new CubicCon();
+
     public void Step(Controller domCon, Controller subCon) {
-      dBlock.Step(domCon, cursorA, ref sBlock, ref blocks);
-      sBlock.Step(subCon, cursorB, ref dBlock, ref blocks);
-      
+      dBlock.Step(domCon, cursor0, ref sBlock, ref blocks);
+      sBlock.Step(subCon, cursor3, ref dBlock, ref blocks);
+
+      cubicCon.Step(domCon, subCon, this, ref cubics);
+
       Draw(false);
     }
 
@@ -331,6 +348,7 @@ public class MonoNet {
                 break;
               }
             }
+            blocks[PullRequest.RandomRange(0, blocks.Length)].Enable(cursor, Quat.Identity);
           } else {
             blocks[index].Disable();
             index = -1;
@@ -405,24 +423,124 @@ public class MonoNet {
       }
     }
 
+    class CubicCon {
+      public void Step(Controller domCon, Controller subCon, Peer peer, ref Cubic[] cubics) {
+        bool place = domCon.IsX2JustPressed;
+        if (place) {
+          for (int i = 0; i < cubics.Length; i++) {
+            if (!cubics[i].active) {
+              cubics[i].Enable(peer.cursor0, peer.cursor1, peer.cursor2, peer.cursor3, peer.color);
+              break;
+            }
+          }
+          cubics[PullRequest.RandomRange(0, cubics.Length)].Enable(peer.cursor0, peer.cursor1, peer.cursor2, peer.cursor3, peer.color);
+        }
+      }
+    }
+
     public void Draw(bool body) {
       if (body){
-        Cube(Matrix.TRS(cursorA, Quat.Identity, Vec3.One * 0.05f));
-        Cube(headset.ToMatrix(Vec3.One * 0.3f));
-        Cube(offHand.ToMatrix(Vec3.One * 0.1f));
-        Cube(mainHand.ToMatrix(Vec3.One * 0.1f));
+        Cube(Matrix.TRS(cursor0, Quat.Identity, Vec3.One * 0.05f), color);
+        Cube(headset.ToMatrix(Vec3.One * 0.3f), color);
+        Cube(offHand.ToMatrix(Vec3.One * 0.1f), color);
+        Cube(mainHand.ToMatrix(Vec3.One * 0.1f), color);
+
+        Bezier.Draw(cursor0, cursor1, cursor2, cursor3, Color.White);
       }
       // cubicFlow.Draw(peer.cursorA, peer.cursorB, peer.cursorC, peer.cursorD);
 
       for (int i = 0; i < blocks.Length; i++) {
-        blocks[i].Draw();
+        if (blocks[i].solid.GetPose().position.y < -10) {
+          blocks[i].Disable();
+        } else {
+          blocks[i].Draw();
+        }
+      }
+
+      for (int i = 0; i < cubics.Length; i++) {
+        cubics[i].Draw();
       }
     }
 
     static Mesh meshCube = Default.MeshCube;
     static Material matCube = Default.Material;
-    public void Cube(Matrix m) {
-      meshCube.Draw(matCube, m);
+    public void Cube(Matrix m, Color color) {
+      meshCube.Draw(matCube, m, color);
+    }
+  }
+}
+
+public class Block {
+  public static Mesh mesh = Default.MeshCube;
+  public static Material mat = Default.Material;
+
+  public bool active = false;
+  public Solid solid;
+
+  public Color color;
+
+  // if you grab someone else's it becomes your own
+  // how to communicate to the other peer that you have grabbed it?
+  // public int request; // request ownership
+  // public int owner; // then if owner continue as usual
+  // public bool busy; // marked as held so no fighting
+  public Block(SolidType type, Color color) {
+    this.solid = new Solid(Vec3.Zero, Quat.Identity, type);
+    this.solid.AddBox(Vec3.One, 3);
+    this.color = color;
+    Disable();
+  }
+
+  // public Block(Vec3 pos, Quat rot, SolidType type, Color color) {
+  //   this.solid = new Solid(pos, rot, type);
+  //   this.solid.AddBox(Vec3.One, 1);
+  //   this.color = color;
+  // }
+
+  public void Enable(Vec3 pos, Quat rot) {
+    solid.SetAngularVelocity(Vec3.Zero);
+    solid.SetVelocity(Vec3.Zero);
+    solid.Teleport(pos, rot);
+    solid.Enabled = active = true;
+  }
+
+  public void Disable() {
+    solid.Enabled = active = false;
+  }
+
+  public void Draw() {
+    if (active) {
+      mesh.Draw(mat, solid.GetPose().ToMatrix(), color);
+    }
+  }
+}
+
+public class Cubic {
+  public bool active;
+  public Vec3 p0, p1, p2, p3;
+  public Color color;
+
+  public Cubic() {
+    color = Color.White;
+    active = false;
+  }
+
+  public void Enable(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, Color c) {
+    this.p0 = p0;
+    this.p1 = p1;
+    this.p2 = p2;
+    this.p3 = p3;
+    color = c;
+    active = true;
+  }
+
+  public void Disable() {
+    active = false;
+  }
+
+  public void Draw() {
+    if (active) {
+      Bezier.Draw(p0, p1, p2, p3, color);
     }
   }
 }
