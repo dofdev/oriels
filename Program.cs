@@ -29,7 +29,7 @@ public class Mono {
   Mesh cube = Default.MeshCube;
 
   public void Run() {
-    Renderer.SetClip(0f, 100f);
+    Renderer.SetClip(0f, 200f);
     // mic = new Mic();
     Vec3 pos = new Vec3(0, 0, 0);
     Vec3 vel = new Vec3(0, 0, 0);
@@ -63,6 +63,8 @@ public class Mono {
 
     SpatialCursor cursor = new ReachCursor();
     SpatialCursor subCursor = new ReachCursor();
+    bool domPlanted = false;
+    bool subPlanted = false;
 
     SpatialCursor cubicFlow = new CubicFlow();
 
@@ -87,6 +89,8 @@ public class Mono {
 
     Input.HandSolid(Handed.Right, false);
     Input.HandSolid(Handed.Left, false);
+    Input.HandVisible(Handed.Right, false);
+    Input.HandVisible(Handed.Left, false);
 
     while (SK.Step(() => {
       Renderer.CameraRoot = Matrix.T(pos);
@@ -103,8 +107,8 @@ public class Mono {
 
       // Shoulders
       Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f;
-      Vec3 toSub = (subCon.aim.position.X0Z - headPos.X0Z).Normalized;
-      Vec3 toDom = (domCon.aim.position.X0Z - headPos.X0Z).Normalized;
+      Vec3 toSub = (subCon.pose.position.X0Z - headPos.X0Z).Normalized;
+      Vec3 toDom = (domCon.pose.position.X0Z - headPos.X0Z).Normalized;
       Vec3 middl = (toSub + toDom).Normalized;
 
       if (Vec3.Dot(middl, Input.Head.Forward) < 0) {
@@ -123,19 +127,28 @@ public class Mono {
       // Lines.Add(headPos + Vec3.Up * -0.2f, rShoulder, new Color(1, 0, 0), 0.01f);
       // Lines.Add(headPos + Vec3.Up * -0.2f, lShoulder, new Color(1, 0, 0), 0.01f);
 
-
-      cursor.Step(new Pose[] { domCon.aim, new Pose(rShoulder, Quat.LookDir(middl)) }, ((Input.Controller(Handed.Right).stick.y + 1) / 2));
-      if (!domCon.IsX1Pressed) {
-        cursor.Calibrate();
+      if (domCon.IsX1JustPressed) {
+        domPlanted = !domPlanted;
       }
-      subCursor.Step(new Pose[] { subCon.aim, new Pose(lShoulder, Quat.LookDir(middl)) }, ((Input.Controller(Handed.Left).stick.y + 1) / 2));
-      if (!subCon.IsX1Pressed) {
+      if (subCon.IsX1JustPressed) {
+        subPlanted = !subPlanted;
+      }
+
+
+      cursor.Step(new Pose[] { domCon.pose, new Pose(rShoulder, Quat.LookDir(middl)) }, 1);
+      if (!domPlanted) {
+        cursor.Calibrate();
+        cursor.p0 = domCon.pose.position;
+      }
+      subCursor.Step(new Pose[] { subCon.pose, new Pose(lShoulder, Quat.LookDir(middl)) }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
+      if (!subPlanted) {
         subCursor.Calibrate();
+        subCursor.p0 = subCon.pose.position;
       } 
       // cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 
-      cubicFlow.Step(new Pose[] { domCon.aim, subCon.aim }, 1);
-      if (domCon.stick.MagnitudeSq != 0 || subCon.stick.MagnitudeSq != 0) {
+      cubicFlow.Step(new Pose[] { new Pose(cursor.p0, domCon.aim.orientation), new Pose(subCursor.p0, subCon.aim.orientation) }, 1);
+      if (domCon.stick.Magnitude > 0.1f || subCon.stick.Magnitude > 0.1f) {
         Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
         net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
       } else {
@@ -237,7 +250,7 @@ public class Mono {
                 };
                 for (int j = 0; j < rail.Length; j++) {
                   Vec3 point = Bezier.Sample(rail, (float)j / (rail.Length - 1f));
-                  float dist = Vec3.Distance(point, domCon.aim.position + vel.Normalized * 0.25f);
+                  float dist = Vec3.Distance(point, domCon.pose.position + vel.Normalized * 0.25f);
                   if (dist < closestDist && dist < 0.5f) {
                     closest = j;
                     closestRail = i;
@@ -256,7 +269,7 @@ public class Mono {
                 net.me.cubics[closestRail].p2,
                 net.me.cubics[closestRail].p3,
               };
-              // pos = closestPoint - (subCon.aim.position - pos);
+              // pos = closestPoint - (subCon.pose.position - pos);
               grindVel = vel;
               Vec3 fromPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT);
               Vec3 toPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT + 0.1f);
@@ -270,7 +283,7 @@ public class Mono {
 
             // vel += (toPos - fromPos);
 
-            pos = -(domCon.aim.position - Input.Head.position) + grindPos - (Input.Head.position - pos);
+            pos = -(domCon.pose.position - Input.Head.position) + grindPos - (Input.Head.position - pos);
             vel = Vec3.Zero;
 
             railT += Time.Elapsedf * grindVel.Magnitude * grindDir; // scale based on length of rail * calculate and cache on place
@@ -327,12 +340,13 @@ public class Mono {
 
       // COLOR CUBE
       // reveal when palm up
-      float reveal = subCon.pose.Right.y * 2;
+      float reveal = subCon.pose.Right.y * 0.666f;
+      reveal += (1 - Math.Clamp(Vec3.Dot((subCon.pose.position - Input.Head.position).Normalized, Input.Head.Forward), 0f, 1f)) * 0.666f;
       colorCube.size = colorCube.ogSize * Math.Clamp(reveal, 0, 1);
       colorCube.center = subCon.pose.position + subCon.pose.Right * 0.0666f;
       // move with grip
       if (reveal > colorCube.thicc) {
-        if (reveal > 1f && subCon.grip > 0.5f) {
+        if (reveal > 1f && subCon.trigger > 0.5f) {
           colorCube.p0 -= (subCon.pose.position - oldSubPos) / colorCube.ogSize * 2;
         } else {
           // clamp 0 - 1

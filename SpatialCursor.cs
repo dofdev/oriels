@@ -97,18 +97,27 @@ public class TwistCursor : SpatialCursor {
     this.str = 6f;
     this.max = 10f;
   }
+  Vec3 twistFrom = -Vec3.Right;
+  Quat quat;
   public override void Step(Pose[] poses, float scalar) {
+    // chirality = Math.Sign(scalar);
     Vec3 pos = poses[0].position;
-    Quat quat = poses[0].orientation;
-    Quat rel = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward);
-    float twist = (Vec3.Dot(rel * -Vec3.Right * scalar, quat * Vec3.Up) + 1) / 2;
+    quat = poses[0].orientation;
+    Quat from = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward, twistFrom);
+    float twist = 1 - ((Vec3.Dot(from * Vec3.Up, quat * Vec3.Up) + 1) / 2);
+    // float wrap = twist - twistFrom; // wrap around 0 to 1
+    // (wrap > 0.5f) ? 1 - wrap : wrap;
+    
     p0 = pos + quat * Vec3.Forward * twist * str;
-
     // model.Draw(Matrix.TS(p0, 0.02f));
-  }
-  public override void Calibrate() { }
 
-  public bool outty;
+    // Lines.Add(pos, pos + from * Vec3.Up, Color.White, 0.005f);
+    // Lines.Add(pos, pos + quat * Vec3.Up, Color.White, 0.005f);
+  }
+  public override void Calibrate() {
+
+    twistFrom = quat * Vec3.Up; // -Vec3.Right * chirality;
+  }
 }
 
 public class CubicFlow : SpatialCursor {
@@ -119,29 +128,62 @@ public class CubicFlow : SpatialCursor {
   }
   TwistCursor domTwist = new TwistCursor();
   TwistCursor subTwist = new TwistCursor();
+  bool domTwisting = false; bool domUp = false;
+  bool subTwisting = false; bool subUp = false;
   public override void Step(Pose[] poses, float scalar) {
     Pose dom = poses[0];
     Pose sub = poses[1];
+    Controller domCon = Input.Controller(Handed.Right);
+    Controller subCon = Input.Controller(Handed.Left);
+
+    if (domCon.stick.Magnitude < 0.1f) {
+      domTwist.Calibrate();
+      domTwisting = false;
+    } else {
+      if (!domTwisting) {
+        domUp = domCon.stick.y > 0;
+        domTwisting = true;
+      }
+    }
     domTwist.Step(new Pose[] { dom }, scalar);
-    subTwist.Step(new Pose[] { sub }, -scalar);
+
+    if (subCon.stick.Magnitude < 0.1f) {
+      subTwist.Calibrate();
+      subTwisting = false;
+    } else {
+      if (!subTwisting) {
+        subUp = subCon.stick.y > 0;
+        subTwisting = true;
+      }
+    }
+    subTwist.Step(new Pose[] { sub }, scalar);
 
     p0 = dom.position;
     p1 = domTwist.p0;
     p2 = subTwist.p0;
     p3 = sub.position;
 
-    Controller domCon = Input.Controller(Handed.Right);
-    Controller subCon = Input.Controller(Handed.Left);
 
-    Vec3 np0 = Vec3.Lerp(p0, p1, (1 + domCon.stick.x) / 2);
-    Vec3 np1 = Vec3.Lerp(p1, p0, (1 + domCon.stick.x) / 2);
-    Vec3 np2 = Vec3.Lerp(p2, p3, (1 + -subCon.stick.x) / 2);
-    Vec3 np3 = Vec3.Lerp(p3, p2, (1 + -subCon.stick.x) / 2);
+    if (domUp) {
+      p0 = domTwist.p0;
+      p1 = dom.position;
+    }
 
-    p0 = np0;
-    p1 = np1;
-    p2 = np2;
-    p3 = np3;
+    if (subUp) {
+      p2 = sub.position;
+      p3 = subTwist.p0;
+    }
+    // Vec3 np0 = Vec3.Lerp(p0, p1, (1 + domCon.stick.x) / 2);
+    // Vec3 np1 = Vec3.Lerp(p1, p0, (1 + domCon.stick.x) / 2);
+    // Vec3 np2 = Vec3.Lerp(p2, p3, (1 + -subCon.stick.x) / 2);
+    // Vec3 np3 = Vec3.Lerp(p3, p2, (1 + -subCon.stick.x) / 2);
+
+    // p0 = np0;
+    // p1 = np1;
+    // p2 = np2;
+    // p3 = np3;
+
+
     // if toggle
   }
 

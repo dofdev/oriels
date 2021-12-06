@@ -94,6 +94,7 @@ public class MonoNet {
           peers[index].offHand = ReadPose();
           peers[index].mainHand = ReadPose();
           ReadBlock(ref peers[index].blocks);
+          ReadCubic(ref peers[index].cubics);
 
           peers[index].lastPing = Time.Totalf;
         }
@@ -123,6 +124,7 @@ public class MonoNet {
       WritePose(me.offHand);
       WritePose(me.mainHand);
       WriteBlock(me.blocks);
+      WriteCubic(me.cubics);
       socket.Send(wData);
 
       Thread.Sleep(60);
@@ -255,7 +257,7 @@ public class MonoNet {
       }
     }
   }
-  void WriteBlock(Cubic[] cubics) {
+  void WriteCubic(Cubic[] cubics) {
     for (int i = 0; i < cubics.Length; i++) {
       WriteBool(cubics[i].active);
       WriteColor(cubics[i].color);
@@ -422,6 +424,9 @@ public class MonoNet {
             Quat toRot = (con.aim.orientation * heldRot * spinRot).Normalized;
             Vec3 toPos = cursor + (con.aim.orientation * heldRot * spinRot).Normalized * offset;
             // cursor - offset;
+            if (con.stick.Magnitude > 0.1f) {
+              toRot = blocks[index].solid.GetPose().orientation;
+            }
             blocks[index].solid.Move(toPos, toRot);
 
             Quat newHeldRot = blocks[index].solid.GetPose().orientation;
@@ -460,16 +465,18 @@ public class MonoNet {
 
     public void Draw(bool body) {
       if (body){
-        Cube(Matrix.TRS(cursor0, Quat.Identity, Vec3.One * 0.05f), color);
-        Cube(headset.ToMatrix(Vec3.One * 0.3f), color);
-        Cube(offHand.ToMatrix(Vec3.One * 0.1f), color);
-        Cube(mainHand.ToMatrix(Vec3.One * 0.1f), color);
+        // Cube(Matrix.TRS(cursor0, Quat.Identity, Vec3.One * 0.05f), color);
+        Cube(Matrix.TRS(headset.position + Input.Head.Forward * -0.15f, headset.orientation, Vec3.One * 0.3f), color);
+        // Cube(offHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
+        // Cube(mainHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
 
         Bezier.Draw(cursor0, cursor1, cursor2, cursor3, Color.White);
       }
+        // Cube(offHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
+        // Cube(mainHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
     
-      Cube(Matrix.TRS(cursor0, Input.Controller(Handed.Right).pose.orientation, 0.1f), color);
-      Cube(Matrix.TRS(cursor3, Input.Controller(Handed.Right).pose.orientation, 0.1f), color);
+      Cube(Matrix.TRS(cursor0, mainHand.orientation, new Vec3(0.025f, 0.1f, 0.1f)), color);
+      Cube(Matrix.TRS(cursor3, offHand.orientation, new Vec3(0.025f, 0.1f, 0.1f)), color);
 
       for (int i = 0; i < blocks.Length; i++) {
         if (blocks[i].solid.GetPose().position.y < -10) {
