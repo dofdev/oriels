@@ -145,7 +145,6 @@ public class CubicFlow : SpatialCursor {
     p3 = np3;
     // if toggle
 
-    Bezier.Draw(this.p0, this.p1, this.p2, this.p3, Color.White);
   }
 
   public override void Calibrate() {}

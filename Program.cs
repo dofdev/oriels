@@ -75,6 +75,7 @@ public class Mono {
 
     float grindDir = 1f;
     bool grinding = false;
+    bool grinded = false;
     Vec3 grindVel = Vec3.Forward;
     Vec3[] grindRail = new Vec3[4];
 
@@ -119,18 +120,32 @@ public class Mono {
 
 
       cursor.Step(new Pose[] { domCon.aim, new Pose(rShoulder, Quat.LookDir(middl)) }, ((Input.Controller(Handed.Right).stick.y + 1) / 2));
-      if (domCon.trigger > 0.5f) {
-        cursor.Calibrate();
-      }
+      // if (domCon.trigger > 0.5f) {
+      //   cursor.Calibrate();
+      // }
       subCursor.Step(new Pose[] { subCon.aim, new Pose(lShoulder, Quat.LookDir(middl)) }, ((Input.Controller(Handed.Left).stick.y + 1) / 2));
-      if (subCon.trigger > 0.5f) {
-        subCursor.Calibrate();
-      } cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
+      // if (subCon.trigger > 0.5f) {
+      //   subCursor.Calibrate();
+      // } cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
+
+      cubicFlow.Step(new Pose[] { domCon.aim, subCon.aim }, 1);
+      if (domCon.stick.MagnitudeSq != 0 || subCon.stick.MagnitudeSq != 0) {
+        Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
+        net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
+      } else {
+        cube.Draw(mat, Matrix.TS(cursor.p0, 0.1f));
+        cube.Draw(mat, Matrix.TS(subCursor.p0, 0.1f));
+        net.me.cursor0 = cursor.p0; net.me.cursor1 = cursor.p0; net.me.cursor2 = subCursor.p0; net.me.cursor3 = subCursor.p0;
+      }
+
 
       for (int i = 0; i < net.me.blocks.Length; i++) {
         Pose blockPose = net.me.blocks[i].solid.GetPose();
-        Bounds bounds = new Bounds(Vec3.Zero, Vec3.One);
-        if (net.me.blocks[i].active && (bounds.Contains(blockPose.orientation.Inverse * (cursor.p0 - blockPose.position)) || bounds.Contains(blockPose.orientation.Inverse * (cursor.p1 - blockPose.position)))) {
+        Bounds bounds = new Bounds(Vec3.Zero, Vec3.One * net.me.blocks[i].size);
+        if (net.me.blocks[i].active && (
+          bounds.Contains(blockPose.orientation.Inverse * (net.me.cursor0 - blockPose.position)) || 
+          bounds.Contains(blockPose.orientation.Inverse * (net.me.cursor3 - blockPose.position))
+        )) {
           net.me.blocks[i].color = new Color(0.8f, 1, 1);
         } else {
           net.me.blocks[i].color = new Color(1, 1, 1);
@@ -144,6 +159,25 @@ public class Mono {
       // Vec3 fullstick = subCon.aim.orientation * rot * dir;
       // pos += fullstick * subCon.trigger * Time.Elapsedf;
 
+      // DRAG DRIFT
+      Vec3 domPos = domCon.aim.position;
+      // if (domCon.grip) {
+      //   // movePress = Time.Totalf;
+      //   domDragStart = domPos;
+      // }
+      vel += -(domPos - domDragStart) * 24 * domCon.grip;
+      domDragStart = domPos;
+
+      Vec3 subPos = subCon.aim.position;
+      // if (subCon.grip) {
+      //   // movePress = Time.Totalf;
+      //   subDragStart = subPos;
+      // }
+      // if (subCon.IsX1Pressed) {
+      // }
+      vel += -(subPos - subDragStart) * 24 * subCon.grip;
+      subDragStart = subPos;
+
       // CUBIC BEZIER RAIL
       // Vec3[] rail = new Vec3[] {
       //   new Vec3(0, 0, -1),
@@ -154,72 +188,82 @@ public class Mono {
       // Bezier.Draw(rail);
 
       if (domCon.grip > 0.5f) {
-        if (!grinding) {
-          int closest = 0;
-          float closestDist = float.MaxValue;
-          Vec3 closestPoint = Vec3.Zero;
-          int closestRail = 0;
-          for (int i = 0; i < net.me.cubics.Length; i++) {
-            if (net.me.cubics[i].active) {
-              Vec3[] rail = new Vec3[] {
-                net.me.cubics[i].p0,
-                net.me.cubics[i].p1,
-                net.me.cubics[i].p2,
-                net.me.cubics[i].p3,
-              };
-              for (int j = 0; j < rail.Length; j++) {
-                Vec3 point = Bezier.Sample(rail, (float)j / (rail.Length - 1f));
-                float dist = Vec3.Distance(point, domCon.aim.position + domCon.aim.Forward * 0.2f);
-                if (dist < closestDist) {
-                  closest = j;
-                  closestRail = i;
-                  closestDist = dist;
-                  closestPoint = point;
-                  railT = (float)j / (rail.Length - 1f);
-                  grinding = true;
+        if (!grinded) {
+          if (!grinding) {
+            int closest = 0;
+            float closestDist = float.MaxValue;
+            Vec3 closestPoint = Vec3.Zero;
+            int closestRail = 0;
+            for (int i = 0; i < net.me.cubics.Length; i++) {
+              if (net.me.cubics[i].active) {
+                Vec3[] rail = new Vec3[] {
+                  net.me.cubics[i].p0,
+                  net.me.cubics[i].p1,
+                  net.me.cubics[i].p2,
+                  net.me.cubics[i].p3,
+                };
+                for (int j = 0; j < rail.Length; j++) {
+                  Vec3 point = Bezier.Sample(rail, (float)j / (rail.Length - 1f));
+                  float dist = Vec3.Distance(point, domCon.aim.position + vel.Normalized * 0.25f);
+                  if (dist < closestDist && dist < 0.5f) {
+                    closest = j;
+                    closestRail = i;
+                    closestDist = dist;
+                    closestPoint = point;
+                    railT = (float)j / (rail.Length - 1f);
+                    grinding = true;
+                  }
                 }
               }
             }
+            if (grinding) {
+              grindRail = new Vec3[] {
+                net.me.cubics[closestRail].p0,
+                net.me.cubics[closestRail].p1,
+                net.me.cubics[closestRail].p2,
+                net.me.cubics[closestRail].p3,
+              };
+              // pos = closestPoint - (subCon.aim.position - pos);
+              grindVel = vel;
+              Vec3 fromPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT);
+              Vec3 toPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT + 0.1f);
+              grindDir = Vec3.Dot((fromPos - toPos).Normalized, grindVel) < 0f ? 1 : -1;
+            }
           }
+
           if (grinding) {
-            grindRail = new Vec3[] {
-              net.me.cubics[closestRail].p0,
-              net.me.cubics[closestRail].p1,
-              net.me.cubics[closestRail].p2,
-              net.me.cubics[closestRail].p3,
-            };
-            // pos = closestPoint - (subCon.aim.position - pos);
-            grindVel = vel;
-            Vec3 fromPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT);
-            Vec3 toPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT + 0.1f);
-            grindDir = Vec3.Dot((fromPos - toPos).Normalized, grindVel) < 0f ? 1 : -1;
+            Vec3 grindPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT);
+            Vec3 nextPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT + 0.1f * grindDir);
+
+            // vel += (toPos - fromPos);
+
+            pos = -(domCon.aim.position - Input.Head.position) + grindPos - (Input.Head.position - pos);
+            vel = Vec3.Zero;
+
+            railT += Time.Elapsedf * grindVel.Magnitude * grindDir; // scale based on length of rail * calculate and cache on place
+            // bool clamped = false;
+            // float railTpreClamp = railT;
+            // if
+            railT = Math.Clamp(railT, 0, 1);
+
+            grindVel = (nextPos - grindPos).Normalized * grindVel.Magnitude;
+
+            if (railT == 1 || railT == 0) {
+              vel = grindVel;
+              grinding = false;
+              grinded = true;
+              railT = 0f;
+            }
+
+
+            cube.Draw(mat, Matrix.TS(grindPos, new Vec3(0.1f, 0.1f, 0.1f)));
+            // cube.Draw(mat, Matrix.TS(toPos, new Vec3(0.1f, 0.1f, 0.1f) * 0.333f));
+            // pos = Vec3.Lerp(pos, Bezier.Sample(net.me.cubics[0].p0, net.me.cubics[0].p1, net.me.cubics[0].p2, net.me.cubics[0].p3, railT) - (subCon.aim.position - pos), Time.Elapsedf * 6f);
+            // how to reliably determine and control which direction to go? (velocity)
           }
-        }
-
-        if (grinding) {
-          Vec3 grindPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT);
-          Vec3 nextPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT + 0.1f * grindDir);
-
-          // vel += (toPos - fromPos);
-
-          pos = -(domCon.aim.position - Input.Head.position) + grindPos - (Input.Head.position - pos);
-          vel = Vec3.Zero;
-
-          railT += Time.Elapsedf * grindVel.Magnitude * grindDir;
-          // bool clamped = false;
-          // float railTpreClamp = railT;
-          // if
-          railT = Math.Clamp(railT, 0f, 1f);
-
-          grindVel = (nextPos - grindPos).Normalized * grindVel.Magnitude;
-
-
-          cube.Draw(mat, Matrix.TS(grindPos, new Vec3(0.1f, 0.1f, 0.1f)));
-          // cube.Draw(mat, Matrix.TS(toPos, new Vec3(0.1f, 0.1f, 0.1f) * 0.333f));
-          // pos = Vec3.Lerp(pos, Bezier.Sample(net.me.cubics[0].p0, net.me.cubics[0].p1, net.me.cubics[0].p2, net.me.cubics[0].p3, railT) - (subCon.aim.position - pos), Time.Elapsedf * 6f);
-          // how to reliably determine and control which direction to go? (velocity)
         }
       } else {
+        grinded = false;
         if (grinding) {
           vel = grindVel;
           grinding = false;
@@ -228,26 +272,7 @@ public class Mono {
 
       // Console.WriteLine(World.RefreshInterval.ToString());
 
-      // DRAG DRIFT
-      Vec3 domPos = domCon.aim.position;
-      if (domCon.IsX1JustPressed) {
-        // movePress = Time.Totalf;
-        domDragStart = domPos;
-      }
-      if (domCon.IsX1Pressed) {
-        vel += -(domPos - domDragStart) * 24;
-        domDragStart = domPos;
-      }
-
-      Vec3 subPos = subCon.aim.position;
-      if (subCon.IsX1JustPressed) {
-        // movePress = Time.Totalf;
-        subDragStart = subPos;
-      }
-      if (subCon.IsX1Pressed) {
-        vel += -(subPos - subDragStart) * 24;
-        subDragStart = subPos;
-      }
+      
 
       // if (domCon.IsX1JustUnPressed && Time.Totalf - movePress < 0.2f) {
       //   pos = p00 - (Input.Head.position - pos);
@@ -257,8 +282,10 @@ public class Mono {
       // not cursor dependent
 
       // pos.x = (float)Math.Sin(Time.Total * 0.1f) * 0.5f;
+      if (!grinding) {
+        pos += vel * Time.Elapsedf;
+      }
 
-      pos += vel * Time.Elapsedf;
       float preX = pos.x; pos.x = Math.Clamp(pos.x, -scale / 2, scale / 2); if (pos.x != preX) { vel.x = 0; }
       float preY = pos.y; pos.y = Math.Clamp(pos.y, 0f, scale / 2); if (pos.y != preY) { vel.y = 0; }
       float preZ = pos.z; pos.z = Math.Clamp(pos.z, -scale / 2, scale / 2); if (pos.z != preZ) { vel.z = 0; }
@@ -285,11 +312,11 @@ public class Mono {
       oldSubPos = subCon.pose.position;
 
 
-      cubicFlow.Step(new Pose[] {domCon.aim, subCon.aim}, 1);
       // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);
       net.me.color = colorCube.color;
-      net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1;
-      net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
+      // net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1;
+      // net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
+      
       net.me.headset = Input.Head;
       net.me.mainHand = domCon.aim; net.me.offHand = subCon.aim; 
       for (int i = 0; i < net.peers.Length; i++) {
