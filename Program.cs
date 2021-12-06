@@ -45,7 +45,10 @@ public class Mono {
     floor.AddBox(new Vec3(0.1f, scale / 2, scale), 1, new Vec3(scale / 2, scale / 4, 0));
     // and ceiling
     floor.AddBox(new Vec3(scale, 0.1f, scale), 1, new Vec3(0, scale / 2, 0));
-    
+    Material matFloor = new Material(Shader.Default);
+    matFloor.SetTexture("diffuse", Tex.FromFile("floor.png"));
+    matFloor.SetFloat("tex_scale", 32);
+
 
     Cursors cursors = new Cursors(this);
 
@@ -53,10 +56,10 @@ public class Mono {
     oriel.Start(3);
     
 
-  // Oriel otherOriel = new Oriel();
-  // otherOriel.Start(4);
+    // Oriel otherOriel = new Oriel();
+    // otherOriel.Start(4);
 
-  MonoNet net = new MonoNet(this);
+    MonoNet net = new MonoNet(this);
     net.Start();
 
     ColorCube colorCube = new ColorCube();
@@ -99,7 +102,7 @@ public class Mono {
     while (SK.Step(() => {
       Renderer.CameraRoot = Matrix.T(pos);
 
-      cube.Draw(mat, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
+      cube.Draw(matFloor, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
 
       if (lefty) { domCon = Input.Controller(Handed.Left); subCon = Input.Controller(Handed.Right); }
       else { domCon = Input.Controller(Handed.Right); subCon = Input.Controller(Handed.Left); }
@@ -404,7 +407,6 @@ public class Mono {
             draggingOriel = true;
           }
         } else {
-
           oriel.bounds.center = Vec3.Lerp(net.me.cursor0, net.me.cursor3, 0.5f);
           //
           float distX = Math.Abs(net.me.cursor0.x - net.me.cursor3.x);
@@ -416,7 +418,7 @@ public class Mono {
         draggingOriel = false;
       }
 
-      oriel.Step();
+      oriel.Step(net.me.cursor0);
 
       // otherOriel.bounds.center = Vec3.Forward * -2;
       // otherOriel.Step();
@@ -597,7 +599,7 @@ public class Lerper {
 
 [StructLayout(LayoutKind.Sequential)]
 struct BufferData {
-  public Vec3 windDirection;
+  public Vec3 position;
   // public Vec3[] tri;
   public float windStrength;
 }
@@ -612,18 +614,14 @@ public class Oriel {
   MaterialBuffer<BufferData> buffer;
 
   public void Start(int bufferIndex) {
-    bounds = new Bounds(Vec3.Forward * 2, new Vec3(1f, 0.5f, 0.5f));
+    bounds = new Bounds(Vec3.Forward * 0, new Vec3(1f, 0.5f, 0.5f));
     _dimensions = bounds.dimensions;
     buffer = new MaterialBuffer<BufferData>(bufferIndex);
   }
 
   BufferData data = new BufferData();
-  public void Step() {
-    data.windDirection = new Vec3(
-      (float)Math.Sin(Time.Total * 1) / 6,
-      (float)Math.Cos(Time.Total * 2) / 6,
-      (float)Math.Sin(Time.Total * 3) / 6
-    );
+  public void Step(Vec3 p0) {
+    data.position = p0;
     // data.a = new Color(1.0f, 0.5f, 0.5f);
     // data.b = new Color(0.5f, 1.0f, 0.5f);
     // data.c = new Color(0.5f, 0.5f, 1.0f);
@@ -632,7 +630,7 @@ public class Oriel {
     //   new Vec3(0, 0, 1),
     //   new Vec3(1, 0, 0),
     // };
-    
+
     data.windStrength = (1 + (float)Math.Sin(Time.Total)) / 2;
     buffer.Set(data);
     
@@ -644,7 +642,7 @@ public class Oriel {
     
     mat.FaceCull = Cull.None;
     mat.SetVector("_dimensions", bounds.dimensions);
-    mat.SetVector("_center", bounds.center);
+    mat.SetVector("_center", Vec3.Zero);
     // mat.Wireframe = true;
 
     Matrix m = Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions);

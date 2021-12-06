@@ -10,7 +10,7 @@ Texture2D tex; // : register(t0);
 SamplerState tex_s; // : register(s0);
 
 cbuffer BufferData : register(b3) {
-  float3 windDirection;
+  float3 position;
   float  windStrength;
 };
 
@@ -85,38 +85,55 @@ float sdSphere(float3 p, float s) {
   return length(p) - s;
 }
 
-float sdPlane(float3 p, float3 n, float h)
-{
+float sdPlane(float3 p, float3 n, float h) {
   // n must be normalized
   return dot(p,n) + h;
 }
 
-float sdBox(float3 p, float3 b)
-{
+float sdBox(float3 p, float3 b) {
   float3 q = abs(p) - b;
   return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
 
-float sdOctahedron(float3 p, float s)
-{
+float sdOctahedron(float3 p, float s) {
   p = abs(p);
   return (p.x + p.y + p.z - s) * 0.57735027;
+}
+
+float sdBoxFrame(float3 p, float3 b, float e) {
+  p = abs(p) - b;
+  float3 q = abs(p + e) - e;
+  return min(
+    min(
+      length(max(float3(p.x,q.y,q.z),0.0))+min(max(p.x,max(q.y,q.z)),0.0),
+      length(max(float3(q.x,p.y,q.z),0.0))+min(max(q.x,max(p.y,q.z)),0.0)
+    ),
+    length(max(float3(q.x,q.y,p.z),0.0))+min(max(q.x,max(q.y,p.z)),0.0)
+  );
+}
+
+float opRep(float3 p, float3 c)
+{
+  float3 q = modf(p + 0.5 * c, c) - 0.5 * c;
+  return sdSphere(q, 0.1);
 }
 
 float map(float3 pos) {
   // pos.x = _center.x + pos.x;
   // pos.y = _center.y + pos.y;
   // pos.z = _center.z - pos.z;
-  float sphere = sdSphere(pos + float3(0, 0.5, 0) - _center, 0.1);
+  // float sphere = sdSphere(pos + float3(0, 0.5, 0) - _center, 0.1);
   // return sdLink(pos, 0.1, 0.1, 0.1);
-  float octo = sdOctahedron(pos - _center, 0.1);
+  float octo = sdOctahedron(pos - _center - position, 0.2);
+  float frame = sdBoxFrame(pos - _center - position, float3(0.06, 0.06, 0.06), 0.004);
   // return lerp(sphere, octo, windStrength);
 
-  float plane = sdPlane(pos - _center, float3(0, 1, 0), 0);
+  float plane = sdPlane(pos - _center + float3(0, 1.5, 0), float3(0, 1, 0), 0);
 
-  float phere = lerp(plane, sphere, windStrength);
-  return min(phere, octo);
-  // return octo;
+  float blendd = lerp(octo, frame, windStrength);
+  return min(plane, blendd);
+  
+  // return opRep(pos - _center, float3(0, 0, 0));
 }
 
 float3 calcNormal(float3 pos)
@@ -145,6 +162,26 @@ float calcAO(float3 pos, float3 nor)
   return clamp(1.0 - 3.0 * occ, 0.0, 1.0) * (0.5 + 0.5 * nor.y);
 }
 
+float calcShadow(float3 pos, float3 light) {
+  float3 rd = normalize(light - pos);
+  float3 ro = pos + rd * 0.1;
+
+  float tmax = 100;
+  float t = 0.0;
+  for (int i = 0; i < 256; i++) {
+    float3 pos = ro + t * rd;
+    float h = map(pos);
+    if (h < 0.0001 || t > tmax) break;
+    t += h;
+  }
+  if (t < tmax) {
+    t = 0;
+  } else {
+    t = 1;
+  }
+
+  return t;
+}
 
 // float RayMarch(vec3 ro, vec3 rd) {
 // 	float dO=0.;
@@ -176,7 +213,7 @@ float4 ps(psIn input) : SV_TARGET {
   // input.color = float4(float3(1,1,1) * max(tri_raycast(input.world, ray), 0.0), 1);
 
   // raymarch
-  float tmax = 3.0;
+  float tmax = 100;
   float t = 0.0;
   for (int i = 0; i < 256; i++) {
     float3 pos = ro + t * rd;
@@ -186,16 +223,34 @@ float4 ps(psIn input) : SV_TARGET {
   }
 
   // shading/lighting	
-  float3 col = float3(0.0, 0.0, 0.0);
+  float3 col = float3(0.5, 0.75, 0.9);
   if (t < tmax)
   {
     float3 pos = ro + t * rd;
+    float3 light = float3(0.0, 1.0, 0.0);
+    float3 lightDir = normalize(light - pos);
     float3 nor = calcNormal(pos);
-    float dif = clamp(dot(nor, float3(0.7, 0.6, 0.4)), 0.0, 1.0);
-    float amb = 0.5 + 0.5 * dot(nor, float3(0.0, 0.8, 0.6));
+    float dif = clamp(dot(nor, lightDir), 0.0, 1.0);
+    float amb = 0.5 + 0.5 * dot(nor, lightDir);
     float ao = calcAO(pos, nor);
-    dif *= ao;
-    col = float3(0.2, 0.3, 0.4) * amb + float3(0.8, 0.7, 0.5) * dif;
+    float sh = calcShadow(pos, light);
+    dif *= ao * sh;
+    col = float3(0.1, 0.5, 0.3) * amb + float3(0.6, 0.8, 0.3) * dif;
+
+    // float3 lightPos = float3(0, 3, 0);
+    // float3 rayo = pos;
+    // float3 rayd = normalize(lightPos - pos);
+    // float ttmax = 6.0;
+    // float tt = 0.0;
+    // for (int i = 0; i < 256; i++) {
+    //   float3 pp = rayo + tt * rayd;
+    //   float hh = map(pp);
+    //   if (hh < 0.0001 || tt > tmax) break;
+    //   tt += hh;
+    // }
+    // if (tt < length(lightPos - rayo)) {
+    //   col *= 0.5;
+    // }
   }
 
   // input.color = float4(float3(1,1,1) * max(t, 0.0), 1);
