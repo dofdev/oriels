@@ -51,11 +51,12 @@ public class Mono {
 
     Oriel oriel = new Oriel();
     oriel.Start(3);
+    
 
-    // Oriel otherOriel = new Oriel();
-    // otherOriel.Start(4);
+  // Oriel otherOriel = new Oriel();
+  // otherOriel.Start(4);
 
-    MonoNet net = new MonoNet(this);
+  MonoNet net = new MonoNet(this);
     net.Start();
 
     ColorCube colorCube = new ColorCube();
@@ -73,6 +74,9 @@ public class Mono {
     Material camMat = new Material(Shader.Unlit);
     camMat.SetTexture("diffuse", camTex);
     Mesh quad = Default.MeshQuad;
+
+    bool draggingOriel = false;
+    Vec3 orielOffset = Vec3.Zero;
 
 
     Vec3 gripPos = Vec3.Zero;
@@ -378,6 +382,25 @@ public class Mono {
 
 
 
+
+      if (domCon.trigger > 0.5f && subCon.trigger > 0.5f) {
+        if (!draggingOriel) {
+          if (oriel.bounds.Contains(net.me.cursor0) || oriel.bounds.Contains(net.me.cursor3)) {
+            draggingOriel = true;
+          }
+        } else {
+
+          oriel.bounds.center = Vec3.Lerp(net.me.cursor0, net.me.cursor3, 0.5f);
+          //
+          float distX = Math.Abs(net.me.cursor0.x - net.me.cursor3.x);
+          float distY = Math.Abs(net.me.cursor0.y - net.me.cursor3.y);
+          float distZ = Math.Abs(net.me.cursor0.z - net.me.cursor3.z);
+          oriel.bounds.dimensions = new Vec3(distX, distY, distZ);
+        }
+      } else {
+        draggingOriel = false;
+      }
+
       oriel.Step();
 
       // otherOriel.bounds.center = Vec3.Forward * -2;
@@ -574,7 +597,7 @@ public class Oriel {
   MaterialBuffer<BufferData> buffer;
 
   public void Start(int bufferIndex) {
-    bounds = new Bounds(Vec3.Zero, new Vec3(1f, 0.5f, 0.5f));
+    bounds = new Bounds(Vec3.Forward * 2, new Vec3(1f, 0.5f, 0.5f));
     _dimensions = bounds.dimensions;
     buffer = new MaterialBuffer<BufferData>(bufferIndex);
   }
@@ -626,7 +649,7 @@ public class Oriel {
     // instead of a quad, just slap the same mesh to the head
 
 
-
+    // crown.SetVector("_center", bounds.center);
     crown.SetFloat("_height", bounds.dimensions.y);
     crown.SetFloat("_ypos", bounds.center.y);
     crown.FaceCull = Cull.Front;

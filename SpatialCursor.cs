@@ -141,7 +141,7 @@ public class CubicFlow : SpatialCursor {
       domTwisting = false;
     } else {
       if (!domTwisting) {
-        domUp = domCon.stick.y > 0;
+        domUp = domCon.stick.x > 0;
         domTwisting = true;
       }
     }
@@ -152,7 +152,7 @@ public class CubicFlow : SpatialCursor {
       subTwisting = false;
     } else {
       if (!subTwisting) {
-        subUp = subCon.stick.y > 0;
+        subUp = subCon.stick.x < 0;
         subTwisting = true;
       }
     }
@@ -164,7 +164,7 @@ public class CubicFlow : SpatialCursor {
     p3 = sub.position;
 
 
-    if (domUp) {
+    if (domUp) { // domUp
       p0 = domTwist.p0;
       p1 = dom.position;
     }

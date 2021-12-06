@@ -104,15 +104,19 @@ float sdOctahedron(float3 p, float s)
 }
 
 float map(float3 pos) {
-  float sphere = sdSphere(pos + float3(0, 0.5, 0), 0.1);
+  // pos.x = _center.x + pos.x;
+  // pos.y = _center.y + pos.y;
+  // pos.z = _center.z - pos.z;
+  float sphere = sdSphere(pos + float3(0, 0.5, 0) - _center, 0.1);
   // return sdLink(pos, 0.1, 0.1, 0.1);
-  float octo = sdOctahedron(pos, 0.1);
+  float octo = sdOctahedron(pos - _center, 0.1);
   // return lerp(sphere, octo, windStrength);
 
-  float plane = sdPlane(pos, float3(0, 1, 0), 0);
+  float plane = sdPlane(pos - _center, float3(0, 1, 0), 0);
 
   float phere = lerp(plane, sphere, windStrength);
   return min(phere, octo);
+  // return octo;
 }
 
 float3 calcNormal(float3 pos)
@@ -157,12 +161,17 @@ float calcAO(float3 pos, float3 nor)
 
 float4 ps(psIn input) : SV_TARGET {
   float3 ro = input.world; // ray origin
-  if (!(sdBox(input.campos, _dimensions / 2) > 0.0)) {
+  // if (!(sdBox(input.campos, _dimensions / 2) > 0.0)) {
+  //   ro = input.campos;
+  //   // always cull front
+  //   // then replace the input.world with a raymarched box position
+  //   // brings hands into the space
+  // }
+
+  if (dot(input.norm, input.campos - ro) < 0.0) {
     ro = input.campos;
-    // always cull front
-    // then replace the input.world with a raymarched box position
-    // brings hands into the space
   }
+
   float3 rd = normalize(input.world - input.campos); // ray direction
   // input.color = float4(float3(1,1,1) * max(tri_raycast(input.world, ray), 0.0), 1);
 
