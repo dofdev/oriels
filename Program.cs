@@ -73,6 +73,11 @@ public class Mono {
     Mesh quad = Default.MeshQuad;
 
 
+    Vec3 gripPos = Vec3.Zero;
+    bool domGripping = false, subGripping = false;
+    bool gripLeft = false;
+
+
     float grindDir = 1f;
     bool grinding = false;
     bool grinded = false;
@@ -120,23 +125,26 @@ public class Mono {
 
 
       cursor.Step(new Pose[] { domCon.aim, new Pose(rShoulder, Quat.LookDir(middl)) }, ((Input.Controller(Handed.Right).stick.y + 1) / 2));
-      // if (domCon.trigger > 0.5f) {
-      //   cursor.Calibrate();
-      // }
+      if (!domCon.IsX1Pressed) {
+        cursor.Calibrate();
+      }
       subCursor.Step(new Pose[] { subCon.aim, new Pose(lShoulder, Quat.LookDir(middl)) }, ((Input.Controller(Handed.Left).stick.y + 1) / 2));
-      // if (subCon.trigger > 0.5f) {
-      //   subCursor.Calibrate();
-      // } cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
+      if (!subCon.IsX1Pressed) {
+        subCursor.Calibrate();
+      } 
+      // cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 
       cubicFlow.Step(new Pose[] { domCon.aim, subCon.aim }, 1);
       if (domCon.stick.MagnitudeSq != 0 || subCon.stick.MagnitudeSq != 0) {
         Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
         net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
       } else {
-        cube.Draw(mat, Matrix.TS(cursor.p0, 0.1f));
-        cube.Draw(mat, Matrix.TS(subCursor.p0, 0.1f));
         net.me.cursor0 = cursor.p0; net.me.cursor1 = cursor.p0; net.me.cursor2 = subCursor.p0; net.me.cursor3 = subCursor.p0;
       }
+
+      // throw yourself (delta -> vel -> momentum)
+      // bring rails back
+      // boolean over network to determine if a peers cubic flow should be drawn
 
 
       for (int i = 0; i < net.me.blocks.Length; i++) {
@@ -160,23 +168,48 @@ public class Mono {
       // pos += fullstick * subCon.trigger * Time.Elapsedf;
 
       // DRAG DRIFT
-      Vec3 domPos = domCon.aim.position;
+      Vec3 domPos = net.me.cursor0;
       // if (domCon.grip) {
       //   // movePress = Time.Totalf;
       //   domDragStart = domPos;
       // }
-      vel += -(domPos - domDragStart) * 24 * domCon.grip;
-      domDragStart = domPos;
+      // vel += -(domPos - domDragStart) * 24 * domCon.grip;
+      // domDragStart = domPos;
 
-      Vec3 subPos = subCon.aim.position;
+      Vec3 subPos = net.me.cursor3;
       // if (subCon.grip) {
       //   // movePress = Time.Totalf;
       //   subDragStart = subPos;
       // }
       // if (subCon.IsX1Pressed) {
       // }
-      vel += -(subPos - subDragStart) * 24 * subCon.grip;
-      subDragStart = subPos;
+      // vel += -(subPos - subDragStart) * 24 * subCon.grip;
+      // subDragStart = subPos;
+      if (domCon.grip > 0.5f) {
+        if (!domGripping) {
+          gripPos = domPos;
+          gripLeft = false;
+          domGripping = true;
+        }
+      } else {
+        domGripping = false;
+      }
+
+      if (subCon.grip > 0.5f) {
+        if (!subGripping) {
+          gripPos = subPos;
+          gripLeft = true;
+          subGripping = true;
+        }
+      } else {
+        subGripping = false;
+      }
+
+      if (domGripping || subGripping) {
+        Vec3 gripTo = gripLeft ? subPos : domPos;
+        pos = -(gripTo - Input.Head.position) + gripPos - (Input.Head.position - pos);
+        vel = Vec3.Zero;
+      }
 
       // CUBIC BEZIER RAIL
       // Vec3[] rail = new Vec3[] {

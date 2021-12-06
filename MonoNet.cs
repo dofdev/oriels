@@ -467,6 +467,9 @@ public class MonoNet {
 
         Bezier.Draw(cursor0, cursor1, cursor2, cursor3, Color.White);
       }
+    
+      Cube(Matrix.TRS(cursor0, Input.Controller(Handed.Right).pose.orientation, 0.1f), color);
+      Cube(Matrix.TRS(cursor3, Input.Controller(Handed.Right).pose.orientation, 0.1f), color);
 
       for (int i = 0; i < blocks.Length; i++) {
         if (blocks[i].solid.GetPose().position.y < -10) {

@@ -125,7 +125,6 @@ public class CubicFlow : SpatialCursor {
     domTwist.Step(new Pose[] { dom }, scalar);
     subTwist.Step(new Pose[] { sub }, -scalar);
 
-
     p0 = dom.position;
     p1 = domTwist.p0;
     p2 = subTwist.p0;
@@ -134,17 +133,16 @@ public class CubicFlow : SpatialCursor {
     Controller domCon = Input.Controller(Handed.Right);
     Controller subCon = Input.Controller(Handed.Left);
 
-    Vec3 np0 = Vec3.Lerp(p0, p1, (1 + domCon.stick.y) / 2);
-    Vec3 np1 = Vec3.Lerp(p1, p0, (1 + domCon.stick.y) / 2);
-    Vec3 np2 = Vec3.Lerp(p2, p3, (1 + subCon.stick.y) / 2);
-    Vec3 np3 = Vec3.Lerp(p3, p2, (1 + subCon.stick.y) / 2);
+    Vec3 np0 = Vec3.Lerp(p0, p1, (1 + domCon.stick.x) / 2);
+    Vec3 np1 = Vec3.Lerp(p1, p0, (1 + domCon.stick.x) / 2);
+    Vec3 np2 = Vec3.Lerp(p2, p3, (1 + -subCon.stick.x) / 2);
+    Vec3 np3 = Vec3.Lerp(p3, p2, (1 + -subCon.stick.x) / 2);
 
     p0 = np0;
     p1 = np1;
     p2 = np2;
     p3 = np3;
     // if toggle
-
   }
 
   public override void Calibrate() {}
