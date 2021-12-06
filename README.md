@@ -1,15 +1,11 @@
-<a href='https://dofdev.org' style="display: flex; justify-content:center; align-items:center; width:100%;">
-<img src='dofdev-logo.png' width="50%" style="display:block">
-</a>
+<img src='dofdev-logo.png' align="right" width="25%">
 
 ## oriels 
 *a dof driven space*  
 
 <img src='markberg.png' width="100%">
 
-
 <br/>  <br/>  
-
 
 ## direction
 - rethink paper paradigm based software for spatial computing
