@@ -1,8 +1,12 @@
+<a href='https://dofdev.org' style="display: flex; justify-content:center; align-items:center; width:100%;">
+<img src='dofdev-logo.png' width="50%" style="display:block">
+</a>
+
 ## oriels 
 *a dof driven space*  
 
-<img src='oriel.gif'>
-<https://dofdev.org>
+<img src='markberg.png' width="100%">
+
 
 <br/>  <br/>  
 
