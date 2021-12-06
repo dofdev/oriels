@@ -131,13 +131,28 @@ public class Mono {
       // Lines.Add(headPos + Vec3.Up * -0.2f, rShoulder, new Color(1, 0, 0), 0.01f);
       // Lines.Add(headPos + Vec3.Up * -0.2f, lShoulder, new Color(1, 0, 0), 0.01f);
 
-      if (domCon.IsX1JustPressed) {
-        domPlanted = !domPlanted;
-      }
-      if (subCon.IsX1JustPressed) {
-        subPlanted = !subPlanted;
+      // if (domCon.IsX1JustPressed) {
+      //   domPlanted = !domPlanted;
+      // }
+      // if (subCon.IsX1JustPressed) {
+      //   subPlanted = !subPlanted;
+      // }
+
+      if (domCon.stick.Magnitude > 0.1f) {
+        if (domCon.stick.y < 0f) {
+          domPlanted = true;
+        }
+      } else {
+        domPlanted = false;
       }
 
+      if (subCon.stick.Magnitude > 0.1f) {
+        if (subCon.stick.y < 0f) {
+          subPlanted = true;
+        }
+      } else {
+        subPlanted = false;
+      }
 
       cursor.Step(new Pose[] { domCon.pose, new Pose(rShoulder, Quat.LookDir(middl)) }, 1);
       if (!domPlanted) {
@@ -152,7 +167,7 @@ public class Mono {
       // cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 
       cubicFlow.Step(new Pose[] { new Pose(cursor.p0, domCon.aim.orientation), new Pose(subCursor.p0, subCon.aim.orientation) }, 1);
-      if (domCon.stick.Magnitude > 0.1f || subCon.stick.Magnitude > 0.1f) {
+      if (domCon.stick.y > 0.1f || subCon.stick.y > 0.1f) {
         Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
         net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
       } else {

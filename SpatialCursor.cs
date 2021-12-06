@@ -99,14 +99,17 @@ public class TwistCursor : SpatialCursor {
   }
   Vec3 twistFrom = -Vec3.Right;
   Quat quat;
+  public int chirality = 1;
   public override void Step(Pose[] poses, float scalar) {
-    // chirality = Math.Sign(scalar);
+    
     Vec3 pos = poses[0].position;
     quat = poses[0].orientation;
     Quat from = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward, twistFrom);
     float twist = 1 - ((Vec3.Dot(from * Vec3.Up, quat * Vec3.Up) + 1) / 2);
     // float wrap = twist - twistFrom; // wrap around 0 to 1
     // (wrap > 0.5f) ? 1 - wrap : wrap;
+
+    outty = Vec3.Dot(from * Vec3.Up, quat * Vec3.Right * chirality) > 0;
     
     p0 = pos + quat * Vec3.Forward * twist * str;
     // model.Draw(Matrix.TS(p0, 0.02f));
@@ -118,6 +121,8 @@ public class TwistCursor : SpatialCursor {
 
     twistFrom = quat * Vec3.Up; // -Vec3.Right * chirality;
   }
+
+  public bool outty;
 }
 
 public class CubicFlow : SpatialCursor {
@@ -135,8 +140,9 @@ public class CubicFlow : SpatialCursor {
     Pose sub = poses[1];
     Controller domCon = Input.Controller(Handed.Right);
     Controller subCon = Input.Controller(Handed.Left);
+    subTwist.chirality = -1;
 
-    if (domCon.stick.Magnitude < 0.1f) {
+    if (domCon.stick.y < 0.1f) {
       domTwist.Calibrate();
       domTwisting = false;
     } else {
@@ -147,7 +153,7 @@ public class CubicFlow : SpatialCursor {
     }
     domTwist.Step(new Pose[] { dom }, scalar);
 
-    if (subCon.stick.Magnitude < 0.1f) {
+    if (subCon.stick.y < 0.1f) {
       subTwist.Calibrate();
       subTwisting = false;
     } else {
@@ -164,12 +170,12 @@ public class CubicFlow : SpatialCursor {
     p3 = sub.position;
 
 
-    if (domUp) { // domUp
+    if (domTwist.outty) { // domUp
       p0 = domTwist.p0;
       p1 = dom.position;
     }
 
-    if (subUp) {
+    if (subTwist.outty) {
       p2 = sub.position;
       p3 = subTwist.p0;
     }

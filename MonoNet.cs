@@ -424,7 +424,7 @@ public class MonoNet {
             Quat toRot = (con.aim.orientation * heldRot * spinRot).Normalized;
             Vec3 toPos = cursor + (con.aim.orientation * heldRot * spinRot).Normalized * offset;
             // cursor - offset;
-            if (con.stick.Magnitude > 0.1f) {
+            if (con.stick.y > 0.1f) {
               toRot = blocks[index].solid.GetPose().orientation;
             }
             blocks[index].solid.Move(toPos, toRot);
