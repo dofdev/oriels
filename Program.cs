@@ -52,8 +52,8 @@ public class Mono {
     Oriel oriel = new Oriel();
     oriel.Start(3);
 
-    Oriel otherOriel = new Oriel();
-    otherOriel.Start(4);
+    // Oriel otherOriel = new Oriel();
+    // otherOriel.Start(4);
 
     MonoNet net = new MonoNet(this);
     net.Start();
@@ -332,8 +332,8 @@ public class Mono {
 
       oriel.Step();
 
-      otherOriel.bounds.center = Vec3.Forward * -2;
-      otherOriel.Step();
+      // otherOriel.bounds.center = Vec3.Forward * -2;
+      // otherOriel.Step();
 
       // Matrix orbitMatrix = OrbitalView.transform;
       // cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
