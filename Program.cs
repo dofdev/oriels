@@ -7,6 +7,7 @@ class Program {
     SKSettings settings = new SKSettings {
       appName = "oriels",
       assetsFolder = "Assets",
+      depthMode = DepthMode.D32,
     };
     if (!SK.Initialize(settings))
       Environment.Exit(1);
@@ -29,7 +30,7 @@ public class Mono {
   Mesh cube = Default.MeshCube;
 
   public void Run() {
-    Renderer.SetClip(0f, 200f);
+    Renderer.SetClip(0.05f, 10f);
     // mic = new Mic();
     Vec3 pos = new Vec3(0, 0, 0);
     Vec3 vel = new Vec3(0, 0, 0);
@@ -614,7 +615,7 @@ public class Oriel {
   MaterialBuffer<BufferData> buffer;
 
   public void Start(int bufferIndex) {
-    bounds = new Bounds(Vec3.Forward * 0, new Vec3(1f, 0.5f, 0.5f));
+    bounds = new Bounds(Vec3.Zero, new Vec3(1f, 0.5f, 0.5f));
     _dimensions = bounds.dimensions;
     buffer = new MaterialBuffer<BufferData>(bufferIndex);
   }
@@ -640,9 +641,10 @@ public class Oriel {
     // bounds.dimensions = _dimensions * (1f + (MathF.Sin(Time.Totalf * 3) * 0.3f));
 
     
-    mat.FaceCull = Cull.None;
+    mat.FaceCull = Cull.Front;
+    // mat.QueueOffset = -1;
     mat.SetVector("_dimensions", bounds.dimensions);
-    mat.SetVector("_center", Vec3.Zero);
+    mat.SetVector("_center", bounds.center);
     // mat.Wireframe = true;
 
     Matrix m = Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions);

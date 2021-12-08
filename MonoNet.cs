@@ -494,6 +494,7 @@ public class MonoNet {
     static Mesh meshCube = Default.MeshCube;
     static Material matCube = Default.Material;
     public void Cube(Matrix m, Color color) {
+      matCube.FaceCull = Cull.None;
       meshCube.Draw(matCube, m, color);
     }
   }
