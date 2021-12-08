@@ -8,26 +8,26 @@
 
 	<ItemGroup>
 		<PackageReference Include="StereoKit" Version="0.3.5-preview.3" />
-    <PackageReference Include="System.Speech" Version="5.0.0" />
+    <!-- <PackageReference Include="System.Speech" Version="5.0.0" /> -->
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="Assets/**">
+		<None Include="add/**">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<!-- <Link>Assets/%(RecursiveDir)%(Filename)%(Extension)</Link> -->
+			<!-- <Link>add/%(RecursiveDir)%(Filename)%(Extension)</Link> -->
 		</None>
 	</ItemGroup>
 
   <ItemGroup>
-    <None Remove="Assets/oriel.hlsl" />
-    <None Remove="Assets/crown.hlsl" />
-    <None Remove="Assets/colorcube.hlsl" />
+    <None Remove="add/oriel.hlsl" />
+    <None Remove="add/crown.hlsl" />
+    <None Remove="add/colorcube.hlsl" />
   </ItemGroup>
 
   <ItemGroup>
-    <SKShader Include="Assets/oriel.hlsl" />
-    <SKShader Include="Assets/crown.hlsl" />
-    <SKShader Include="Assets/colorcube.hlsl" />
+    <SKShader Include="add/oriel.hlsl" />
+    <SKShader Include="add/crown.hlsl" />
+    <SKShader Include="add/colorcube.hlsl" />
   </ItemGroup>
 
 </Project>

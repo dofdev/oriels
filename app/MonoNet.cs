@@ -1,16 +1,14 @@
 using StereoKit;
 using System;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Speech.Synthesis;
-using System.Speech.Recognition;
-using System.Speech.AudioFormat;
 
 public class MonoNet {
-  public Mono mono;
-  public MonoNet(Mono mono) {
+  public Monolith mono;
+  public MonoNet(Monolith mono) {
     this.mono = mono;
     Random rnd = new Random();
     me = new Peer(rnd.Next(1, 1024 * 8), SolidType.Normal, Color.White); // let the server determine the id
@@ -33,17 +31,6 @@ public class MonoNet {
     rData = new byte[bufferSize];
     wData = new byte[bufferSize];
     peers = new Peer[64];
-
-    // SpeechSynthesizer synth = new SpeechSynthesizer();
-    // synth.Speak("oriels!");
-
-    // SpeechRecognitionEngine reco = new SpeechRecognitionEngine();
-
-    // System.IO.Stream s;
-    // // s.Write();
-
-    // SpeechAudioFormatInfo info = new SpeechAudioFormatInfo(EncodingFormat.Pcm, 16000, 16, 1, WaveFormatTag.Pcm, 1, 1);
-    // reco.SetInputToAudioStream(s, info);
 
     Thread.Sleep(1000); // useful?
 
@@ -275,19 +262,13 @@ public class MonoNet {
       IPEndPoint endPoint = socket.LocalEndPoint as IPEndPoint;
       localIP = endPoint.Address.ToString();
     }
-    publicIP = new WebClient().DownloadString("https://ipv4.icanhazip.com/").TrimEnd();
+    publicIP = new HttpClient().GetStringAsync("https://ipv4.icanhazip.com/").Result.TrimEnd();
   }
 
   public class Peer {
-
-
-
-    // to do this we need to assign fixed id's to each peer from the server
-    // ++ make a peer timeout on the client side as well
-
     public float lastPing;
 
-    public int id;
+    public int id; // on connect: wait on server sending your peer id
     public Color color;
     public Vec3 cursor0, cursor1, cursor2, cursor3;
     public Pose headset;

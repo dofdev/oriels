@@ -2,23 +2,19 @@ using StereoKit;
 using System;
 using System.Runtime.InteropServices;
 
-class Program {
-  static void Main(string[] args) {
-    SKSettings settings = new SKSettings {
-      appName = "oriels",
-      assetsFolder = "Assets",
-      depthMode = DepthMode.D32,
-    };
-    if (!SK.Initialize(settings))
-      Environment.Exit(1);
+SKSettings settings = new SKSettings {
+  appName = "oriels",
+  assetsFolder = "add",
+  depthMode = DepthMode.D32,
+};
+if (!SK.Initialize(settings))
+  Environment.Exit(1);
 
-    // TextStyle style = Text.MakeStyle(Font.FromFile("DMMono-Regular.ttf"), 0.1f, Color.White);
-    Mono mono = new Mono();
-    mono.Run();
-  }
-}
+// TextStyle style = Text.MakeStyle(Font.FromFile("DMMono-Regular.ttf"), 0.1f, Color.White);
+Monolith mono = new Monolith();
+mono.Run();
 
-public class Mono {
+public class Monolith {
   public Mic mic;
   public Controller domCon, subCon; public bool lefty;
 

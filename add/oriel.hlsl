@@ -269,8 +269,8 @@ psOut ps(psIn input) {
     // }
 
     if(sdBox(pos - _center, _dimensions / 2) <= 0.005) {
-    //float4 clipPos = mul(float4(pos,     1), sk_viewproj[input.view_id]);
-      o.pos =          mul(float4(o.world, 1), sk_viewproj[o.view_id]);
+      float4 clipPos = mul(float4(pos,     1), sk_viewproj[input.view_id]);
+      // o.pos =          mul(float4(o.world, 1), sk_viewproj[o.view_id]);
       result.depth = clipPos.z;
 
       // float4 viewWorldPos = mul(float4(pos, 1), sk_view[input.view_id]);

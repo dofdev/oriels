@@ -1,54 +1,41 @@
-<img src='dofdev-logo.png' align="right" width="25%">
+<img src='zrc/dofdev-logo.png' align="right" width="40%">
 
-## oriels 
+<code>
+
+# oriels
 *a dof driven space*  
 
-<img src='markberg.png' width="100%">
+<img src='zrc/markberg.png' width="100%">
 
-<br/>  <br/>  
-
-## direction
-- rethink paper paradigm based software for spatial computing
-- networked by default through a federated server model
-- smart contract for handling security and value
-
-## increment
-- ~~merge networking prototypes~~
-- ~~fixed latency, now for multiple clients~~
-- ~~architect interfaces for navigation~~
-- implement all dofs from site
-
-## override
-**8 days left for the sterokit comp!**
-
-### MVP
-switch between cursors with a button (quick press(b) on both hands to switch/cycle through the two handed ones) long press(b) on one hand to swap mainhand
-
-movement:
-- ~~fullstick~~
-- ~~teleport and drag~~
-- ~~bezier rails~~
-
-interact:
-~~blocks you can manipulate with spatial cursors~~ (trackballer) 
-~~color them with the color cube (player colors)~~ 
-
-- trackballer
-- network the new stuff
-
-software:
-oriel + orbital view (control a shooty guy with fullstick and spatial cursor)
-
-### POLISH
-- fix (server sending back your data)
-- *just show them red when hit* 
-- bezier in color cube
-- calibrate cubic flow + sensitivity
-- press and twist to adjust sensitivity (long press(b) and trigger for value *keep cursor active) (min 1:1)
-
-### ACCESSIBILITY
-show how the dofs work (debug visuals *CMY)
-
+# pos
+net.read()  
+c[] = reach-cursor * trackballer || cubic-flow  
+blocks.step(c[0].pose, c[3].pose)  
+cubics.step(c[0].pos, c[1].pos, c[2].pos, c[3].pos)  
+net.write()  
+oriel.raymarch()  
 <br><br>
+
+# dir
+= (dof - paperParadigm).normalized  
+server.federate()  
+accounts = web3()  
+<br><br>
+
+## ++
+oriels.dofs == site.dofs  
+dofs.debug(CMY)  
+init(oriel-game)  
+exec(vlai)  
+<br><br>
+
+## --
+refactor(hackathon.result())  
+<br><br>
+
+
+<br><br><br><br><br><br>
 mapped out by:
-@spatialfree * @opendegree
+<a href='https://ethanmerchant.com'>@spatialfree</a> * <a href='https://twitter.com/opendegree'>@opendegree</a>
+
+</code>

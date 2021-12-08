@@ -12,12 +12,12 @@ public abstract class SpatialCursor {
 }
 
 public class Cursors {
-  Mono mono;
-  public Cursors(Mono mono) {
+  Monolith mono;
+  public Cursors(Monolith mono) {
     this.mono = mono;
   }
   SpatialCursor[] oneHanded = new SpatialCursor[] { new ReachCursor(), new TwistCursor() }; int oneIndex = 0;
-  SpatialCursor[] twoHanded = new SpatialCursor[] { new StretchCursor(), new CubicFlow(), new SupineCursor() }; int twoIndex = 0;
+  SpatialCursor[] twoHanded = new SpatialCursor[] { new StretchCursor(), new CubicFlow(), new SupineCursor() };
 
   public SpatialCursor Step(Pose domHand, Pose subHand) {
     SpatialCursor cursor = oneHanded[oneIndex];
