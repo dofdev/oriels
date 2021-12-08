@@ -665,14 +665,18 @@ public class Oriel {
 
 
     // crown.SetVector("_center", bounds.center);
-    crown.SetFloat("_height", bounds.dimensions.y);
-    crown.SetFloat("_ypos", bounds.center.y);
-    crown.FaceCull = Cull.Front;
-    crown.Transparency = Transparency.Add;
-    crown.DepthTest = DepthTest.Always;
-    // crown.QueueOffset = 0;
-    // crown.DepthWrite = false;
-    mesh.Draw(crown, Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions));
+
+
+    // crown.SetFloat("_height", bounds.dimensions.y);
+    // crown.SetFloat("_ypos", bounds.center.y);
+    // crown.FaceCull = Cull.Front;
+    // crown.Transparency = Transparency.Add;
+    // crown.DepthTest = DepthTest.Always;
+
+    // // crown.QueueOffset = 0;
+    // // crown.DepthWrite = false;
+
+    // mesh.Draw(crown, Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions));
   }
 }
 

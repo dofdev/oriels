@@ -126,19 +126,18 @@ float map(float3 pos) {
   // pos.x = _center.x + pos.x;
   // pos.y = _center.y + pos.y;
   // pos.z = _center.z - pos.z;
-  // float sphere = sdSphere(pos + float3(0, 0.5, 0) - _center, 0.1);
+  float sphere = sdSphere(pos + float3(0, 0, -1) - _center, 0.1);
   // return sdLink(pos, 0.1, 0.1, 0.1);
   // float octo = sdOctahedron(pos - _center - position, 0.2);
   float frame = sdBoxFrame(pos - _center - position, float3(0.06, 0.06, 0.06), 0.004);
 
   float orielFrame = sdBoxFrame(pos - _center, _dimensions / 2, 0.004);
   // return lerp(sphere, octo, windStrength);
-
-  float plane = sdPlane(pos - _center + float3(0, 1.5, 0), float3(0, 1, 0), 0);
+  float plane = sdPlane(pos - _center + float3(0, 0.5, 0), float3(0, 1, 0), 0);
 
   // float blendd = lerp(octo, frame, windStrength);
   // return min(min(plane, orielFrame), frame);
-  return min(plane, orielFrame);
+  return min(min(plane, orielFrame), sphere);
   
   // return opRep(pos - _center, float3(0, 0, 0));
 }
