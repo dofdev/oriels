@@ -363,7 +363,7 @@ public class Mono {
       // COLOR CUBE
       // reveal when palm up
       float reveal = subCon.pose.Right.y * 1.666f;
-      float look = 1 - Math.Clamp((1 - Math.Clamp(Vec3.Dot((subCon.pose.position - Input.Head.position).Normalized, Input.Head.Forward), 0f, 1f)) * 6f, 0f, 1f);
+      float look = 1 - Math.Clamp((1 - Math.Clamp(Vec3.Dot((subCon.pose.position - Input.Head.position).Normalized, Input.Head.Forward), 0f, 1f)) * 5f, 0f, 1f);
       reveal *= look;
       colorCube.size = colorCube.ogSize * Math.Clamp(reveal, 0, 1);
       colorCube.center = subCon.pose.position + subCon.pose.Right * 0.0666f;
