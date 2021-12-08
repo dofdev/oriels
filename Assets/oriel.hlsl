@@ -269,26 +269,19 @@ psOut ps(psIn input) {
     // }
 
     if(sdBox(pos - _center, _dimensions / 2) <= 0.005) {
-      // float4x4 worldToClipMatrix = sk_view[input.view_id];
+    //float4 clipPos = mul(float4(pos,     1), sk_viewproj[input.view_id]);
+      o.pos =          mul(float4(o.world, 1), sk_viewproj[o.view_id]);
+      result.depth = clipPos.z;
 
-      // float4 clipPos = mul(float4(pos, 1), sk_viewproj[input.view_id]);
+      // float4 viewWorldPos = mul(float4(pos, 1), sk_view[input.view_id]);
 
-      // result.depth = clipPos.z/clipPos.w;
+      // float near = 0.05;
+      // float far = 100;
 
-      float4 viewWorldPos = mul(float4(pos, 1), sk_view[input.view_id]);
+      // float a = (far+near)/(far-near);
+      // float b = 2.0*far*near/(far-near);
+      // result.depth = a + b/viewWorldPos.z;
 
-      float near = 0.05;
-      float far = 100;
-
-      float a = (far+near)/(far-near);
-      float b = 2.0*far*near/(far-near);
-      result.depth = a + b/viewWorldPos.z;
-
-      // result.depth = clipPos.z;
-
-      // float4 properPos = normalize(input.pos)*(1/t);
-      // float4 properPos = input.pos;
-      // result.depth = properPos.z;
     }
   }
 
