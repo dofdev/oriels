@@ -21,13 +21,17 @@ struct vsIn {
   float4 col  : COLOR0;
 };
 struct psIn {
+  float4 color : COLOR0;
   float4 pos   : SV_POSITION;
-  float3 campos : NORMAL0;
-  float3 world : NORMAL1;
   float3 norm  : NORMAL2;
   float2 uv    : TEXCOORD0;
-  float4 color : COLOR0;
+  float3 campos : TEXCOORD1;
+  float3 world : TEXCOORD2;
   uint view_id : SV_RenderTargetArrayIndex;
+};
+struct psOut {
+	float4 color : SV_Target;
+	float  depth : SV_Depth;
 };
 
 psIn vs(vsIn input, uint id : SV_InstanceID) {
@@ -124,14 +128,17 @@ float map(float3 pos) {
   // pos.z = _center.z - pos.z;
   // float sphere = sdSphere(pos + float3(0, 0.5, 0) - _center, 0.1);
   // return sdLink(pos, 0.1, 0.1, 0.1);
-  float octo = sdOctahedron(pos - _center - position, 0.2);
+  // float octo = sdOctahedron(pos - _center - position, 0.2);
   float frame = sdBoxFrame(pos - _center - position, float3(0.06, 0.06, 0.06), 0.004);
+
+  float orielFrame = sdBoxFrame(pos - _center, _dimensions / 2, 0.004);
   // return lerp(sphere, octo, windStrength);
 
   float plane = sdPlane(pos - _center + float3(0, 1.5, 0), float3(0, 1, 0), 0);
 
-  float blendd = lerp(octo, frame, windStrength);
-  return min(plane, blendd);
+  // float blendd = lerp(octo, frame, windStrength);
+  // return min(min(plane, orielFrame), frame);
+  return min(plane, orielFrame);
   
   // return opRep(pos - _center, float3(0, 0, 0));
 }
@@ -183,6 +190,22 @@ float calcShadow(float3 pos, float3 light) {
   return t;
 }
 
+float calcSoftshadow(in float3 ro, in float3 rd, in float mint, in float tmax, in float k) {
+  // bounding volume
+  float tp = (0.8-ro.y)/rd.y; if( tp>0.0 ) tmax = min( tmax, tp );
+
+  float res = 1.0;
+  float t = mint;
+  for( int i=0; i<24; i++ ) {
+  float h = map( ro + rd*t ).x;
+    float s = clamp(8.0*h/t,0.0,1.0);
+    res = min( res, k*s*s*(3.0-2.0*s) );
+    t += clamp( h, 0.02, 0.2 );
+    if( res<0.004 || t>tmax ) break;
+  }
+  return clamp( res, 0.0, 1.0 );
+}
+
 // float RayMarch(vec3 ro, vec3 rd) {
 // 	float dO=0.;
     
@@ -196,20 +219,14 @@ float calcShadow(float3 pos, float3 light) {
 //   return dO;
 // }
 
-float4 ps(psIn input) : SV_TARGET {
-  float3 ro = input.world; // ray origin
-  // if (!(sdBox(input.campos, _dimensions / 2) > 0.0)) {
-  //   ro = input.campos;
-  //   // always cull front
-  //   // then replace the input.world with a raymarched box position
-  //   // brings hands into the space
-  // }
+psOut ps(psIn input) {
+  psOut result;
 
-  if (dot(input.norm, input.campos - ro) < 0.0) {
-    ro = input.campos;
-  }
+  result.depth = input.pos.z;
 
-  float3 rd = normalize(input.world - input.campos); // ray direction
+  float3 worldIntersection;
+  float3 ro = input.campos; // ray origin
+  float3 rd = normalize(input.world - ro); // ray direction
   // input.color = float4(float3(1,1,1) * max(tri_raycast(input.world, ray), 0.0), 1);
 
   // raymarch
@@ -224,9 +241,8 @@ float4 ps(psIn input) : SV_TARGET {
 
   // shading/lighting	
   float3 col = float3(0.5, 0.75, 0.9);
-  if (t < tmax)
-  {
-    float3 pos = ro + t * rd;
+  if (t < tmax) {
+    float3 pos = ro + (t * rd);
     float3 light = float3(0.0, 1.0, 0.0);
     float3 lightDir = normalize(light - pos);
     float3 nor = calcNormal(pos);
@@ -234,6 +250,7 @@ float4 ps(psIn input) : SV_TARGET {
     float amb = 0.5 + 0.5 * dot(nor, lightDir);
     float ao = calcAO(pos, nor);
     float sh = calcShadow(pos, light);
+    // float sh = calcSoftshadow(pos, light, 0.02, 2.5, 32);
     dif *= ao * sh;
     col = float3(0.1, 0.5, 0.3) * amb + float3(0.6, 0.8, 0.3) * dif;
 
@@ -251,6 +268,29 @@ float4 ps(psIn input) : SV_TARGET {
     // if (tt < length(lightPos - rayo)) {
     //   col *= 0.5;
     // }
+
+    if(sdBox(pos - _center, _dimensions / 2) <= 0.005) {
+      // float4x4 worldToClipMatrix = sk_view[input.view_id];
+
+      // float4 clipPos = mul(float4(pos, 1), sk_viewproj[input.view_id]);
+
+      // result.depth = clipPos.z/clipPos.w;
+
+      float4 viewWorldPos = mul(float4(pos, 1), sk_view[input.view_id]);
+
+      float near = 0.05;
+      float far = 100;
+
+      float a = (far+near)/(far-near);
+      float b = 2.0*far*near/(far-near);
+      result.depth = a + b/viewWorldPos.z;
+
+      // result.depth = clipPos.z;
+
+      // float4 properPos = normalize(input.pos)*(1/t);
+      // float4 properPos = input.pos;
+      // result.depth = properPos.z;
+    }
   }
 
   // input.color = float4(float3(1,1,1) * max(t, 0.0), 1);
@@ -258,5 +298,20 @@ float4 ps(psIn input) : SV_TARGET {
 
   // input.color = float4(float3(1,1,1) * sdSphere(input.uv, float2(0.2, 0.2), float2(0.8, 0.8)), 1);
   // input.color.r = rr;
-  return input.color;
+  result.color = input.color;
+
+  // float4x4 worldToViewMatrix = sk_view[input.view_id];
+  // float4 viewIntersectionPos = worldToViewMatrix * float4(worldIntersection, 1.0);
+
+  // float n = 0.0f;
+  // float f = 200.0f;
+
+  // result.depth = (-viewIntersectionPos.z - n) / (f - n) * viewIntersectionPos.w;
+
+  // worldIntersection = float3(0.0);
+///input.pos.w;
+  // result.depth = zc/wc;
+  // result.color.rgb = float3(zc/wc);
+
+  return result;
 }
