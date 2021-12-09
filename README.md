@@ -50,4 +50,5 @@ refactor(hackathon.result())
 <br><br><br><br><br><br>
 mapped out by:
 <a href='https://ethanmerchant.com'>@spatialfree</a> * <a href='https://twitter.com/opendegree'>@opendegree</a>
+
 </code>
