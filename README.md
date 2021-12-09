@@ -52,7 +52,7 @@ unity
 
 &nbsp;
 
-## pos += dir * time * funds
+## pos += dir * <a href='https://dofdev.org'>time * funds</a>
 
 &nbsp;
 
@@ -61,6 +61,6 @@ unity
 &nbsp;
 
 mapped out by:
-<a href='https://ethanmerchant.com'>@spatialfree</a> * <a href='https://twitter.com/opendegree'>@opendegree</a>
+<a href='https://ethanmerchant.com'>@spatialfree</a> x <a href='https://twitter.com/opendegree'>@opendegree</a>
 
 </code>
