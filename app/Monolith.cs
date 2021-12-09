@@ -1,6 +1,5 @@
-using StereoKit;
 using System;
-using System.Runtime.InteropServices;
+using StereoKit;
 
 SKSettings settings = new SKSettings {
   appName = "oriels",
@@ -10,15 +9,18 @@ SKSettings settings = new SKSettings {
 if (!SK.Initialize(settings))
   Environment.Exit(1);
 
+Input.HandSolid(Handed.Max, false);
+Input.HandVisible(Handed.Max, false);
 // TextStyle style = Text.MakeStyle(Font.FromFile("DMMono-Regular.ttf"), 0.1f, Color.White);
+
 Monolith mono = new Monolith();
 mono.Run();
 
 public class Monolith {
   public Mic mic;
-  public Controller domCon, subCon; public bool lefty;
+  // public Controller rCon, lCon;
 
-  public Vec3 domDragStart, subDragStart;
+  public Vec3 rDragStart, lDragStart;
   public float railT;
 
   Mesh ball = Default.MeshSphere;
@@ -51,8 +53,6 @@ public class Monolith {
 
     Oriel oriel = new Oriel();
     oriel.Start(3);
-    
-
     // Oriel otherOriel = new Oriel();
     // otherOriel.Start(4);
 
@@ -60,12 +60,12 @@ public class Monolith {
     net.Start();
 
     ColorCube colorCube = new ColorCube();
-    Vec3 oldSubPos = Vec3.Zero;
+    Vec3 oldLPos = Vec3.Zero;
 
-    SpatialCursor cursor = new ReachCursor();
-    SpatialCursor subCursor = new ReachCursor();
-    bool domPlanted = false;
-    bool subPlanted = false;
+    SpatialCursor rightCursor = new ReachCursor();
+    SpatialCursor leftCursor = new ReachCursor();
+    bool rightPlanted = false;
+    bool leftPlanted = false;
 
     SpatialCursor cubicFlow = new CubicFlow();
 
@@ -80,7 +80,7 @@ public class Monolith {
 
 
     Vec3 gripPos = Vec3.Zero;
-    bool domGripping = false, subGripping = false;
+    bool rightGripping = false, leftGripping = false;
     bool gripLeft = false;
 
 
@@ -90,29 +90,18 @@ public class Monolith {
     Vec3 grindVel = Vec3.Forward;
     Vec3[] grindRail = new Vec3[4];
 
-
-    Input.HandSolid(Handed.Right, false);
-    Input.HandSolid(Handed.Left, false);
-    Input.HandVisible(Handed.Right, false);
-    Input.HandVisible(Handed.Left, false);
-
     while (SK.Step(() => {
       Renderer.CameraRoot = Matrix.T(pos);
+      Controller rCon = Input.Controller(Handed.Right); 
+      Controller lCon = Input.Controller(Handed.Left); 
 
       cube.Draw(matFloor, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
 
-      if (lefty) { domCon = Input.Controller(Handed.Left); subCon = Input.Controller(Handed.Right); }
-      else { domCon = Input.Controller(Handed.Right); subCon = Input.Controller(Handed.Left); }
-      // if (subCon.IsX2JustPressed) { lefty = !lefty; }
-
-      // ball.Draw(ballMat, Matrix.TS(pos, 0.1f));
-
-      // SpatialCursor cursor = cursors.Step(domCon.aim, subCon.aim);
 
       // Shoulders
       Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f;
-      Vec3 toSub = (subCon.pose.position.X0Z - headPos.X0Z).Normalized;
-      Vec3 toDom = (domCon.pose.position.X0Z - headPos.X0Z).Normalized;
+      Vec3 toSub = (lCon.pose.position.X0Z - headPos.X0Z).Normalized;
+      Vec3 toDom = (rCon.pose.position.X0Z - headPos.X0Z).Normalized;
       Vec3 middl = (toSub + toDom).Normalized;
 
       if (Vec3.Dot(middl, Input.Head.Forward) < 0) {
@@ -138,40 +127,40 @@ public class Monolith {
       //   subPlanted = !subPlanted;
       // }
 
-      if (domCon.stick.Magnitude > 0.1f) {
-        if (domCon.stick.y < 0f) {
-          domPlanted = true;
+      if (rCon.stick.Magnitude > 0.1f) {
+        if (rCon.stick.y < 0f) {
+          rightPlanted = true;
         }
       } else {
-        domPlanted = false;
+        rightPlanted = false;
       }
 
-      if (subCon.stick.Magnitude > 0.1f) {
-        if (subCon.stick.y < 0f) {
-          subPlanted = true;
+      if (lCon.stick.Magnitude > 0.1f) {
+        if (lCon.stick.y < 0f) {
+          leftPlanted = true;
         }
       } else {
-        subPlanted = false;
+        leftPlanted = false;
       }
 
-      cursor.Step(new Pose[] { domCon.pose, new Pose(rShoulder, Quat.LookDir(middl)) }, 1);
-      if (!domPlanted) {
-        cursor.Calibrate();
-        cursor.p0 = domCon.pose.position;
+      rightCursor.Step(new Pose[] { rCon.pose, new Pose(rShoulder, Quat.LookDir(middl)) }, 1);
+      if (!rightPlanted) {
+        rightCursor.Calibrate();
+        rightCursor.p0 = rCon.pose.position;
       }
-      subCursor.Step(new Pose[] { subCon.pose, new Pose(lShoulder, Quat.LookDir(middl)) }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
-      if (!subPlanted) {
-        subCursor.Calibrate();
-        subCursor.p0 = subCon.pose.position;
+      leftCursor.Step(new Pose[] { lCon.pose, new Pose(lShoulder, Quat.LookDir(middl)) }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
+      if (!leftPlanted) {
+        leftCursor.Calibrate();
+        leftCursor.p0 = lCon.pose.position;
       } 
       // cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 
-      cubicFlow.Step(new Pose[] { new Pose(cursor.p0, domCon.aim.orientation), new Pose(subCursor.p0, subCon.aim.orientation) }, 1);
-      if (domCon.stick.y > 0.1f || subCon.stick.y > 0.1f) {
+      cubicFlow.Step(new Pose[] { new Pose(rightCursor.p0, rCon.aim.orientation), new Pose(leftCursor.p0, lCon.aim.orientation) }, 1);
+      if (rCon.stick.y > 0.1f || lCon.stick.y > 0.1f) {
         Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
         net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
       } else {
-        net.me.cursor0 = cursor.p0; net.me.cursor1 = cursor.p0; net.me.cursor2 = subCursor.p0; net.me.cursor3 = subCursor.p0;
+        net.me.cursor0 = rightCursor.p0; net.me.cursor1 = rightCursor.p0; net.me.cursor2 = leftCursor.p0; net.me.cursor3 = leftCursor.p0;
       }
 
       // throw yourself (delta -> vel -> momentum)
@@ -200,7 +189,7 @@ public class Monolith {
       // pos += fullstick * subCon.trigger * Time.Elapsedf;
 
       // DRAG DRIFT
-      Vec3 domPos = net.me.cursor0;
+      Vec3 rPos = net.me.cursor0;
       // if (domCon.grip) {
       //   // movePress = Time.Totalf;
       //   domDragStart = domPos;
@@ -208,7 +197,7 @@ public class Monolith {
       // vel += -(domPos - domDragStart) * 24 * domCon.grip;
       // domDragStart = domPos;
 
-      Vec3 subPos = net.me.cursor3;
+      Vec3 lPos = net.me.cursor3;
       // if (subCon.grip) {
       //   // movePress = Time.Totalf;
       //   subDragStart = subPos;
@@ -217,28 +206,28 @@ public class Monolith {
       // }
       // vel += -(subPos - subDragStart) * 24 * subCon.grip;
       // subDragStart = subPos;
-      if (domCon.grip > 0.5f) {
-        if (!domGripping) {
-          gripPos = domPos;
+      if (rCon.grip > 0.5f) {
+        if (!rightGripping) {
+          gripPos = rPos;
           gripLeft = false;
-          domGripping = true;
+          rightGripping = true;
         }
       } else {
-        domGripping = false;
+        rightGripping = false;
       }
 
-      if (subCon.grip > 0.5f) {
-        if (!subGripping) {
-          gripPos = subPos;
+      if (lCon.grip > 0.5f) {
+        if (!leftGripping) {
+          gripPos = lPos;
           gripLeft = true;
-          subGripping = true;
+          leftGripping = true;
         }
       } else {
-        subGripping = false;
+        leftGripping = false;
       }
 
-      if (domGripping || subGripping) {
-        Vec3 gripTo = gripLeft ? subPos : domPos;
+      if (rightGripping || leftGripping) {
+        Vec3 gripTo = gripLeft ? lPos : rPos;
         pos = -(gripTo - Input.Head.position) + gripPos - (Input.Head.position - pos);
         vel = Vec3.Zero;
       }
@@ -252,7 +241,7 @@ public class Monolith {
       // };
       // Bezier.Draw(rail);
 
-      if (domCon.grip > 0.5f) {
+      if (rCon.grip > 0.5f) {
         if (!grinded) {
           if (!grinding) {
             int closest = 0;
@@ -269,7 +258,7 @@ public class Monolith {
                 };
                 for (int j = 0; j < rail.Length; j++) {
                   Vec3 point = Bezier.Sample(rail, (float)j / (rail.Length - 1f));
-                  float dist = Vec3.Distance(point, domCon.pose.position + vel.Normalized * 0.25f);
+                  float dist = Vec3.Distance(point, rCon.pose.position + vel.Normalized * 0.25f);
                   if (dist < closestDist && dist < 0.5f) {
                     closest = j;
                     closestRail = i;
@@ -302,7 +291,7 @@ public class Monolith {
 
             // vel += (toPos - fromPos);
 
-            pos = -(domCon.pose.position - Input.Head.position) + grindPos - (Input.Head.position - pos);
+            pos = -(rCon.pose.position - Input.Head.position) + grindPos - (Input.Head.position - pos);
             vel = Vec3.Zero;
 
             railT += Time.Elapsedf * grindVel.Magnitude * grindDir; // scale based on length of rail * calculate and cache on place
@@ -359,15 +348,15 @@ public class Monolith {
 
       // COLOR CUBE
       // reveal when palm up
-      float reveal = subCon.pose.Right.y * 1.666f;
-      float look = 1 - Math.Clamp((1 - Math.Clamp(Vec3.Dot((subCon.pose.position - Input.Head.position).Normalized, Input.Head.Forward), 0f, 1f)) * 5f, 0f, 1f);
+      float reveal = lCon.pose.Right.y * 1.666f;
+      float look = 1 - Math.Clamp((1 - Math.Clamp(Vec3.Dot((lCon.pose.position - Input.Head.position).Normalized, Input.Head.Forward), 0f, 1f)) * 5f, 0f, 1f);
       reveal *= look;
       colorCube.size = colorCube.ogSize * Math.Clamp(reveal, 0, 1);
-      colorCube.center = subCon.pose.position + subCon.pose.Right * 0.0666f;
+      colorCube.center = lCon.pose.position + lCon.pose.Right * 0.0666f;
       // move with grip
-      if (reveal > colorCube.thicc && !subPlanted) {
-        if (reveal > 1f && subCon.trigger > 0.5f) {
-          colorCube.p0 -= (subCon.pose.position - oldSubPos) / colorCube.ogSize * 2;
+      if (reveal > colorCube.thicc && !leftPlanted) {
+        if (reveal > 1f && lCon.trigger > 0.5f) {
+          colorCube.p0 -= (lCon.pose.position - oldLPos) / colorCube.ogSize * 2;
         } else {
           // clamp 0 - 1
           colorCube.p0.x = Math.Clamp(colorCube.p0.x, -1, 1);
@@ -376,7 +365,7 @@ public class Monolith {
         }
         colorCube.Step();
       }
-      oldSubPos = subCon.pose.position;
+      oldLPos = lCon.pose.position;
 
 
       // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);
@@ -385,7 +374,7 @@ public class Monolith {
       // net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
       
       net.me.headset = Input.Head;
-      net.me.mainHand = domCon.aim; net.me.offHand = subCon.aim; 
+      net.me.mainHand = rCon.aim; net.me.offHand = lCon.aim; 
       for (int i = 0; i < net.peers.Length; i++) {
         MonoNet.Peer peer = net.peers[i];
         if (peer != null) {
@@ -393,12 +382,12 @@ public class Monolith {
         }
       }
 
-      net.me.Step(domCon, subCon);
+      net.me.Step(rCon, lCon);
 
 
 
 
-      if (domCon.trigger > 0.5f && subCon.trigger > 0.5f) {
+      if (rCon.trigger > 0.5f && lCon.trigger > 0.5f) {
         if (!draggingOriel) {
           if (oriel.bounds.Contains(net.me.cursor0) || oriel.bounds.Contains(net.me.cursor3)) {
             draggingOriel = true;
@@ -434,136 +423,6 @@ public class Monolith {
   }
 }
 
-public class Mic {
-  public float[] bufferRaw = new float[0];
-  public int bufferRawSize = 0;
-
-  public int comp = 8;
-  public float[] buffer = new float[0];
-  public int bufferSize = 0;
-
-  FilterButterworth filter;
-  public void Step() {
-    if (Microphone.IsRecording) {
-      // Ensure our buffer of samples is large enough to contain all the
-      // data the mic has ready for us this frame
-      if (Microphone.Sound.UnreadSamples > bufferRaw.Length) {
-        bufferRaw = new float[Microphone.Sound.UnreadSamples];
-        buffer = new float[Microphone.Sound.UnreadSamples / comp];
-      }
-
-      // Read data from the microphone stream into our buffer, and track 
-      // how much was actually read. Since the mic data collection runs in
-      // a separate thread, this will often be a little inconsistent. Some
-      // frames will have nothing ready, and others may have a lot!
-      bufferRawSize = Microphone.Sound.ReadSamples(ref bufferRaw);
-      bufferSize = bufferRawSize / comp;
-
-      if (bufferSize > 0) {
-        // LowPassFilter lowpass = new LowPassFilter(48000 / comp / 2, 2, 48000);
-        for (int i = 0; i < bufferRawSize; i++) {
-          // bufferRaw[i] = (float)lowpass.compute(bufferRaw[i]);
-          filter.Update(bufferRaw[i]);
-          bufferRaw[i] = filter.Value;
-        }
-        // voice.WriteSamples(bufferRaw);
-      
-        buffer[0] = bufferRaw[0];
-        for (int i = 1; i < bufferSize; i++) {
-          buffer[i] = bufferRaw[i * comp - 1];
-        }
-
-        // upsample
-        float[] upsampled = new float[bufferSize * comp];
-        for (int i = 0; i < bufferSize - 1; i++) {
-          upsampled[Math.Max(i * comp - 1, 0)] = buffer[i];
-          for (int j = 1; j < comp; j++) {
-            upsampled[i * comp - 1 + j] = SKMath.Lerp(buffer[i], buffer[i + 1], (float)j / (float)comp);
-          }
-        }
-        voice.WriteSamples(upsampled);
-      }
-    } else {
-      Microphone.Start();
-      voice = Sound.CreateStream(0.5f);
-      voiceInst = voice.Play(Vec3.Zero, 0.5f);
-      filter = new FilterButterworth(48000 / comp / 2, 48000, FilterButterworth.PassType.Lowpass, (float)Math.Sqrt(2));
-    }
-  }
-  public Sound voice;
-  public SoundInst voiceInst; // update position
-
-  public class FilterButterworth {
-    /// <summary>
-    /// rez amount, from sqrt(2) to ~ 0.1
-    /// </summary>
-    private readonly float resonance;
-
-    private readonly float frequency;
-    private readonly int sampleRate;
-    private readonly PassType passType;
-
-    private readonly float c, a1, a2, a3, b1, b2;
-
-    /// <summary>
-    /// Array of input values, latest are in front
-    /// </summary>
-    private float[] inputHistory = new float[2];
-
-    /// <summary>
-    /// Array of output values, latest are in front
-    /// </summary>
-    private float[] outputHistory = new float[3];
-
-    public FilterButterworth(float frequency, int sampleRate, PassType passType, float resonance) {
-      this.resonance = resonance;
-      this.frequency = frequency;
-      this.sampleRate = sampleRate;
-      this.passType = passType;
-
-      switch (passType) {
-        case PassType.Lowpass:
-          c = 1.0f / (float)Math.Tan(Math.PI * frequency / sampleRate);
-          a1 = 1.0f / (1.0f + resonance * c + c * c);
-          a2 = 2f * a1;
-          a3 = a1;
-          b1 = 2.0f * (1.0f - c * c) * a1;
-          b2 = (1.0f - resonance * c + c * c) * a1;
-          break;
-        case PassType.Highpass:
-          c = (float)Math.Tan(Math.PI * frequency / sampleRate);
-          a1 = 1.0f / (1.0f + resonance * c + c * c);
-          a2 = -2f * a1;
-          a3 = a1;
-          b1 = 2.0f * (c * c - 1.0f) * a1;
-          b2 = (1.0f - resonance * c + c * c) * a1;
-          break;
-      }
-    }
-
-    public enum PassType {
-      Highpass,
-      Lowpass,
-    }
-
-    public void Update(float newInput) {
-      float newOutput = a1 * newInput + a2 * this.inputHistory[0] + a3 * this.inputHistory[1] - b1 * this.outputHistory[0] - b2 * this.outputHistory[1];
-
-      this.inputHistory[1] = this.inputHistory[0];
-      this.inputHistory[0] = newInput;
-
-      this.outputHistory[2] = this.outputHistory[1];
-      this.outputHistory[1] = this.outputHistory[0];
-      this.outputHistory[0] = newOutput;
-    }
-
-    public float Value {
-      get { return this.outputHistory[0]; }
-    }
-  }
-
-}
-
 public class Lerper {
   public float t = 0;
   public float spring = 1;
@@ -591,88 +450,6 @@ public class Lerper {
 
   public void Reset() {
     t = vel = 0;
-  }
-}
-
-[StructLayout(LayoutKind.Sequential)]
-struct BufferData {
-  public Vec3 position;
-  // public Vec3[] tri;
-  public float windStrength;
-}
-public class Oriel {
-  public Bounds bounds;
-  Material mat = new Material(Shader.FromFile("oriel.hlsl"));
-  Material crown = new Material(Shader.FromFile("crown.hlsl"));
-  Mesh mesh = Default.MeshCube;
-  Mesh quad = Default.MeshQuad;
-  Vec3 _dimensions;
-
-  MaterialBuffer<BufferData> buffer;
-
-  public void Start(int bufferIndex) {
-    bounds = new Bounds(Vec3.Zero, new Vec3(1f, 0.5f, 0.5f));
-    _dimensions = bounds.dimensions;
-    buffer = new MaterialBuffer<BufferData>(bufferIndex);
-  }
-
-  BufferData data = new BufferData();
-  public void Step(Vec3 p0) {
-    data.position = p0;
-    // data.a = new Color(1.0f, 0.5f, 0.5f);
-    // data.b = new Color(0.5f, 1.0f, 0.5f);
-    // data.c = new Color(0.5f, 0.5f, 1.0f);
-    // data.tri = new Vec3[] {
-    //   new Vec3(0, 0, 0),
-    //   new Vec3(0, 0, 1),
-    //   new Vec3(1, 0, 0),
-    // };
-
-    data.windStrength = (1 + (float)Math.Sin(Time.Total)) / 2;
-    buffer.Set(data);
-    
-
-    // circle around center
-    // bounds.center = Quat.FromAngles(0, 0, Time.Totalf * 60) * Vec3.Up * 0.3f;
-    // bounds.dimensions = _dimensions * (1f + (MathF.Sin(Time.Totalf * 3) * 0.3f));
-
-    
-    mat.FaceCull = Cull.Front;
-    // mat.QueueOffset = -1;
-    mat.SetVector("_dimensions", bounds.dimensions);
-    mat.SetVector("_center", bounds.center);
-    // mat.Wireframe = true;
-
-    Matrix m = Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions);
-    Pose head = Input.Head;
-    // Vec3 quadPos = head.position + head.Forward * 0.0021f;
-    // if (bounds.Contains(head.position, head.position, 0.036f)) {
-    //   mat.FaceCull = Cull.Front;
-    //   m = Matrix.TRS(head.position, head.orientation, new Vec3(1.0f, 0.5f, 0.0088f * 2));
-    //   Renderer.
-    // }
-    mesh.Draw(mat, m);
-
-    // if (bounds.Contains(head.position, quadPos)) {
-    //   quad.Draw(mat, Matrix.TRS(quadPos, Quat.LookAt(quadPos, head.position), Vec3.One * 0.5f));
-    // }
-
-    // instead of a quad, just slap the same mesh to the head
-
-
-    // crown.SetVector("_center", bounds.center);
-
-
-    // crown.SetFloat("_height", bounds.dimensions.y);
-    // crown.SetFloat("_ypos", bounds.center.y);
-    // crown.FaceCull = Cull.Front;
-    // crown.Transparency = Transparency.Add;
-    // crown.DepthTest = DepthTest.Always;
-
-    // // crown.QueueOffset = 0;
-    // // crown.DepthWrite = false;
-
-    // mesh.Draw(crown, Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions));
   }
 }
 
