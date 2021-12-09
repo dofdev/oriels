@@ -24,14 +24,12 @@ oriel.raymarch()
 # dir
 = (dof - paperParadigm).normalized
 
-server.federate()
-
 accounts = web3()
 
 &nbsp;
 
 
-# ++
+# m++
 refactor(hackathon.result())
 
 oriels.dofs == site.dofs
@@ -45,14 +43,14 @@ exec(vlai)
 &nbsp;
 
 
-# --
+# m--
 unity
-
-
 
 &nbsp;
 
-## pos += dir * <a href='https://dofdev.org'>time * funds</a>
+## p = effort * <a href='https://dofdev.org'>funds</a>
+## vel = p / m
+## pos += dir * vel * time
 
 &nbsp;
 
