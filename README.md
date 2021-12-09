@@ -19,8 +19,6 @@ net.write()
 
 oriel.raymarch()
 
-<br><br>
-
 # dir
 = (dof - paperParadigm).normalized
 
@@ -28,9 +26,7 @@ server.federate()
 
 accounts = web3()
 
-<br><br>
-
-## ++
+# ++
 oriels.dofs == site.dofs
 
 dofs.debug(CMY)
@@ -39,15 +35,11 @@ init(oriel-game)
 
 exec(vlai)
 
-<br><br>
-
-## --
+# --
 refactor(hackathon.result())
 
-<br><br>
+&nbsp;
 
-
-<br><br><br><br><br><br>
 mapped out by:
 <a href='https://ethanmerchant.com'>@spatialfree</a> * <a href='https://twitter.com/opendegree'>@opendegree</a>
 
