@@ -19,6 +19,8 @@ net.write()
 
 oriel.raymarch()
 
+&nbsp;
+
 # dir
 = (dof - paperParadigm).normalized
 
@@ -26,7 +28,12 @@ server.federate()
 
 accounts = web3()
 
+&nbsp;
+
+
 # ++
+refactor(hackathon.result())
+
 oriels.dofs == site.dofs
 
 dofs.debug(CMY)
@@ -35,8 +42,21 @@ init(oriel-game)
 
 exec(vlai)
 
+&nbsp;
+
+
 # --
-refactor(hackathon.result())
+unity
+
+
+
+&nbsp;
+
+## pos += dir * time * funds
+
+&nbsp;
+
+&nbsp;
 
 &nbsp;
 
