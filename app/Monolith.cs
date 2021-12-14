@@ -376,7 +376,7 @@ public class Monolith {
       net.me.headset = Input.Head;
       net.me.mainHand = rCon.aim; net.me.offHand = lCon.aim; 
       for (int i = 0; i < net.peers.Length; i++) {
-        MonoNet.Peer peer = net.peers[i];
+        Peer peer = net.peers[i];
         if (peer != null) {
           peer.Draw(true);
         }

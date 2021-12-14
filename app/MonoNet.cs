@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using StereoKit;
 
-public class MonoNet {
+class MonoNet {
   public Monolith mono;
   public MonoNet(Monolith mono) {
     this.mono = mono;
@@ -100,6 +100,10 @@ public class MonoNet {
   void Write() {
     bool running = true;
     while (running) {
+      Thread.Sleep(60);
+      if (Input.Controller(Handed.Right).IsTracked)
+        continue;
+
       wHead = 0;
       WriteInt(me.id);
       WriteColor(me.color);
@@ -113,8 +117,6 @@ public class MonoNet {
       WriteBlock(me.blocks);
       WriteCubic(me.cubics);
       socket.Send(wData);
-
-      Thread.Sleep(60);
     }
   }
 
@@ -265,295 +267,82 @@ public class MonoNet {
     publicIP = new HttpClient().GetStringAsync("https://ipv4.icanhazip.com/").Result.TrimEnd();
   }
 
-  public class Peer {
-    public float lastPing;
-
-    public int id; // on connect: wait on server sending your peer id
-    public Color color;
-    public Vec3 cursor0, cursor1, cursor2, cursor3;
-    public Pose headset;
-    public Pose offHand;
-    public Pose mainHand;
-    public Block[] blocks;
-    public Cubic[] cubics;
-    // public Sound voice;
-    // public SoundInst voiceInst; // update position
-
-    public Peer(int id, SolidType type, Color color) {
-      this.id = id;
-      blocks = new Block[] {
-        new Block(type, color),
-        new Block(type, color),
-        new Block(type, color),
-        new Block(type, color),
-        new Block(type, color),
-        new Block(type, color)
-      };
-      cubics = new Cubic[] {
-        new Cubic(),
-        new Cubic(),
-        new Cubic(),
-        new Cubic(),
-        new Cubic(),
-        new Cubic()
-      };
-      // voice = Sound.CreateStream(0.5f);
-      // voiceInst = voice.Play(Vec3.Zero, 0.5f);
-    }
-
-    BlockCon dBlock = new BlockCon();
-    BlockCon sBlock = new BlockCon();
-
-    CubicCon cubicCon = new CubicCon();
-
-    public void Step(Controller domCon, Controller subCon) {
-      dBlock.Step(domCon, subCon, cursor0, ref sBlock, ref blocks);
-      sBlock.Step(subCon, domCon, cursor3, ref dBlock, ref blocks);
-
-      cubicCon.Step(domCon, subCon, this, ref cubics);
-
-      Draw(false);
-    }
-
-    class BlockCon {
-      public int index = -1;
-      public Vec3 offset = Vec3.Zero;
-      public Quat heldRot = Quat.Identity, spinRot = Quat.Identity, spinDelta = Quat.Identity;
-      public Quat oldConRot = Quat.Identity, oldHeldRot = Quat.Identity;
-      public Vec3 delta = Vec3.Zero, momentum = Vec3.Zero, angularMomentum = Vec3.Zero;
-
-      float lastPressed = 0;
-      bool pressed = false;
-
-      public void Step(Controller con, Controller otherCon, Vec3 cursor, ref BlockCon otherBlockCon, ref Block[] blocks) {
-        bool doublePressed = false;
-        if (con.trigger > 0.5f) {
-          if (!pressed) {
-            if (lastPressed > Time.Totalf - 0.5f) {
-              doublePressed = true;
-            }
-            lastPressed = Time.Totalf;
-            pressed = true;
-          }
-        } else {
-          pressed = false;
-        }
-
-        if (doublePressed) {
-          if (index < 0) {
-            bool bFound = false;
-            for (int i = 0; i < blocks.Length; i++) {
-              if (!blocks[i].active) {
-                blocks[i].Enable(cursor, Quat.Identity);
-                bFound = true;
-                break;
-              }
-            }
-            if (!bFound) {
-              blocks[PullRequest.RandomRange(0, blocks.Length)].Enable(cursor, Quat.Identity);
-            }
-          } else {
-            blocks[index].Disable();
-            index = -1;
-          }
-        } 
-
-        Quat conRotDelta = (con.aim.orientation * oldConRot.Inverse).Normalized;
-
-        if (con.trigger > 0.1f) {
-          if (index < 0) {
-            // BLOCK EXCHANGE
-            // loop over peer blocks as well
-            // disable theirs ? (id of the peer, index of block)
-            // wait for their block to be disabled
-            // recycle one of yours to replace it
-
-            for (int i = 0; i < blocks.Length; i++) {
-              Pose blockPose = blocks[i].solid.GetPose();
-              Bounds bounds = new Bounds(Vec3.Zero, Vec3.One * blocks[i].size);
-              if (blocks[i].active && bounds.Contains(blockPose.orientation.Inverse * (cursor - blockPose.position))) {
-                index = i;
-                if (otherBlockCon.index == i) {
-                  otherBlockCon.index = -1;
-                }
-                // block.color = colorCube.color;
-                // clear
-                spinRot = spinDelta = Quat.Identity;
-                blocks[i].solid.SetAngularVelocity(Vec3.Zero);
-                blocks[i].solid.SetVelocity(Vec3.Zero);
-                // set
-                heldRot = (con.aim.orientation.Inverse * blockPose.orientation).Normalized;
-                offset = blockPose.orientation.Inverse * (blockPose.position - cursor);
-
-                // 
-                break;
-              }
-            }
-          }
-
-          if (index >= 0) {
-            Quat newRot = (con.aim.orientation * heldRot * spinRot).Normalized;
-            // trackballer
-            if (con.trigger > 0.99f) {
-              spinDelta = Quat.Slerp(
-                spinDelta.Normalized,
-                (newRot.Inverse * conRotDelta * newRot).Normalized,
-                Time.Elapsedf / 0.1f
-              );
-            }
-            spinRot *= spinDelta * spinDelta;
-            Quat toRot = (con.aim.orientation * heldRot * spinRot).Normalized;
-            Vec3 toPos = cursor + (con.aim.orientation * heldRot * spinRot).Normalized * offset;
-            // cursor - offset;
-            if (con.stick.y > 0.1f) {
-              toRot = blocks[index].solid.GetPose().orientation;
-            }
-            blocks[index].solid.Move(toPos, toRot);
-
-            Quat newHeldRot = blocks[index].solid.GetPose().orientation;
-            angularMomentum = Vec3.Lerp(angularMomentum, PullRequest.AngularDisplacement((newHeldRot * oldHeldRot.Inverse).Normalized), Time.Elapsedf / 0.1f);
-            oldHeldRot = newHeldRot;
-
-            delta = (cursor + (con.aim.orientation * heldRot * spinRot).Normalized * offset) - blocks[index].solid.GetPose().position;
-            momentum = Vec3.Lerp(momentum, delta, Time.Elapsedf / 0.1f);
-          }
-        } else {
-          if (index >= 0) {
-            blocks[index].solid.SetAngularVelocity(angularMomentum / Time.Elapsedf);
-            blocks[index].solid.SetVelocity(momentum / Time.Elapsedf);
-          }
-          index = -1;
-        }
-
-        oldConRot = con.aim.orientation;
-      }
-    }
-
-    class CubicCon {
-      public void Step(Controller domCon, Controller subCon, Peer peer, ref Cubic[] cubics) {
-        bool place = domCon.IsStickJustClicked || subCon.IsStickJustClicked;
-        if (place) {
-          for (int i = 0; i < cubics.Length; i++) {
-            if (!cubics[i].active) {
-              cubics[i].Enable(peer.cursor0, peer.cursor1, peer.cursor2, peer.cursor3, peer.color);
-              break;
-            }
-          }
-          cubics[PullRequest.RandomRange(0, cubics.Length)].Enable(peer.cursor0, peer.cursor1, peer.cursor2, peer.cursor3, peer.color);
-        }
-      }
-    }
-
-    public void Draw(bool body) {
-      if (body){
-        // Cube(Matrix.TRS(cursor0, Quat.Identity, Vec3.One * 0.05f), color);
-        Cube(Matrix.TRS(headset.position + Input.Head.Forward * -0.15f, headset.orientation, Vec3.One * 0.3f), color);
-        // Cube(offHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
-        // Cube(mainHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
-
-        Bezier.Draw(cursor0, cursor1, cursor2, cursor3, Color.White);
-      }
-        // Cube(offHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
-        // Cube(mainHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
-    
-      Cube(Matrix.TRS(cursor0, mainHand.orientation, new Vec3(0.025f, 0.1f, 0.1f)), color);
-      Cube(Matrix.TRS(cursor3, offHand.orientation, new Vec3(0.025f, 0.1f, 0.1f)), color);
-
-      for (int i = 0; i < blocks.Length; i++) {
-        if (blocks[i].solid.GetPose().position.y < -10) {
-          blocks[i].Disable();
-        } else {
-          blocks[i].Draw();
-        }
-      }
-
-      for (int i = 0; i < cubics.Length; i++) {
-        cubics[i].Draw();
-      }
-    }
-
-    static Mesh meshCube = Default.MeshCube;
-    static Material matCube = Default.Material;
-    public void Cube(Matrix m, Color color) {
-      matCube.FaceCull = Cull.None;
-      meshCube.Draw(matCube, m, color);
-    }
-  }
 }
 
-public class Block {
-  public static Mesh mesh = Default.MeshCube;
-  public static Material mat = Default.Material;
+class Peer {
+  public float lastPing;
 
-  public bool active = false;
-  public Solid solid;
-
+  public int id; // on connect: wait on server sending your peer id
   public Color color;
-  public float size = 0.5f;
+  public Vec3 cursor0, cursor1, cursor2, cursor3;
+  public Pose headset;
+  public Pose offHand;
+  public Pose mainHand;
+  public Block[] blocks;
+  public Cubic[] cubics;
+  // public Sound voice;
+  // public SoundInst voiceInst; // update position
 
-  // if you grab someone else's it becomes your own
-  // how to communicate to the other peer that you have grabbed it?
-  // public int request; // request ownership
-  // public int owner; // then if owner continue as usual
-  // public bool busy; // marked as held so no fighting
-  public Block(SolidType type, Color color) {
-    this.solid = new Solid(Vec3.Zero, Quat.Identity, type);
-    this.size = 0.5f;
-    this.solid.AddBox(Vec3.One * size, 3);
-    this.color = color;
-    Disable();
+  public Peer(int id, SolidType type, Color color) {
+    this.id = id;
+    blocks = new Block[] {
+      new Block(type, color), new Block(type, color), new Block(type, color),
+      new Block(type, color), new Block(type, color), new Block(type, color)
+    };
+    cubics = new Cubic[] {
+      new Cubic(), new Cubic(), new Cubic(),
+      new Cubic(), new Cubic(), new Cubic()
+    };
+    // voice = Sound.CreateStream(0.5f);
+    // voiceInst = voice.Play(Vec3.Zero, 0.5f);
   }
 
-  // public Block(Vec3 pos, Quat rot, SolidType type, Color color) {
-  //   this.solid = new Solid(pos, rot, type);
-  //   this.solid.AddBox(Vec3.One, 1);
-  //   this.color = color;
-  // }
+  BlockCon dBlock = new BlockCon();
+  BlockCon sBlock = new BlockCon();
 
-  public void Enable(Vec3 pos, Quat rot) {
-    solid.SetAngularVelocity(Vec3.Zero);
-    solid.SetVelocity(Vec3.Zero);
-    solid.Teleport(pos, rot);
-    solid.Enabled = active = true;
+  CubicCon cubicCon = new CubicCon();
+
+  public void Step(Controller domCon, Controller subCon) {
+    dBlock.Step(domCon, subCon, cursor0, ref sBlock, ref blocks);
+    sBlock.Step(subCon, domCon, cursor3, ref dBlock, ref blocks);
+
+    cubicCon.Step(domCon, subCon, this, ref cubics);
+
+    Draw(false);
   }
 
-  public void Disable() {
-    solid.Enabled = active = false;
-  }
+  public void Draw(bool body) {
+    if (body){
+      // Cube(Matrix.TRS(cursor0, Quat.Identity, Vec3.One * 0.05f), color);
+      Cube(Matrix.TRS(headset.position + Input.Head.Forward * -0.15f, headset.orientation, Vec3.One * 0.3f), color);
+      // Cube(offHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
+      // Cube(mainHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
 
-  public void Draw() {
-    if (active) {
-      mesh.Draw(mat, solid.GetPose().ToMatrix(Vec3.One * size), color);
+      Bezier.Draw(cursor0, cursor1, cursor2, cursor3, Color.White);
+    }
+      // Cube(offHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
+      // Cube(mainHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
+  
+    Cube(Matrix.TRS(cursor0, mainHand.orientation, new Vec3(0.025f, 0.1f, 0.1f)), color);
+    Cube(Matrix.TRS(cursor3, offHand.orientation, new Vec3(0.025f, 0.1f, 0.1f)), color);
+
+    for (int i = 0; i < blocks.Length; i++) {
+      if (blocks[i].solid.GetPose().position.y < -10) {
+        blocks[i].Disable();
+      } else {
+        blocks[i].Draw();
+      }
+    }
+
+    for (int i = 0; i < cubics.Length; i++) {
+      cubics[i].Draw();
     }
   }
-}
 
-public class Cubic {
-  public bool active;
-  public Vec3 p0, p1, p2, p3;
-  public Color color;
-
-  public Cubic() {
-    color = Color.White;
-    active = false;
-  }
-
-  public void Enable(Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, Color c) {
-    this.p0 = p0;
-    this.p1 = p1;
-    this.p2 = p2;
-    this.p3 = p3;
-    color = c;
-    active = true;
-  }
-
-  public void Disable() {
-    active = false;
-  }
-
-  public void Draw() {
-    if (active) {
-      Bezier.Draw(p0, p1, p2, p3, color);
-    }
+  static Mesh meshCube = Default.MeshCube;
+  static Material matCube = Default.Material;
+  public void Cube(Matrix m, Color color) {
+    matCube.FaceCull = Cull.None;
+    meshCube.Draw(matCube, m, color);
   }
 }
