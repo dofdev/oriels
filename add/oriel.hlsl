@@ -177,8 +177,8 @@ psOut ps(psIn input) {
 
   float3 ro = input.campos; // ray origin
   float3 rd = normalize(input.world - ro); // ray direction
-  float oriel = oriel(ro, rd);
-  ro += oriel * rd;
+  float ol = oriel(ro, rd);
+  ro += ol * rd;
   float dist = raymarch(ro, rd);
   // float dist = raymarch(ro, rd);
 
@@ -211,8 +211,8 @@ psOut ps(psIn input) {
   }
 
   // input.color = float4(col, 1);
-  
-  // if (input.world.x > 0.0) {
+
+  // if (input.world.y > (_center.y + _dimensions.y / 2.0 ) - 0.0666) {
   //   col = float3(1 - col.r, 1 - col.g, 1 - col.b);
   // }
   result.color = float4(col, 1);
@@ -229,7 +229,6 @@ psOut ps(psIn input) {
   // input.pos.w;
   // result.depth = zc/wc;
   // result.color.rgb = float3(zc/wc);
-
 
   return result;
 }
