@@ -45,10 +45,11 @@ public class Oriel {
     // bounds.center = Quat.FromAngles(0, 0, Time.Totalf * 60) * Vec3.Up * 0.3f;
     // bounds.dimensions = _dimensions * (1f + (MathF.Sin(Time.Totalf * 3) * 0.3f));
 
+    // bounds.center.y = (float)Math.Sin(Time.Totalf * 3) * 0.3f;
 
     mat.FaceCull = Cull.Front;
-    mat.DepthTest = DepthTest.Always;
-    mat.QueueOffset = 1000;
+    // mat.DepthTest = DepthTest.Always;
+    // mat.QueueOffset = 1000;
     
     mat.SetFloat("_distmax", 1000);
     mat.SetVector("_dimensions", bounds.dimensions);

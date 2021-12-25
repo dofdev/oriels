@@ -26,7 +26,7 @@ struct vsIn {
 struct psIn {
   float4 color : COLOR0;
   float4 pos   : SV_POSITION;
-  float3 norm  : NORMAL2;
+  float3 norm  : NORMAL1;
   float2 uv    : TEXCOORD0;
   float3 campos : TEXCOORD1;
   float3 world : TEXCOORD2;
@@ -116,13 +116,17 @@ float map(float3 pos) {
   // float octo = sdOctahedron(pos - _center - position, 0.2);
   float frame = sdBoxFrame(pos - _center - position, float3(0.06, 0.06, 0.06), 0.004);
 
-  float orielFrame = sdBoxFrame(pos - _center, _dimensions / 2, 0.001);
+  float orielFrame = sdBoxFrame(pos - _center, _dimensions / 2, 0.0006);
+  float3 d = _dimensions / 2;
+  d.y = _height;
+
+  float orielCrown = sdBoxFrame(pos - _center, d, 0.000);
   // float box = sdBox(pos - _center, _dimensions / 2.1);
   // return lerp(sphere, octo, time);
-  float plane = sdPlane(pos - _center + float3(0, 0.5, 0), float3(0, 1, 0), 0);
+  float plane = sdPlane(pos + float3(0, 1.5, 0), float3(0, 1, 0), 0);
 
   // float blendd = lerp(octo, frame, time);
-  return min(min(plane, orielFrame), sphere);
+  return min(plane, sphere);
 }
 
 float raymarch(float3 ro, float3 rd) {
@@ -183,14 +187,14 @@ psOut ps(psIn input) {
   // float dist = raymarch(ro, rd);
 
   // shading/lighting	
+  float3 pos = ro + dist * rd;
+  float3 light = float3(0.0, 1.0, 0.0);
+  float3 lightDir = normalize(light - pos);
   float3 col = float3(0.5, 0.75, 0.9);
   if (dist == 0.0) {
     col = float3(0.15, 0.15, 0.15);
   }
   if (dist < _distmax && dist > 0.0) {
-    float3 pos = ro + dist * rd;
-    float3 light = float3(0.0, 1.0, 0.0);
-    float3 lightDir = normalize(light - pos);
     float3 nor = calcNormal(pos);
     float dif = clamp(dot(nor, lightDir), 0.0, 1.0);
     float amb = 0.5 + 0.5 * dot(nor, lightDir);
@@ -212,9 +216,13 @@ psOut ps(psIn input) {
 
   // input.color = float4(col, 1);
 
-  // if (input.world.y > (_center.y + _dimensions.y / 2.0 ) - 0.0666) {
-  //   col = float3(1 - col.r, 1 - col.g, 1 - col.b);
-  // }
+  if (input.world.y > (_center.y + _dimensions.y / 2.0 ) - 0.0666) {
+    float value = (col.r + col.r + col.g + col.g + col.g + col.b) / 6;
+    float lit = abs((1 - clamp(dot(input.norm, lightDir), -1.0, 1.0)) / 2);
+    value = (1 + lit + value) / 3;
+    col = lerp(float3(1, 1, 1) * value, col * lit, 0.333);
+    // col = float3(1 - col.r, 1 - col.g, 1 - col.b);
+  }
   result.color = float4(col, 1);
 
   // float4x4 worldToViewMatrix = sk_view[input.view_id];
