@@ -26,6 +26,8 @@ class MonoNet {
     socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
     string ip = "192.168.1.70";
     ip = "139.177.201.219";
+    
+
     EndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), 1234);
     socket.Connect(serverEndPoint);
     rData = new byte[bufferSize];

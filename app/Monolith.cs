@@ -28,7 +28,8 @@ public class Monolith {
   Mesh cube = Default.MeshCube;
 
   public void Run() {
-    Renderer.SetClip(0.05f, 10f);
+    Renderer.SetClip(0.0f, 1000f);
+    // Renderer.
     // mic = new Mic();
     Vec3 pos = new Vec3(0, 0, 0);
     Vec3 vel = new Vec3(0, 0, 0);
@@ -126,6 +127,28 @@ public class Monolith {
       // if (subCon.IsX1JustPressed) {
       //   subPlanted = !subPlanted;
       // }
+
+
+
+
+
+
+      // there is a lot of stuff in this class that needs to move out
+      // as we need to make way for an oriel game, for god's sake
+      // start with the largest and work our way down
+      // is there someway to package these systems in a sensible way
+      // there is something about a player here... though that may be to general...
+
+
+      // don't crash if server isn't up
+      // its not tho...
+
+
+
+
+
+
+
 
       if (rCon.stick.Magnitude > 0.1f) {
         if (rCon.stick.y < 0f) {

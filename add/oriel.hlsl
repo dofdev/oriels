@@ -1,7 +1,8 @@
 #include "stereokit.hlsli"
 
-//--name = dofdev/oriel
+// --name = dofdev/oriel
 // float4       color;
+float _distmax;
 float _height;
 float _ypos;
 float3 _dimensions;
@@ -9,10 +10,12 @@ float3 _center;
 Texture2D tex; // : register(t0);
 SamplerState tex_s; // : register(s0);
 
+
 cbuffer BufferData : register(b3) {
   float3 position;
-  float  windStrength;
+  float  time;
 };
+
 
 struct vsIn {
   float4 pos  : SV_POSITION;
@@ -46,9 +49,9 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
 
   o.uv    = input.uv;
   o.color = input.col;
-  float lighting = dot(o.norm, normalize(float3(-0.3, 0.6, 0.1)));
-  lighting = (clamp(lighting, 0, 1) * 0.8) + 0.2;
-  o.color.rgb = o.color.rgb * lighting; // * sk_inst[id].color;
+  // float lighting = dot(o.norm, normalize(float3(-0.3, 0.6, 0.1)));
+  // lighting = (clamp(lighting, 0, 1) * 0.8) + 0.2;
+  // o.color.rgb = o.color.rgb * lighting; // * sk_inst[id].color;
   return o;
 }
 
@@ -59,31 +62,6 @@ float3 cross(float3 a, float3 b) {
 float dot(float3 a, float3 b) {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 }
-
-// float tri_raycast(float3 origin, float3 dir) {
-//   float final = -1;
-//   float3 v0 = tri[0].xyz;
-//   float3 v1 = tri[1].xyz;
-//   float3 v2 = tri[2].xyz;
-//   float3 e1 = v1 - v0;
-//   float3 e2 = v2 - v0;
-//   float3 h = cross(dir, e2);
-//   float a = dot(e1, h);
-//   if (a > -0.00001 && a < 0.00001) {} else{
-//     float f = 1 / a;
-//     float3 s = origin - v0;
-//     float u = f * dot(s, h);
-//     if (u < 0.0 || u > 1.0) {} else {
-//       float3 q = cross(s, e1);
-//       float v = f * dot(dir, q);
-//       if (v < 0.0 || u + v > 1.0) {} else {
-//         float t = f * dot(e2, q);
-//         if (t > 0.00001) { final = 1.0;} // t
-//       }
-//     }
-//   }
-//   return final;
-// }
 
 float sdSphere(float3 p, float s) {
   return length(p) - s;
@@ -116,30 +94,47 @@ float sdBoxFrame(float3 p, float3 b, float e) {
   );
 }
 
-float opRep(float3 p, float3 c)
-{
-  float3 q = modf(p + 0.5 * c, c) - 0.5 * c;
-  return sdSphere(q, 0.1);
+float oriel(float3 ro, float3 rd) {
+	float dist = 0.0;
+  for (int i = 0; i < 256; i++) {
+    float3 pos = ro + dist * rd;
+    float step = sdBox(pos - _center, _dimensions / 2);
+    if (step < 0.0001 || dist > _distmax) break;
+    dist += step;
+  }
+  
+  return dist;
 }
 
 float map(float3 pos) {
   // pos.x = _center.x + pos.x;
   // pos.y = _center.y + pos.y;
   // pos.z = _center.z - pos.z;
-  float sphere = sdSphere(pos + float3(0, 0, -1) - _center, 0.1);
+  float3 spin = float3(sin(time), 0, cos(time)) * 0.5;
+  float sphere = sdSphere(pos + spin - _center, 0.1);
   // return sdLink(pos, 0.1, 0.1, 0.1);
   // float octo = sdOctahedron(pos - _center - position, 0.2);
   float frame = sdBoxFrame(pos - _center - position, float3(0.06, 0.06, 0.06), 0.004);
 
-  float orielFrame = sdBoxFrame(pos - _center, _dimensions / 2, 0.004);
-  // return lerp(sphere, octo, windStrength);
+  float orielFrame = sdBoxFrame(pos - _center, _dimensions / 2, 0.001);
+  // float box = sdBox(pos - _center, _dimensions / 2.1);
+  // return lerp(sphere, octo, time);
   float plane = sdPlane(pos - _center + float3(0, 0.5, 0), float3(0, 1, 0), 0);
 
-  // float blendd = lerp(octo, frame, windStrength);
-  // return min(min(plane, orielFrame), frame);
+  // float blendd = lerp(octo, frame, time);
   return min(min(plane, orielFrame), sphere);
+}
+
+float raymarch(float3 ro, float3 rd) {
+	float dist = 0.0;
+  for (int i = 0; i < 256; i++) {
+    float3 pos = ro + dist * rd;
+    float step = map(pos);
+    if (step < 0.0001 || dist > _distmax) break;
+    dist += step;
+  }
   
-  // return opRep(pos - _center, float3(0, 0, 0));
+  return dist;
 }
 
 float3 calcNormal(float3 pos)
@@ -172,76 +167,28 @@ float calcShadow(float3 pos, float3 light) {
   float3 rd = normalize(light - pos);
   float3 ro = pos + rd * 0.1;
 
-  float tmax = 100;
-  float t = 0.0;
-  for (int i = 0; i < 256; i++) {
-    float3 pos = ro + t * rd;
-    float h = map(pos);
-    if (h < 0.0001 || t > tmax) break;
-    t += h;
-  }
-  if (t < tmax) {
-    t = 0;
-  } else {
-    t = 1;
-  }
-
-  return t;
+  float dist = raymarch(ro, rd);
+  return (float)(dist > _distmax);
 }
-
-float calcSoftshadow(in float3 ro, in float3 rd, in float mint, in float tmax, in float k) {
-  // bounding volume
-  float tp = (0.8-ro.y)/rd.y; if( tp>0.0 ) tmax = min( tmax, tp );
-
-  float res = 1.0;
-  float t = mint;
-  for( int i=0; i<24; i++ ) {
-  float h = map( ro + rd*t ).x;
-    float s = clamp(8.0*h/t,0.0,1.0);
-    res = min( res, k*s*s*(3.0-2.0*s) );
-    t += clamp( h, 0.02, 0.2 );
-    if( res<0.004 || t>tmax ) break;
-  }
-  return clamp( res, 0.0, 1.0 );
-}
-
-// float RayMarch(vec3 ro, vec3 rd) {
-// 	float dO=0.;
-    
-//   for(int i=0; i<MAX_STEPS; i++) {
-//     vec3 p = ro + rd*dO;
-//     float dS = GetDist(p);
-//     dO += dS;
-//     if(dO>MAX_DIST || dS<SURF_DIST) break;
-//   }
-  
-//   return dO;
-// }
 
 psOut ps(psIn input) {
   psOut result;
-
   result.depth = input.pos.z;
 
-  float3 worldIntersection;
   float3 ro = input.campos; // ray origin
   float3 rd = normalize(input.world - ro); // ray direction
-  // input.color = float4(float3(1,1,1) * max(tri_raycast(input.world, ray), 0.0), 1);
-
-  // raymarch
-  float tmax = 100;
-  float t = 0.0;
-  for (int i = 0; i < 256; i++) {
-    float3 pos = ro + t * rd;
-    float h = map(pos);
-    if (h < 0.0001 || t > tmax) break;
-    t += h;
-  }
+  float oriel = oriel(ro, rd);
+  ro += oriel * rd;
+  float dist = raymarch(ro, rd);
+  // float dist = raymarch(ro, rd);
 
   // shading/lighting	
   float3 col = float3(0.5, 0.75, 0.9);
-  if (t < tmax) {
-    float3 pos = ro + (t * rd);
+  if (dist == 0.0) {
+    col = float3(0.15, 0.15, 0.15);
+  }
+  if (dist < _distmax && dist > 0.0) {
+    float3 pos = ro + dist * rd;
     float3 light = float3(0.0, 1.0, 0.0);
     float3 lightDir = normalize(light - pos);
     float3 nor = calcNormal(pos);
@@ -249,48 +196,26 @@ psOut ps(psIn input) {
     float amb = 0.5 + 0.5 * dot(nor, lightDir);
     float ao = calcAO(pos, nor);
     float sh = calcShadow(pos, light);
-    // float sh = calcSoftshadow(pos, light, 0.02, 2.5, 32);
     dif *= ao * sh;
     col = float3(0.1, 0.5, 0.3) * amb + float3(0.6, 0.8, 0.3) * dif;
 
-    // float3 lightPos = float3(0, 3, 0);
-    // float3 rayo = pos;
-    // float3 rayd = normalize(lightPos - pos);
-    // float ttmax = 6.0;
-    // float tt = 0.0;
-    // for (int i = 0; i < 256; i++) {
-    //   float3 pp = rayo + tt * rayd;
-    //   float hh = map(pp);
-    //   if (hh < 0.0001 || tt > tmax) break;
-    //   tt += hh;
+    // if (sdBox(pos - _center, _dimensions / 2) == 0.0) {
+    //   float4 clipPos = mul(float4(pos, 1), sk_viewproj[input.view_id]);
+    //   float near = 0.0;
+    //   float far = _distmax;
+    //   float a = (far + near) / (far - near);
+    //   float b = 2.0 * far * near / (far - near);
+    //   result.depth = a + b / clipPos.z;
+    //   // result.depth = clipPos.z;
     // }
-    // if (tt < length(lightPos - rayo)) {
-    //   col *= 0.5;
-    // }
-
-    if(sdBox(pos - _center, _dimensions / 2) <= 0.005) {
-      float4 clipPos = mul(float4(pos,     1), sk_viewproj[input.view_id]);
-      // o.pos =          mul(float4(o.world, 1), sk_viewproj[o.view_id]);
-      result.depth = clipPos.z;
-
-      // float4 viewWorldPos = mul(float4(pos, 1), sk_view[input.view_id]);
-
-      // float near = 0.05;
-      // float far = 100;
-
-      // float a = (far+near)/(far-near);
-      // float b = 2.0*far*near/(far-near);
-      // result.depth = a + b/viewWorldPos.z;
-
-    }
   }
 
-  // input.color = float4(float3(1,1,1) * max(t, 0.0), 1);
-  input.color = float4(col, 1);
-
-  // input.color = float4(float3(1,1,1) * sdSphere(input.uv, float2(0.2, 0.2), float2(0.8, 0.8)), 1);
-  // input.color.r = rr;
-  result.color = input.color;
+  // input.color = float4(col, 1);
+  
+  // if (input.world.x > 0.0) {
+  //   col = float3(1 - col.r, 1 - col.g, 1 - col.b);
+  // }
+  result.color = float4(col, 1);
 
   // float4x4 worldToViewMatrix = sk_view[input.view_id];
   // float4 viewIntersectionPos = worldToViewMatrix * float4(worldIntersection, 1.0);
@@ -301,9 +226,10 @@ psOut ps(psIn input) {
   // result.depth = (-viewIntersectionPos.z - n) / (f - n) * viewIntersectionPos.w;
 
   // worldIntersection = float3(0.0);
-///input.pos.w;
+  // input.pos.w;
   // result.depth = zc/wc;
   // result.color.rgb = float3(zc/wc);
+
 
   return result;
 }

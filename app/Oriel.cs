@@ -6,7 +6,7 @@ using StereoKit;
 struct BufferData {
   public Vec3 position;
   // public Vec3[] tri;
-  public float windStrength;
+  public float time;
 }
 
 public class Oriel {
@@ -37,7 +37,7 @@ public class Oriel {
     //   new Vec3(1, 0, 0),
     // };
 
-    data.windStrength = (1 + (float)Math.Sin(Time.Total)) / 2;
+    data.time = (float)Time.Total;
     buffer.Set(data);
 
 
@@ -47,7 +47,10 @@ public class Oriel {
 
 
     mat.FaceCull = Cull.Front;
-    // mat.QueueOffset = -1;
+    mat.DepthTest = DepthTest.Always;
+    mat.QueueOffset = 1000;
+    
+    mat.SetFloat("_distmax", 1000);
     mat.SetVector("_dimensions", bounds.dimensions);
     mat.SetVector("_center", bounds.center);
     // mat.Wireframe = true;
