@@ -32,9 +32,13 @@ accounts = web3()
 # m++
 refactor(hackathon.result())
 
-oriels.dofs == site.dofs
+oriel manipulation
 
 dofs.debug(CMY)
+
+cursor combinatory mechanism
+
+oriels.dofs == site.dofs
 
 init(oriel-game)
 

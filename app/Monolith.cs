@@ -76,10 +76,6 @@ public class Monolith {
     camMat.SetTexture("diffuse", camTex);
     Mesh quad = Default.MeshQuad;
 
-    bool draggingOriel = false;
-    Vec3 orielOffset = Vec3.Zero;
-
-
     Vec3 gripPos = Vec3.Zero;
     bool rightGripping = false, leftGripping = false;
     bool gripLeft = false;
@@ -410,24 +406,7 @@ public class Monolith {
 
 
 
-      if (rCon.trigger > 0.5f && lCon.trigger > 0.5f) {
-        if (!draggingOriel) {
-          if (oriel.bounds.Contains(net.me.cursor0) || oriel.bounds.Contains(net.me.cursor3)) {
-            draggingOriel = true;
-          }
-        } else {
-          oriel.bounds.center = Vec3.Lerp(net.me.cursor0, net.me.cursor3, 0.5f);
-          //
-          float distX = Math.Abs(net.me.cursor0.x - net.me.cursor3.x);
-          float distY = Math.Abs(net.me.cursor0.y - net.me.cursor3.y);
-          float distZ = Math.Abs(net.me.cursor0.z - net.me.cursor3.z);
-          oriel.bounds.dimensions = new Vec3(distX, distY, distZ);
-        }
-      } else {
-        draggingOriel = false;
-      }
-
-      oriel.Step(net.me.cursor0);
+      oriel.Step(net.me.cursor0, net.me.cursor3);
 
       // otherOriel.bounds.center = Vec3.Forward * -2;
       // otherOriel.Step();

@@ -20,13 +20,11 @@
 
   <ItemGroup>
     <None Remove="add/oriel.hlsl" />
-    <None Remove="add/crown.hlsl" />
     <None Remove="add/colorcube.hlsl" />
   </ItemGroup>
 
   <ItemGroup>
     <SKShader Include="add/oriel.hlsl" />
-    <SKShader Include="add/crown.hlsl" />
     <SKShader Include="add/colorcube.hlsl" />
   </ItemGroup>
 

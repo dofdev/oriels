@@ -7,6 +7,7 @@ float _height;
 float _ypos;
 float3 _dimensions;
 float3 _center;
+float _crown;
 Texture2D tex; // : register(t0);
 SamplerState tex_s; // : register(s0);
 
@@ -114,19 +115,19 @@ float map(float3 pos) {
   float sphere = sdSphere(pos + spin - _center, 0.1);
   // return sdLink(pos, 0.1, 0.1, 0.1);
   // float octo = sdOctahedron(pos - _center - position, 0.2);
-  float frame = sdBoxFrame(pos - _center - position, float3(0.06, 0.06, 0.06), 0.004);
+  // float frame = sdBoxFrame(pos - _center - position, float3(0.06, 0.06, 0.06), 0.004);
 
-  float orielFrame = sdBoxFrame(pos - _center, _dimensions / 2, 0.0006);
-  float3 d = _dimensions / 2;
-  d.y = _height;
+  // float orielFrame = sdBoxFrame(pos - _center, _dimensions / 2, 0.0006);
+  // float3 d = _dimensions / 2;
+  // d.y = _height;
+  // float orielCrown = sdBoxFrame(pos - _center, d, 0.000);
 
-  float orielCrown = sdBoxFrame(pos - _center, d, 0.000);
-  // float box = sdBox(pos - _center, _dimensions / 2.1);
+  float box = sdBox(pos - _center, float3(0.1, 0.1, 0.1));
   // return lerp(sphere, octo, time);
   float plane = sdPlane(pos + float3(0, 1.5, 0), float3(0, 1, 0), 0);
 
   // float blendd = lerp(octo, frame, time);
-  return min(plane, sphere);
+  return min(min(plane, sphere), box);
 }
 
 float raymarch(float3 ro, float3 rd) {
@@ -203,6 +204,8 @@ psOut ps(psIn input) {
     dif *= ao * sh;
     col = float3(0.1, 0.5, 0.3) * amb + float3(0.6, 0.8, 0.3) * dif;
 
+    
+
     // if (sdBox(pos - _center, _dimensions / 2) == 0.0) {
     //   float4 clipPos = mul(float4(pos, 1), sk_viewproj[input.view_id]);
     //   float near = 0.0;
@@ -216,7 +219,7 @@ psOut ps(psIn input) {
 
   // input.color = float4(col, 1);
 
-  if (input.world.y > (_center.y + _dimensions.y / 2.0 ) - 0.0666) {
+  if (input.world.y > (_center.y + _dimensions.y / 2.0 ) - _crown) {
     float value = (col.r + col.r + col.g + col.g + col.g + col.b) / 6;
     float lit = abs((1 - clamp(dot(input.norm, lightDir), -1.0, 1.0)) / 2);
     value = (1 + lit + value) / 3;

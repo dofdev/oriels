@@ -12,34 +12,62 @@ struct BufferData {
 public class Oriel {
   public Bounds bounds;
   Material mat = new Material(Shader.FromFile("oriel.hlsl"));
-  Material crown = new Material(Shader.FromFile("crown.hlsl"));
   Mesh mesh = Default.MeshCube;
-  Mesh quad = Default.MeshQuad;
-  Vec3 _dimensions;
+  public float crown = 0.0666f;
+
+  bool scalingOriel = false;
+  bool draggingOriel = false;
+  Vec3 orielOffset = Vec3.Zero;
 
   MaterialBuffer<BufferData> buffer;
 
   public void Start(int bufferIndex) {
     bounds = new Bounds(Vec3.Zero, new Vec3(1f, 0.5f, 0.5f));
-    _dimensions = bounds.dimensions;
     buffer = new MaterialBuffer<BufferData>(bufferIndex);
   }
 
   BufferData data = new BufferData();
-  public void Step(Vec3 p0) {
-    data.position = p0;
-    // data.a = new Color(1.0f, 0.5f, 0.5f);
-    // data.b = new Color(0.5f, 1.0f, 0.5f);
-    // data.c = new Color(0.5f, 0.5f, 1.0f);
-    // data.tri = new Vec3[] {
-    //   new Vec3(0, 0, 0),
-    //   new Vec3(0, 0, 1),
-    //   new Vec3(1, 0, 0),
-    // };
+  public void Step(Vec3 cursor0, Vec3 cursor3) {
+    Controller rCon = Input.Controller(Handed.Right);
+    Controller lCon = Input.Controller(Handed.Left);
+
+    if (rCon.trigger > 0.5f && lCon.trigger > 0.5f) {
+      if (!scalingOriel) {
+        if (bounds.Contains(cursor0) || bounds.Contains(cursor3)) {
+          scalingOriel = true;
+        }
+      } else {
+        bounds.center = Vec3.Lerp(cursor0, cursor3, 0.5f);
+        float distX = Math.Abs(cursor0.x - cursor3.x);
+        float distY = Math.Abs(cursor0.y - cursor3.y);
+        float distZ = Math.Abs(cursor0.z - cursor3.z);
+        bounds.dimensions = new Vec3(distX, distY, distZ);
+      }
+    } else {
+      scalingOriel = false;
+    }
+
+    if (!scalingOriel && rCon.trigger > 0.5f) {
+      if (!draggingOriel) {
+        bool inCrown = cursor0.y > (bounds.center.y + bounds.dimensions.y / 2.0) - crown;
+        if (bounds.Contains(cursor0) && inCrown) {
+          orielOffset = cursor0 - bounds.center;
+          draggingOriel = true;
+        }
+      } else {
+        bounds.center = cursor0 - orielOffset;
+      }
+    } else {
+      draggingOriel = false;
+    }
+
+
+
+
+    data.position = cursor0;
 
     data.time = (float)Time.Total;
     buffer.Set(data);
-
 
     // circle around center
     // bounds.center = Quat.FromAngles(0, 0, Time.Totalf * 60) * Vec3.Up * 0.3f;
@@ -54,37 +82,11 @@ public class Oriel {
     mat.SetFloat("_distmax", 1000);
     mat.SetVector("_dimensions", bounds.dimensions);
     mat.SetVector("_center", bounds.center);
-    // mat.Wireframe = true;
+    mat.SetFloat("_crown", crown);
 
     Matrix m = Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions);
     Pose head = Input.Head;
-    // Vec3 quadPos = head.position + head.Forward * 0.0021f;
-    // if (bounds.Contains(head.position, head.position, 0.036f)) {
-    //   mat.FaceCull = Cull.Front;
-    //   m = Matrix.TRS(head.position, head.orientation, new Vec3(1.0f, 0.5f, 0.0088f * 2));
-    //   Renderer.
-    // }
+    
     mesh.Draw(mat, m);
-
-    // if (bounds.Contains(head.position, quadPos)) {
-    //   quad.Draw(mat, Matrix.TRS(quadPos, Quat.LookAt(quadPos, head.position), Vec3.One * 0.5f));
-    // }
-
-    // instead of a quad, just slap the same mesh to the head
-
-
-    // crown.SetVector("_center", bounds.center);
-
-
-    // crown.SetFloat("_height", bounds.dimensions.y);
-    // crown.SetFloat("_ypos", bounds.center.y);
-    // crown.FaceCull = Cull.Front;
-    // crown.Transparency = Transparency.Add;
-    // crown.DepthTest = DepthTest.Always;
-
-    // // crown.QueueOffset = 0;
-    // // crown.DepthWrite = false;
-
-    // mesh.Draw(crown, Matrix.TRS(bounds.center, Quat.Identity, bounds.dimensions));
   }
 }
