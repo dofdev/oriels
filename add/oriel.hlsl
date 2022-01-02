@@ -8,6 +8,7 @@ float _ypos;
 float3 _dimensions;
 float3 _center;
 float _crown;
+float4x4 _matrix;
 Texture2D tex; // : register(t0);
 SamplerState tex_s; // : register(s0);
 
@@ -50,9 +51,6 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
 
   o.uv    = input.uv;
   o.color = input.col;
-  // float lighting = dot(o.norm, normalize(float3(-0.3, 0.6, 0.1)));
-  // lighting = (clamp(lighting, 0, 1) * 0.8) + 0.2;
-  // o.color.rgb = o.color.rgb * lighting; // * sk_inst[id].color;
   return o;
 }
 
@@ -107,6 +105,8 @@ float oriel(float3 ro, float3 rd) {
   return dist;
 }
 
+
+
 float map(float3 pos) {
   // pos.x = _center.x + pos.x;
   // pos.y = _center.y + pos.y;
@@ -122,7 +122,9 @@ float map(float3 pos) {
   // d.y = _height;
   // float orielCrown = sdBoxFrame(pos - _center, d, 0.000);
 
-  float box = sdBox(pos - _center, float3(0.1, 0.1, 0.1));
+  // float box = sdBox(pos, float3(0.1, 0.1, 0.1));
+  float box = sdBox((float3)mul(float4(pos, 1), _matrix), float3(0.1, 0.1, 0.1));
+
   // return lerp(sphere, octo, time);
   float plane = sdPlane(pos + float3(0, 1.5, 0), float3(0, 1, 0), 0);
 
@@ -203,6 +205,7 @@ psOut ps(psIn input) {
     float sh = calcShadow(pos, light);
     dif *= ao * sh;
     col = float3(0.1, 0.5, 0.3) * amb + float3(0.6, 0.8, 0.3) * dif;
+
 
     
 

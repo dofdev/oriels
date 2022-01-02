@@ -5,6 +5,7 @@ SKSettings settings = new SKSettings {
   appName = "oriels",
   assetsFolder = "add",
   depthMode = DepthMode.D32,
+  disableUnfocusedSleep = true,
 };
 if (!SK.Initialize(settings))
   Environment.Exit(1);

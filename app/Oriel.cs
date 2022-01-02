@@ -69,6 +69,10 @@ public class Oriel {
     data.time = (float)Time.Total;
     buffer.Set(data);
 
+    Matrix matrix = Matrix.TR(bounds.center + Vec3.Up * (float)Math.Sin(Time.Elapsedf), Quat.FromAngles(0, Time.Elapsedf * 60, 0)).Inverse;
+    // matrix. = (float)Math.Sin(Time.Elapsedf);
+    mat.SetMatrix("_matrix", matrix);
+
     // circle around center
     // bounds.center = Quat.FromAngles(0, 0, Time.Totalf * 60) * Vec3.Up * 0.3f;
     // bounds.dimensions = _dimensions * (1f + (MathF.Sin(Time.Totalf * 3) * 0.3f));
