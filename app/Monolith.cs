@@ -163,15 +163,19 @@ public class Monolith {
         leftPlanted = false;
       }
 
-      rightCursor.Step(new Pose[] { rCon.pose, new Pose(rShoulder, Quat.LookDir(middl)) }, 1);
+      Vec3 rWrist = rCon.pose.position + rCon.aim.orientation * new Vec3(0, -0.0333f, 0.052f);
+      rightCursor.Step(new Pose[] { rCon.pose, new Pose(rWrist, rCon.aim.orientation), new Pose(rShoulder, Quat.LookDir(middl)) }, 1);
       if (!rightPlanted) {
-        rightCursor.Calibrate();
         rightCursor.p0 = rCon.pose.position;
+        rightCursor.Calibrate();
+        // rightCursor.Step(new Pose[] { rCon.pose, new Pose(rShoulder, Quat.LookDir(middl)) }, 1);
       }
-      leftCursor.Step(new Pose[] { lCon.pose, new Pose(lShoulder, Quat.LookDir(middl)) }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
+      Vec3 lWrist = lCon.pose.position + lCon.aim.orientation * new Vec3(0, -0.0333f, 0.052f);
+      leftCursor.Step(new Pose[] { lCon.pose, new Pose(lWrist, lCon.aim.orientation), new Pose(lShoulder, Quat.LookDir(middl)) }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
       if (!leftPlanted) {
-        leftCursor.Calibrate();
         leftCursor.p0 = lCon.pose.position;
+        leftCursor.Calibrate();
+        // leftCursor.Step(new Pose[] { lCon.pose, new Pose(lShoulder, Quat.LookDir(middl)) }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
       } 
       // cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 

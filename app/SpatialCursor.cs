@@ -52,12 +52,14 @@ public class ReachCursor : SpatialCursor {
     this.max = 10f;
   }
   Vec3 pos;
+  Vec3 wrist;
   Vec3 origin;
   Pose shoulder;
   // Vec3 yaw;
   public override void Step(Pose[] poses, float scalar) {
     pos = poses[0].position;
-    shoulder = poses[1];
+    wrist = poses[1].position;
+    shoulder = poses[2];
     // just the yaw of the head Quaternion
     // yaw = Input.Head.Forward; yaw.y = 0; yaw = yaw.Normalized;
     // Quat q = Quat.LookDir(yaw);
@@ -65,13 +67,16 @@ public class ReachCursor : SpatialCursor {
 
     str = min + (scalar * max);
 
-    float stretch = Vec3.Distance(from, pos);
+    float stretch = Vec3.Distance(from, wrist);
     Vec3 dir = (pos - from).Normalized;
     p0 = pos + dir * stretch * str;
 
     // model.Draw(Matrix.TS(p0, 0.1f));
     // model.Draw(Matrix.TS(shoulder.position, 0.06f));
     // Lines.Add(from, p0, Color.White, 0.005f);
+
+    Lines.Add(from, wrist, new Color(1, 0, 1), 0.005f);
+    Lines.Add(pos, p0, new Color(0, 1, 1), 0.005f);
 
     // model.Draw(Matrix.TS(from, 0.04f));
     // Pose mainHand = poses[0];
@@ -87,7 +92,7 @@ public class ReachCursor : SpatialCursor {
     // }
   }
   public override void Calibrate() {
-    origin = shoulder.orientation.Inverse * (pos - shoulder.position);
+    origin = shoulder.orientation.Inverse * (wrist - shoulder.position);
   }
 }
 
@@ -105,21 +110,29 @@ public class TwistCursor : SpatialCursor {
     Vec3 pos = poses[0].position;
     quat = poses[0].orientation;
     Quat from = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward, twistFrom);
-    float twist = 1 - ((Vec3.Dot(from * Vec3.Up, quat * Vec3.Up) + 1) / 2);
-    // float wrap = twist - twistFrom; // wrap around 0 to 1
-    // (wrap > 0.5f) ? 1 - wrap : wrap;
-
+    float twist = (float)(Math.Acos(Vec3.Dot(from * Vec3.Up, quat * Vec3.Up)) / Math.PI);
     outty = Vec3.Dot(from * Vec3.Up, quat * Vec3.Right * chirality) > 0;
     
     p0 = pos + quat * Vec3.Forward * twist * str;
     // model.Draw(Matrix.TS(p0, 0.02f));
 
-    // Lines.Add(pos, pos + from * Vec3.Up, Color.White, 0.005f);
-    // Lines.Add(pos, pos + quat * Vec3.Up, Color.White, 0.005f);
+    // Lines.Add(pos, pos + from * Vec3.Up * 0.1f, new Color(1, 0, 1), 0.005f);
+    Lines.Add(pos, pos + quat * Vec3.Up * 0.1f, new Color(1, 0, 1), 0.005f);
+    Lines.Add(pos, p0, new Color(0, 1, 1), 0.005f);
+    // draw the twist (angle)
+    Vec3 lastPos = pos;
+    for (int i = 0; i < 32; i++) {
+      float tw = twist * (i / 31f);
+      tw *= outty ? -1 : 1;
+      Vec3 nextPos = pos + from * new Vec3((float)Math.Sin(tw * (float)Math.PI), (float)Math.Cos(tw * (float)Math.PI), 0) * 0.1f;
+
+      Lines.Add(lastPos, nextPos, new Color(1, 1, 0), 0.0025f); // convert to LinePoints ?
+      lastPos = nextPos;
+    }
   }
   public override void Calibrate() {
 
-    twistFrom = quat * Vec3.Up; // -Vec3.Right * chirality;
+    twistFrom = quat * Vec3.Up;
   }
 
   public bool outty;
