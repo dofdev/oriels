@@ -19,7 +19,18 @@ mono.Run();
 
 public class Monolith {
   public Mic mic;
-  // public Controller rCon, lCon;
+  public Controller rCon, lCon;
+  public Controller Con(bool chirality) {
+    return chirality ? rCon : lCon;
+  }
+  public Pose rWrist, lWrist;
+  public Pose Wrist(bool chirality) {
+    return chirality ? rWrist : lWrist;
+  }
+  public Pose rShoulder, lShoulder;
+  public Pose Shoulder(bool chirality) {
+    return chirality ? rShoulder : lShoulder;
+  }
 
   public Vec3 rDragStart, lDragStart;
   public float railT;
@@ -51,8 +62,6 @@ public class Monolith {
     matFloor.SetFloat("tex_scale", 32);
 
 
-    Cursors cursors = new Cursors(this);
-
     Oriel oriel = new Oriel();
     oriel.Start(3);
     // Oriel otherOriel = new Oriel();
@@ -64,12 +73,12 @@ public class Monolith {
     ColorCube colorCube = new ColorCube();
     Vec3 oldLPos = Vec3.Zero;
 
-    SpatialCursor rightCursor = new ReachCursor();
-    SpatialCursor leftCursor = new ReachCursor();
+    SpatialCursor rightCursor = new ReachCursor(this, true);
+    SpatialCursor leftCursor = new ReachCursor(this, false);
     bool rightPlanted = false;
     bool leftPlanted = false;
 
-    SpatialCursor cubicFlow = new CubicFlow();
+    SpatialCursor cubicFlow = new CubicFlow(this);
 
     Tex camTex = new Tex(TexType.Rendertarget);
     camTex.SetSize(600, 400);
@@ -90,30 +99,45 @@ public class Monolith {
 
     while (SK.Step(() => {
       Renderer.CameraRoot = Matrix.T(pos);
-      Controller rCon = Input.Controller(Handed.Right); 
-      Controller lCon = Input.Controller(Handed.Left); 
+      rCon = Input.Controller(Handed.Right); 
+      lCon = Input.Controller(Handed.Left); 
 
       cube.Draw(matFloor, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
 
 
       // Shoulders
       Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f;
-      Vec3 toSub = (lCon.pose.position.X0Z - headPos.X0Z).Normalized;
-      Vec3 toDom = (rCon.pose.position.X0Z - headPos.X0Z).Normalized;
-      Vec3 middl = (toSub + toDom).Normalized;
+      Vec3 toLeft = (lCon.pose.position.X0Z - headPos.X0Z).Normalized;
+      Vec3 toRight = (rCon.pose.position.X0Z - headPos.X0Z).Normalized;
+      Vec3 middl = (toLeft + toRight).Normalized;
 
       if (Vec3.Dot(middl, Input.Head.Forward) < 0) {
         middl = -middl;
       }
 
-      // Lines.Add(headPos.X0Z, headPos.X0Z + toSub.X0Z, Color.White, 0.005f);
-      // Lines.Add(headPos.X0Z, headPos.X0Z + toDom.X0Z, Color.White, 0.005f);
+      // Lines.Add(headPos.X0Z, headPos.X0Z + toLeft.X0Z, Color.White, 0.005f);
+      // Lines.Add(headPos.X0Z, headPos.X0Z + toRight.X0Z, Color.White, 0.005f);
       // Lines.Add(headPos.X0Z, headPos.X0Z + middl.X0Z, Color.White, 0.005f);
 
       // cube.Draw(mat, Matrix.TRS(headPos, Input.Head.orientation, new Vec3(0.3f, 0.3f, 0.3f)));
+      rShoulder = new Pose(
+        headPos + Quat.LookDir(middl) * new Vec3(0.2f, -0.2f, 0),
+        Quat.LookDir(middl)
+      );
+      lShoulder = new Pose(
+        headPos + Quat.LookDir(middl) * new Vec3(-0.2f, -0.2f, 0),
+        Quat.LookDir(middl)
+      );
 
-      Vec3 rShoulder = headPos + Quat.LookDir(middl) * new Vec3(0.2f, -0.2f, 0);
-      Vec3 lShoulder = headPos + Quat.LookDir(middl) * new Vec3(-0.2f, -0.2f, 0);
+      rWrist = new Pose(
+        rCon.pose.position + rCon.aim.orientation * new Vec3(0, -0.0333f, 0.052f),
+        rCon.aim.orientation
+      );
+      lWrist = new Pose(
+        lCon.pose.position + lCon.aim.orientation * new Vec3(0, -0.0333f, 0.052f),
+        lCon.aim.orientation
+      );
+
       // cube.Draw(mat, Matrix.TRS(headPos, Input.Head.orientation, new Vec3(0.25f, 0.3f, 0.3f)), new Color(1,0,0));
       // Lines.Add(headPos + Vec3.Up * -0.2f, rShoulder, new Color(1, 0, 0), 0.01f);
       // Lines.Add(headPos + Vec3.Up * -0.2f, lShoulder, new Color(1, 0, 0), 0.01f);
@@ -163,20 +187,16 @@ public class Monolith {
         leftPlanted = false;
       }
 
-      Vec3 rWrist = rCon.pose.position + rCon.aim.orientation * new Vec3(0, -0.0333f, 0.052f);
-      rightCursor.Step(new Pose[] { rCon.pose, new Pose(rWrist, rCon.aim.orientation), new Pose(rShoulder, Quat.LookDir(middl)) }, 1);
       if (!rightPlanted) {
         rightCursor.p0 = rCon.pose.position;
         rightCursor.Calibrate();
-        // rightCursor.Step(new Pose[] { rCon.pose, new Pose(rShoulder, Quat.LookDir(middl)) }, 1);
       }
-      Vec3 lWrist = lCon.pose.position + lCon.aim.orientation * new Vec3(0, -0.0333f, 0.052f);
-      leftCursor.Step(new Pose[] { lCon.pose, new Pose(lWrist, lCon.aim.orientation), new Pose(lShoulder, Quat.LookDir(middl)) }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
+      rightCursor.Step(new Pose[] { rCon.pose }, 1);
       if (!leftPlanted) {
         leftCursor.p0 = lCon.pose.position;
         leftCursor.Calibrate();
-        // leftCursor.Step(new Pose[] { lCon.pose, new Pose(lShoulder, Quat.LookDir(middl)) }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
       } 
+      leftCursor.Step(new Pose[] { lCon.pose }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
       // cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 
       cubicFlow.Step(new Pose[] { new Pose(rightCursor.p0, rCon.aim.orientation), new Pose(leftCursor.p0, lCon.aim.orientation) }, 1);
