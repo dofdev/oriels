@@ -108,11 +108,13 @@ float oriel(float3 ro, float3 rd) {
 
 
 float map(float3 pos) {
+
+  float3 posOriel = mul(float4(pos, 1), _matrix).xyz;
   // pos.x = _center.x + pos.x;
   // pos.y = _center.y + pos.y;
   // pos.z = _center.z - pos.z;
-  float3 spin = float3(sin(time), 0, cos(time)) * 0.5;
-  float sphere = sdSphere(pos + spin - _center, 0.1);
+  // float3 spin = float3(sin(time), 0, cos(time)) * 0.5;
+  // float sphere = sdSphere(pos + spin - _center, 0.1);
   // return sdLink(pos, 0.1, 0.1, 0.1);
   // float octo = sdOctahedron(pos - _center - position, 0.2);
   // float frame = sdBoxFrame(pos - _center - position, float3(0.06, 0.06, 0.06), 0.004);
@@ -123,13 +125,14 @@ float map(float3 pos) {
   // float orielCrown = sdBoxFrame(pos - _center, d, 0.000);
 
   // float box = sdBox(pos, float3(0.1, 0.1, 0.1));
-  float box = sdBox((float3)mul(float4(pos, 1), _matrix), float3(0.1, 0.1, 0.1));
+  float box = sdBox(posOriel, float3(0.7, 0.015, 0.07));
+  
 
   // return lerp(sphere, octo, time);
   float plane = sdPlane(pos + float3(0, 1.5, 0), float3(0, 1, 0), 0);
 
   // float blendd = lerp(octo, frame, time);
-  return min(min(plane, sphere), box);
+  return min(plane, box);
 }
 
 float raymarch(float3 ro, float3 rd) {

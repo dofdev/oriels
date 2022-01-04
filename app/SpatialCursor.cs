@@ -41,7 +41,7 @@ public class ReachCursor : SpatialCursor {
     this.max = 10f;
   }
   Vec3 pos;
-  Vec3 origin;
+  public Vec3 origin;
   public override void Step(Pose[] poses, float scalar) {
     pos = poses[0].position;
     Vec3 wrist = mono.Wrist(chirality).position;

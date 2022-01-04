@@ -73,8 +73,8 @@ public class Monolith {
     ColorCube colorCube = new ColorCube();
     Vec3 oldLPos = Vec3.Zero;
 
-    SpatialCursor rightCursor = new ReachCursor(this, true);
-    SpatialCursor leftCursor = new ReachCursor(this, false);
+    ReachCursor rightReachCursor = new ReachCursor(this, true);
+    ReachCursor leftReachCursor = new ReachCursor(this, false);
     bool rightPlanted = false;
     bool leftPlanted = false;
 
@@ -130,11 +130,11 @@ public class Monolith {
       );
 
       rWrist = new Pose(
-        rCon.pose.position + rCon.aim.orientation * new Vec3(0, -0.0333f, 0.052f),
+        rCon.pose.position + rCon.aim.orientation * new Vec3(0, 0, 0.052f),
         rCon.aim.orientation
       );
       lWrist = new Pose(
-        lCon.pose.position + lCon.aim.orientation * new Vec3(0, -0.0333f, 0.052f),
+        lCon.pose.position + lCon.aim.orientation * new Vec3(0, 0, 0.052f),
         lCon.aim.orientation
       );
 
@@ -188,23 +188,43 @@ public class Monolith {
       }
 
       if (!rightPlanted) {
-        rightCursor.p0 = rCon.pose.position;
-        rightCursor.Calibrate();
+        rightReachCursor.p0 = rCon.pose.position;
+        rightReachCursor.Calibrate();
       }
-      rightCursor.Step(new Pose[] { rCon.pose }, 1);
       if (!leftPlanted) {
-        leftCursor.p0 = lCon.pose.position;
-        leftCursor.Calibrate();
+        leftReachCursor.p0 = lCon.pose.position;
+        leftReachCursor.Calibrate();
       } 
-      leftCursor.Step(new Pose[] { lCon.pose }, 1); // ((Input.Controller(Handed.Left).stick.y + 1) / 2)
-      // cursor.p1 = subCursor.p0; // override *later change all one handed cursors to be dual wielded by default*
 
-      cubicFlow.Step(new Pose[] { new Pose(rightCursor.p0, rCon.aim.orientation), new Pose(leftCursor.p0, lCon.aim.orientation) }, 1);
+      if (rCon.grip > 0.5f) {
+        leftReachCursor.origin = lShoulder.orientation.Inverse * (rCon.pose.position - lShoulder.position);
+      }
+      if (lCon.grip > 0.5f) {
+        rightReachCursor.origin = rShoulder.orientation.Inverse * (lCon.pose.position - rShoulder.position);
+      }
+
+      
+      rightReachCursor.Step(new Pose[] { rCon.pose }, 0.2f);
+      leftReachCursor.Step(new Pose[] { lCon.pose }, 0.2f);
+
+      // enum GripState {
+      //   None,
+      //   Grip,
+      //   Release,
+      // }
+
+      // GripState rightState = GripState.None;
+      // GripState leftState = GripState.None;
+
+      // switch ()
+
+
+      cubicFlow.Step(new Pose[] { new Pose(rightReachCursor.p0, rCon.aim.orientation), new Pose(leftReachCursor.p0, lCon.aim.orientation) }, 1);
       if (rCon.stick.y > 0.1f || lCon.stick.y > 0.1f) {
         Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
         net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
       } else {
-        net.me.cursor0 = rightCursor.p0; net.me.cursor1 = rightCursor.p0; net.me.cursor2 = leftCursor.p0; net.me.cursor3 = leftCursor.p0;
+        net.me.cursor0 = rightReachCursor.p0; net.me.cursor1 = rightReachCursor.p0; net.me.cursor2 = leftReachCursor.p0; net.me.cursor3 = leftReachCursor.p0;
       }
 
       // throw yourself (delta -> vel -> momentum)
@@ -232,49 +252,46 @@ public class Monolith {
       // Vec3 fullstick = subCon.aim.orientation * rot * dir;
       // pos += fullstick * subCon.trigger * Time.Elapsedf;
 
+
+
+
       // DRAG DRIFT
       Vec3 rPos = net.me.cursor0;
-      // if (domCon.grip) {
-      //   // movePress = Time.Totalf;
-      //   domDragStart = domPos;
-      // }
-      // vel += -(domPos - domDragStart) * 24 * domCon.grip;
-      // domDragStart = domPos;
-
       Vec3 lPos = net.me.cursor3;
-      // if (subCon.grip) {
-      //   // movePress = Time.Totalf;
-      //   subDragStart = subPos;
-      // }
-      // if (subCon.IsX1Pressed) {
-      // }
-      // vel += -(subPos - subDragStart) * 24 * subCon.grip;
-      // subDragStart = subPos;
-      if (rCon.grip > 0.5f) {
-        if (!rightGripping) {
-          gripPos = rPos;
-          gripLeft = false;
-          rightGripping = true;
-        }
-      } else {
-        rightGripping = false;
-      }
 
-      if (lCon.grip > 0.5f) {
-        if (!leftGripping) {
-          gripPos = lPos;
-          gripLeft = true;
-          leftGripping = true;
-        }
-      } else {
-        leftGripping = false;
-      }
+      // use grip grab reach cursor origin it then becoming a backhanded stretch cursor
+      // if (rCon.grip > 0.5f) {
+      //   if (!rightGripping) {
+      //     gripPos = rPos;
+      //     gripLeft = false;
+      //     rightGripping = true;
+      //   }
+      // } else {
+      //   rightGripping = false;
+      // }
 
-      if (rightGripping || leftGripping) {
-        Vec3 gripTo = gripLeft ? lPos : rPos;
-        pos = -(gripTo - Input.Head.position) + gripPos - (Input.Head.position - pos);
-        vel = Vec3.Zero;
-      }
+      // if (lCon.grip > 0.5f) {
+      //   if (!leftGripping) {
+      //     gripPos = lPos;
+      //     gripLeft = true;
+      //     leftGripping = true;
+      //   }
+      // } else {
+      //   leftGripping = false;
+      // }
+
+      // if (rightGripping || leftGripping) {
+      //   Vec3 gripTo = gripLeft ? lPos : rPos;
+      //   pos = -(gripTo - Input.Head.position) + gripPos - (Input.Head.position - pos);
+      //   vel = Vec3.Zero;
+      // }
+      // delete: gripPos, gripLeft, rightGripping, leftGripping
+      // gripPos = r/l OldPos
+      // rightGripping/leftGripping -> state machine (world grip, stretch, backhanded, grinding?)
+
+
+
+
 
       // CUBIC BEZIER RAIL
       // Vec3[] rail = new Vec3[] {
