@@ -40,7 +40,7 @@ public class Monolith {
   Mesh cube = Default.MeshCube;
 
   public void Run() {
-    Renderer.SetClip(0.0f, 1000f);
+    Renderer.SetClip(0.02f, 1000f);
     // Renderer.
     // mic = new Mic();
     Vec3 pos = new Vec3(0, 0, 0);
@@ -89,6 +89,8 @@ public class Monolith {
     Vec3 gripPos = Vec3.Zero;
     bool rightGripping = false, leftGripping = false;
     bool gripLeft = false;
+
+    bool rightGripDown = false, leftGripDown = false;
 
 
     float grindDir = 1f;
@@ -197,13 +199,43 @@ public class Monolith {
       } 
 
       if (rCon.grip > 0.5f) {
-        leftReachCursor.origin = lShoulder.orientation.Inverse * (rCon.pose.position - lShoulder.position);
+        Vec3 toPos = lShoulder.orientation.Inverse * (rCon.pose.position - lShoulder.position);
+        if (!rightGripDown) {
+          float deadzone = Vec3.Distance(leftReachCursor.origin, toPos);
+          if (deadzone < 0.1f) {
+            leftReachCursor.deadzone = deadzone;
+            rightGripDown = true;
+          }
+        }
+        
+        if (rightGripDown) {
+          leftReachCursor.origin = toPos;
+        }
+      } else {
+        leftReachCursor.deadzone = 0;
+        rightGripDown = false;
       }
       if (lCon.grip > 0.5f) {
-        rightReachCursor.origin = rShoulder.orientation.Inverse * (lCon.pose.position - rShoulder.position);
+        Vec3 toPos = rShoulder.orientation.Inverse * (lCon.pose.position - rShoulder.position);
+        if (!leftGripDown) {
+          float deadzone = Vec3.Distance(rightReachCursor.origin, toPos);
+          if (deadzone < 0.1f) {
+            rightReachCursor.deadzone = deadzone;
+            leftGripDown = true;
+          }
+        }
+
+        if (leftGripDown) {
+          rightReachCursor.origin = toPos;
+        }
+      } else {
+        rightReachCursor.deadzone = 0;
+        leftGripDown = false;
       }
 
-      
+
+
+
       rightReachCursor.Step(new Pose[] { rCon.pose }, 0.2f);
       leftReachCursor.Step(new Pose[] { lCon.pose }, 0.2f);
 

@@ -39,9 +39,11 @@ public class ReachCursor : SpatialCursor {
     this.min = 1f;
     this.str = 3f;
     this.max = 10f;
+    this.deadzone = 0;
   }
   Vec3 pos;
   public Vec3 origin;
+  public float deadzone;
   public override void Step(Pose[] poses, float scalar) {
     pos = poses[0].position;
     Vec3 wrist = mono.Wrist(chirality).position;
@@ -52,6 +54,8 @@ public class ReachCursor : SpatialCursor {
     str = min + (scalar * max);
 
     float stretch = Vec3.Distance(from, wrist);
+    stretch = Math.Max(stretch - deadzone, 0);
+
     Vec3 dir = (pos - from).Normalized;
     p0 = pos + dir * stretch * str;
 
