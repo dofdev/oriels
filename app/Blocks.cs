@@ -58,9 +58,10 @@ class BlockCon {
   float lastPressed = 0;
   bool pressed = false;
 
-  public void Step(Controller con, Controller otherCon, Vec3 cursor, ref BlockCon otherBlockCon, ref Block[] blocks) {
+  public void Step(Con con, Con otherCon, Vec3 cursor, ref BlockCon otherBlockCon, ref Block[] blocks) {
+    
     bool doublePressed = false;
-    if (con.trigger > 0.5f) {
+    if (con.device.trigger > 0.5f) {
       if (!pressed) {
         if (lastPressed > Time.Totalf - 0.5f) {
           doublePressed = true;
@@ -91,9 +92,9 @@ class BlockCon {
       }
     }
 
-    Quat conRotDelta = (con.aim.orientation * oldConRot.Inverse).Normalized;
+    Quat conRotDelta = (con.ori * oldConRot.Inverse).Normalized;
 
-    if (con.trigger > 0.1f) {
+    if (con.device.trigger > 0.1f) {
       if (index < 0) {
         // BLOCK EXCHANGE
         // loop over peer blocks as well
@@ -115,7 +116,7 @@ class BlockCon {
             blocks[i].solid.SetAngularVelocity(Vec3.Zero);
             blocks[i].solid.SetVelocity(Vec3.Zero);
             // set
-            heldRot = (con.aim.orientation.Inverse * blockPose.orientation).Normalized;
+            heldRot = (con.ori.Inverse * blockPose.orientation).Normalized;
             offset = blockPose.orientation.Inverse * (blockPose.position - cursor);
 
             // 
@@ -125,9 +126,9 @@ class BlockCon {
       }
 
       if (index >= 0) {
-        Quat newRot = (con.aim.orientation * heldRot * spinRot).Normalized;
+        Quat newRot = (con.ori * heldRot * spinRot).Normalized;
         // trackballer
-        if (con.trigger > 0.99f) {
+        if (con.device.trigger > 0.99f) {
           spinDelta = Quat.Slerp(
             spinDelta.Normalized,
             (newRot.Inverse * conRotDelta * newRot).Normalized,
@@ -135,10 +136,10 @@ class BlockCon {
           );
         }
         spinRot *= spinDelta * spinDelta;
-        Quat toRot = (con.aim.orientation * heldRot * spinRot).Normalized;
-        Vec3 toPos = cursor + (con.aim.orientation * heldRot * spinRot).Normalized * offset;
+        Quat toRot = (con.ori * heldRot * spinRot).Normalized;
+        Vec3 toPos = cursor + (con.ori * heldRot * spinRot).Normalized * offset;
         // cursor - offset;
-        if (con.stick.y > 0.1f) {
+        if (con.device.stick.y > 0.1f) {
           toRot = blocks[index].solid.GetPose().orientation;
         }
         blocks[index].solid.Move(toPos, toRot);
@@ -147,7 +148,7 @@ class BlockCon {
         angularMomentum = Vec3.Lerp(angularMomentum, PullRequest.AngularDisplacement((newHeldRot * oldHeldRot.Inverse).Normalized), Time.Elapsedf / 0.1f);
         oldHeldRot = newHeldRot;
 
-        delta = (cursor + (con.aim.orientation * heldRot * spinRot).Normalized * offset) - blocks[index].solid.GetPose().position;
+        delta = (cursor + (con.ori * heldRot * spinRot).Normalized * offset) - blocks[index].solid.GetPose().position;
         momentum = Vec3.Lerp(momentum, delta, Time.Elapsedf / 0.1f);
       }
     } else {
@@ -158,6 +159,6 @@ class BlockCon {
       index = -1;
     }
 
-    oldConRot = con.aim.orientation;
+    oldConRot = con.ori;
   }
 }

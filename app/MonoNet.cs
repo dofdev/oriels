@@ -304,11 +304,11 @@ class Peer {
 
   CubicCon cubicCon = new CubicCon();
 
-  public void Step(Controller domCon, Controller subCon) {
-    dBlock.Step(domCon, subCon, cursor0, ref sBlock, ref blocks);
-    sBlock.Step(subCon, domCon, cursor3, ref dBlock, ref blocks);
+  public void Step(Con rCon, Con lCon) {
+    dBlock.Step(rCon, lCon, cursor0, ref sBlock, ref blocks);
+    sBlock.Step(lCon, rCon, cursor3, ref dBlock, ref blocks);
 
-    cubicCon.Step(domCon, subCon, this, ref cubics);
+    cubicCon.Step(rCon, lCon, this, ref cubics);
 
     Draw(false);
   }

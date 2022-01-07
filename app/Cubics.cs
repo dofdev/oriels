@@ -32,8 +32,8 @@ class Cubic {
 }
 
 class CubicCon {
-  public void Step(Controller domCon, Controller subCon, Peer peer, ref Cubic[] cubics) {
-    bool place = domCon.IsStickJustClicked || subCon.IsStickJustClicked;
+  public void Step(Con domCon, Con subCon, Peer peer, ref Cubic[] cubics) {
+    bool place = domCon.device.IsStickJustClicked || subCon.device.IsStickJustClicked;
     if (place) {
       for (int i = 0; i < cubics.Length; i++) {
         if (!cubics[i].active) {

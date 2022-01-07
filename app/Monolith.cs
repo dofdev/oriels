@@ -17,19 +17,50 @@ Input.HandVisible(Handed.Max, false);
 Monolith mono = new Monolith();
 mono.Run();
 
+public class Con {
+  public Controller device;
+  public Vec3 pos;
+  public Quat ori;
+  public Btn gripBtn;
+  public Btn triggerBtn;
+
+  public void Step(bool chirality) {
+    device = Input.Controller(Handed.Right);
+    pos = device.pose.position;
+    ori = device.aim.orientation;
+    gripBtn.Step(device.grip > 0.5f);
+    triggerBtn.Step(device.trigger > 0.5f);
+  }
+}
+
+public class Btn {
+  public bool frameDown, held, frameUp;
+
+  public void Step(bool down) {
+    frameDown = down && !held;
+    frameUp = !down && held;
+    held = down;
+  }
+}
+
 public class Monolith {
   public Mic mic;
-  public Controller rCon, lCon;
-  public Controller Con(bool chirality) {
-    return chirality ? rCon : lCon;
+
+  public Pose rShoulder, lShoulder;
+  public Pose Shoulder(bool chirality) {
+    return chirality ? rShoulder : lShoulder;
   }
   public Pose rWrist, lWrist;
   public Pose Wrist(bool chirality) {
     return chirality ? rWrist : lWrist;
   }
-  public Pose rShoulder, lShoulder;
-  public Pose Shoulder(bool chirality) {
-    return chirality ? rShoulder : lShoulder;
+  public Glove lGlove, rGlove;
+  public Glove Glove(bool chirality) {
+    return chirality ? rGlove : lGlove;
+  }
+  public Con rCon, lCon;
+  public Con Con(bool chirality) {
+    return chirality ? rCon : lCon;
   }
 
   public Vec3 rDragStart, lDragStart;
@@ -73,11 +104,6 @@ public class Monolith {
     ColorCube colorCube = new ColorCube();
     Vec3 oldLPos = Vec3.Zero;
 
-    ReachCursor rightReachCursor = new ReachCursor(this, true);
-    ReachCursor leftReachCursor = new ReachCursor(this, false);
-    bool rightPlanted = false;
-    bool leftPlanted = false;
-
     SpatialCursor cubicFlow = new CubicFlow(this);
 
     Tex camTex = new Tex(TexType.Rendertarget);
@@ -87,10 +113,6 @@ public class Monolith {
     Mesh quad = Default.MeshQuad;
 
     Vec3 gripPos = Vec3.Zero;
-    bool rightGripping = false, leftGripping = false;
-    bool gripLeft = false;
-
-    bool rightGripDown = false, leftGripDown = false;
 
 
     float grindDir = 1f;
@@ -101,157 +123,27 @@ public class Monolith {
 
     while (SK.Step(() => {
       Renderer.CameraRoot = Matrix.T(pos);
-      rCon = Input.Controller(Handed.Right); 
-      lCon = Input.Controller(Handed.Left); 
-
-      cube.Draw(matFloor, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
+      rCon.Step(true);
+      lCon.Step(false);
 
 
       // Shoulders
       Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f;
-      Vec3 toLeft = (lCon.pose.position.X0Z - headPos.X0Z).Normalized;
-      Vec3 toRight = (rCon.pose.position.X0Z - headPos.X0Z).Normalized;
-      Vec3 middl = (toLeft + toRight).Normalized;
+      Vec3 shoulderDir = (
+        (lCon.pos.X0Z - headPos.X0Z).Normalized + 
+        (rCon.pos.X0Z - headPos.X0Z).Normalized
+      ).Normalized;
 
-      if (Vec3.Dot(middl, Input.Head.Forward) < 0) {
-        middl = -middl;
-      }
-
-      // Lines.Add(headPos.X0Z, headPos.X0Z + toLeft.X0Z, Color.White, 0.005f);
-      // Lines.Add(headPos.X0Z, headPos.X0Z + toRight.X0Z, Color.White, 0.005f);
-      // Lines.Add(headPos.X0Z, headPos.X0Z + middl.X0Z, Color.White, 0.005f);
-
-      // cube.Draw(mat, Matrix.TRS(headPos, Input.Head.orientation, new Vec3(0.3f, 0.3f, 0.3f)));
-      rShoulder = new Pose(
-        headPos + Quat.LookDir(middl) * new Vec3(0.2f, -0.2f, 0),
-        Quat.LookDir(middl)
-      );
-      lShoulder = new Pose(
-        headPos + Quat.LookDir(middl) * new Vec3(-0.2f, -0.2f, 0),
-        Quat.LookDir(middl)
-      );
-
-      rWrist = new Pose(
-        rCon.pose.position + rCon.aim.orientation * new Vec3(0, 0, 0.052f),
-        rCon.aim.orientation
-      );
-      lWrist = new Pose(
-        lCon.pose.position + lCon.aim.orientation * new Vec3(0, 0, 0.052f),
-        lCon.aim.orientation
-      );
-
-      // cube.Draw(mat, Matrix.TRS(headPos, Input.Head.orientation, new Vec3(0.25f, 0.3f, 0.3f)), new Color(1,0,0));
-      // Lines.Add(headPos + Vec3.Up * -0.2f, rShoulder, new Color(1, 0, 0), 0.01f);
-      // Lines.Add(headPos + Vec3.Up * -0.2f, lShoulder, new Color(1, 0, 0), 0.01f);
-
-      // if (domCon.IsX1JustPressed) {
-      //   domPlanted = !domPlanted;
-      // }
-      // if (subCon.IsX1JustPressed) {
-      //   subPlanted = !subPlanted;
-      // }
+      if (Vec3.Dot(shoulderDir, Input.Head.Forward) < 0) { shoulderDir = -shoulderDir; }
+      rShoulder = new Pose(headPos + Quat.LookDir(shoulderDir) * new Vec3(0.2f, -0.2f, 0), Quat.LookDir(shoulderDir));
+      lShoulder = new Pose(headPos + Quat.LookDir(shoulderDir) * new Vec3(-0.2f, -0.2f, 0), Quat.LookDir(shoulderDir));
+      rWrist = new Pose(rCon.pos + rCon.ori * new Vec3(0, 0, 0.052f), rCon.ori);
+      lWrist = new Pose(lCon.pos + lCon.ori * new Vec3(0, 0, 0.052f), lCon.ori);
 
 
+      // past this point more questions arise
 
-
-
-
-      // there is a lot of stuff in this class that needs to move out
-      // as we need to make way for an oriel game, for god's sake
-      // start with the largest and work our way down
-      // is there someway to package these systems in a sensible way
-      // there is something about a player here... though that may be to general...
-
-
-      // don't crash if server isn't up
-      // its not tho...
-
-
-
-
-
-
-
-
-      if (rCon.stick.Magnitude > 0.1f) {
-        if (rCon.stick.y < 0f) {
-          rightPlanted = true;
-        }
-      } else {
-        rightPlanted = false;
-      }
-
-      if (lCon.stick.Magnitude > 0.1f) {
-        if (lCon.stick.y < 0f) {
-          leftPlanted = true;
-        }
-      } else {
-        leftPlanted = false;
-      }
-
-      if (!rightPlanted) {
-        rightReachCursor.p0 = rCon.pose.position;
-        rightReachCursor.Calibrate();
-      }
-      if (!leftPlanted) {
-        leftReachCursor.p0 = lCon.pose.position;
-        leftReachCursor.Calibrate();
-      } 
-
-      if (rCon.grip > 0.5f) {
-        Vec3 toPos = lShoulder.orientation.Inverse * (rCon.pose.position - lShoulder.position);
-        if (!rightGripDown) {
-          float deadzone = Vec3.Distance(leftReachCursor.origin, toPos);
-          if (deadzone < 0.1f) {
-            leftReachCursor.deadzone = deadzone;
-            rightGripDown = true;
-          }
-        }
-        
-        if (rightGripDown) {
-          leftReachCursor.origin = toPos;
-        }
-      } else {
-        leftReachCursor.deadzone = 0;
-        rightGripDown = false;
-      }
-      if (lCon.grip > 0.5f) {
-        Vec3 toPos = rShoulder.orientation.Inverse * (lCon.pose.position - rShoulder.position);
-        if (!leftGripDown) {
-          float deadzone = Vec3.Distance(rightReachCursor.origin, toPos);
-          if (deadzone < 0.1f) {
-            rightReachCursor.deadzone = deadzone;
-            leftGripDown = true;
-          }
-        }
-
-        if (leftGripDown) {
-          rightReachCursor.origin = toPos;
-        }
-      } else {
-        rightReachCursor.deadzone = 0;
-        leftGripDown = false;
-      }
-
-
-
-
-      rightReachCursor.Step(new Pose[] { rCon.pose }, 0.2f);
-      leftReachCursor.Step(new Pose[] { lCon.pose }, 0.2f);
-
-      // enum GripState {
-      //   None,
-      //   Grip,
-      //   Release,
-      // }
-
-      // GripState rightState = GripState.None;
-      // GripState leftState = GripState.None;
-
-      // switch ()
-
-
-      cubicFlow.Step(new Pose[] { new Pose(rightReachCursor.p0, rCon.aim.orientation), new Pose(leftReachCursor.p0, lCon.aim.orientation) }, 1);
+      cubicFlow.Step(new Pose[] { new Pose(rightReachCursor.p0, rCon.ori), new Pose(leftReachCursor.p0, lCon.ori) }, 1);
       if (rCon.stick.y > 0.1f || lCon.stick.y > 0.1f) {
         Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
         net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
@@ -334,7 +226,7 @@ public class Monolith {
       // };
       // Bezier.Draw(rail);
 
-      if (rCon.grip > 0.5f) {
+      if (rCon.device.grip > 0.5f) {
         if (!grinded) {
           if (!grinding) {
             int closest = 0;
@@ -351,7 +243,7 @@ public class Monolith {
                 };
                 for (int j = 0; j < rail.Length; j++) {
                   Vec3 point = Bezier.Sample(rail, (float)j / (rail.Length - 1f));
-                  float dist = Vec3.Distance(point, rCon.pose.position + vel.Normalized * 0.25f);
+                  float dist = Vec3.Distance(point, rCon.pos + vel.Normalized * 0.25f);
                   if (dist < closestDist && dist < 0.5f) {
                     closest = j;
                     closestRail = i;
@@ -384,7 +276,7 @@ public class Monolith {
 
             // vel += (toPos - fromPos);
 
-            pos = -(rCon.pose.position - Input.Head.position) + grindPos - (Input.Head.position - pos);
+            pos = -(rCon.pos - Input.Head.position) + grindPos - (Input.Head.position - pos);
             vel = Vec3.Zero;
 
             railT += Time.Elapsedf * grindVel.Magnitude * grindDir; // scale based on length of rail * calculate and cache on place
@@ -439,35 +331,34 @@ public class Monolith {
 
       vel *= 1 - Time.Elapsedf * 0.2f;
 
+
+
       // COLOR CUBE
       // reveal when palm up
-      float reveal = lCon.pose.Right.y * 1.666f;
-      float look = 1 - Math.Clamp((1 - Math.Clamp(Vec3.Dot((lCon.pose.position - Input.Head.position).Normalized, Input.Head.Forward), 0f, 1f)) * 5f, 0f, 1f);
+      float reveal = lCon.device.pose.Right.y * 1.666f;
+      float look = 1 - Math.Clamp((1 - Math.Clamp(Vec3.Dot((lCon.device.pose.position - Input.Head.position).Normalized, Input.Head.Forward), 0f, 1f)) * 5f, 0f, 1f);
       reveal *= look;
       colorCube.size = colorCube.ogSize * Math.Clamp(reveal, 0, 1);
-      colorCube.center = lCon.pose.position + lCon.pose.Right * 0.0666f;
+      colorCube.center = lCon.device.pose.position + lCon.device.pose.Right * 0.0666f;
       // move with grip
-      if (reveal > colorCube.thicc && !leftPlanted) {
-        if (reveal > 1f && lCon.trigger > 0.5f) {
-          colorCube.p0 -= (lCon.pose.position - oldLPos) / colorCube.ogSize * 2;
+      if (reveal > colorCube.thicc) { // !leftPlanted
+        if (reveal > 1f && lCon.device.trigger > 0.5f) {
+          colorCube.cursor -= (lCon.device.pose.position - oldLPos) / colorCube.ogSize * 2;
         } else {
           // clamp 0 - 1
-          colorCube.p0.x = Math.Clamp(colorCube.p0.x, -1, 1);
-          colorCube.p0.y = Math.Clamp(colorCube.p0.y, -1, 1);
-          colorCube.p0.z = Math.Clamp(colorCube.p0.z, -1, 1);
+          colorCube.cursor.x = Math.Clamp(colorCube.cursor.x, -1, 1);
+          colorCube.cursor.y = Math.Clamp(colorCube.cursor.y, -1, 1);
+          colorCube.cursor.z = Math.Clamp(colorCube.cursor.z, -1, 1);
         }
         colorCube.Step();
       }
-      oldLPos = lCon.pose.position;
+      oldLPos = lCon.device.pose.position;
 
 
-      // net.me.cursorA = Vec3.Up * (float)Math.Sin(Time.Total);
       net.me.color = colorCube.color;
-      // net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1;
-      // net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
-      
       net.me.headset = Input.Head;
-      net.me.mainHand = rCon.aim; net.me.offHand = lCon.aim; 
+      net.me.mainHand = new Pose(rCon.pos, rCon.ori);
+      net.me.offHand = new Pose(lCon.pos, lCon.ori);
       for (int i = 0; i < net.peers.Length; i++) {
         Peer peer = net.peers[i];
         if (peer != null) {
@@ -494,6 +385,7 @@ public class Monolith {
       
       // Renderer.RenderTo(camTex, Matrix.TR(Input.Head.position + Vec3.Up * 10, Quat.FromAngles(-90f, 0, 0)), Matrix.Orthographic(2f, 2f, 0.1f, 100f), RenderLayer.All, RenderClear.All);
       // quad.Draw(camMat, Matrix.TR(Input.Head.Forward, Quat.FromAngles(0, 180, 0)));
+      cube.Draw(matFloor, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
     })) ;
     SK.Shutdown();
   }
@@ -526,90 +418,6 @@ public class Lerper {
 
   public void Reset() {
     t = vel = 0;
-  }
-}
-
-public class Bitting {
-  public class DrawKey {
-    public int x, y;
-    public Key key;
-    public DrawKey(int x, int y, Key key) {
-      this.x = x;
-      this.y = y;
-      this.key = key;
-    }
-  }
-  Tex tex = new Tex(TexType.Image, TexFormat.Rgba32);
-  Material material = Default.Material;
-  Mesh quad = Default.MeshQuad;
-  int[,] bitchar = new int[,] {
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0},
-  };
-  DrawKey[] drawKeys = new DrawKey[] {
-    new DrawKey(0, 0, Key.F), new DrawKey(0, 2, Key.D), new DrawKey(0, 4, Key.S), new DrawKey(0, 6, Key.A),
-    new DrawKey(2, 0, Key.J), new DrawKey(2, 2, Key.K), new DrawKey(2, 4, Key.L), new DrawKey(2, 6, Key.Semicolon),
-  }; DrawKey lastKey = null;
-
-  public void Start() {
-    tex.SetSize(128, 128);
-    tex.SampleMode = TexSample.Point;
-    material.SetTexture("diffuse", tex);
-  }
-
-  public void Step() {
-    // clear
-    if (Input.Key(Key.Space).IsJustActive()) {
-      for (int i = 0; i < bitchar.GetLength(0); i++) {
-        for (int j = 0; j < bitchar.GetLength(1); j++) {
-          bitchar[i, j] = 0;
-        }
-      }
-      lastKey = null;
-    }
-
-    for (int i = 0; i < drawKeys.Length; i++) {
-      DrawKey drawKey = drawKeys[i];
-      if (Input.Key(drawKey.key).IsJustActive()) {
-        bitchar[drawKey.x, drawKey.y] = 1;
-        if (lastKey != null) {
-          // draw line between last and current
-          int x1 = lastKey.x;
-          int y1 = lastKey.y;
-          int x2 = drawKey.x;
-          int y2 = drawKey.y;
-          int dx = Math.Abs(x2 - x1);
-          int dy = Math.Abs(y2 - y1);
-          int sx = x1 < x2 ? 1 : -1;
-          int sy = y1 < y2 ? 1 : -1;
-          int err = dx - dy;
-          while (true) {
-            bitchar[x1, y1] = 1;
-            if (x1 == x2 && y1 == y2) break;
-            int e2 = 2 * err;
-            if (e2 > -dy) { err -= dy; x1 += sx; }
-            if (e2 < dx) { err += dx; y1 += sy; }
-          }
-        }
-        lastKey = drawKey;
-        break;
-      }
-    }
-
-    Color32[] pixels = new Color32[tex.Width * tex.Height];
-    tex.GetColors(ref pixels);
-    for (int i = 0; i < pixels.Length; i++) {
-      pixels[i] = new Color32(0, 0, 0, 0);
-      int x = i % tex.Width;
-      int y = i / tex.Width;
-      if (x < 3 && y < 7 && bitchar[x, y] == 1) {
-        pixels[i] = new Color32(0, 255, 255, 0);
-      }
-    }
-    tex.SetColors(tex.Width, tex.Height, pixels);
-
-    quad.Draw(material, Matrix.TR(Vec3.Zero, Quat.FromAngles(0, 180, 0)));
   }
 }
 

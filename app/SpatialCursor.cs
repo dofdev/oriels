@@ -29,7 +29,6 @@ public class StretchCursor : SpatialCursor {
   public override void Calibrate() {}
 }
 
-// this is just a stretch cursor derivative
 public class ReachCursor : SpatialCursor {
   Monolith mono;
   bool chirality;
@@ -41,11 +40,10 @@ public class ReachCursor : SpatialCursor {
     this.max = 10f;
     this.deadzone = 0;
   }
-  Vec3 pos;
   public Vec3 origin;
   public float deadzone;
   public override void Step(Pose[] poses, float scalar) {
-    pos = poses[0].position;
+    Vec3 pos = poses[0].position;
     Vec3 wrist = mono.Wrist(chirality).position;
     Pose shoulder = mono.Shoulder(chirality);
 
@@ -83,7 +81,7 @@ public class TwistCursor : SpatialCursor {
   public override void Step(Pose[] poses, float scalar) {
     
     Vec3 pos = poses[0].position;
-    Quat quat = mono.Con(chirality).aim.orientation;
+    Quat quat = mono.Con(chirality).ori;
     Quat from = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward, twistFrom);
     float twist = (float)(Math.Acos(Vec3.Dot(from * Vec3.Up, quat * Vec3.Up)) / Math.PI);
     outty = Vec3.Dot(from * Vec3.Up, quat * Vec3.Right * (chirality ? 1 : -1)) > 0;
@@ -106,7 +104,7 @@ public class TwistCursor : SpatialCursor {
     }
   }
   public override void Calibrate() {
-    Quat quat = mono.Con(chirality).aim.orientation;
+    Quat quat = mono.Con(chirality).ori;
     twistFrom = quat * Vec3.Up;
   }
 
@@ -131,23 +129,23 @@ public class CubicFlow : SpatialCursor {
     Pose dom = poses[0];
     Pose sub = poses[1];
 
-    if (mono.rCon.stick.y < 0.1f) {
+    if (mono.rCon.device.stick.y < 0.1f) {
       domTwist.Calibrate();
       domTwisting = false;
     } else {
       if (!domTwisting) {
-        domUp = mono.rCon.stick.x > 0;
+        domUp = mono.rCon.device.stick.x > 0;
         domTwisting = true;
       }
     }
     domTwist.Step(new Pose[] { dom }, scalar);
 
-    if (mono.lCon.stick.y < 0.1f) {
+    if (mono.lCon.device.stick.y < 0.1f) {
       subTwist.Calibrate();
       subTwisting = false;
     } else {
       if (!subTwisting) {
-        subUp = mono.lCon.stick.x < 0;
+        subUp = mono.lCon.device.stick.x < 0;
         subTwisting = true;
       }
     }

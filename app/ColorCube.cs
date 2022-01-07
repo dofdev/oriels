@@ -2,7 +2,6 @@ using System;
 using StereoKit;
 
 class ColorCube {
-  static Mesh orb = Default.MeshSphere;
   static Mesh cube = Default.MeshCube;
   static Material mat = new Material(Shader.FromFile("colorcube.hlsl"));
   static Material unlit = Default.MaterialUnlit;
@@ -10,7 +9,7 @@ class ColorCube {
   public float ogSize = 0.05f;
   public float size = 0.05f;
   public Vec3 center = Vec3.Zero;
-  public Vec3 p0 = Vec3.Zero;
+  public Vec3 cursor = Vec3.Zero;
 
   public Color color = Color.White * 0.5f;
 
@@ -35,8 +34,8 @@ class ColorCube {
 
     float thinn = thicc / 3;
     // Vec3 p0s = pos + new Vec3((float)Math.Sin(Time.Totalf) * offset, (float)Math.Sin(Time.Totalf* 2) * offset, (float)Math.Sin(Time.Totalf * 4) * offset);
-    Vec3 raw = center + (p0 * offset);
-    Vec3 p00 = p0;
+    Vec3 raw = center + (cursor * offset);
+    Vec3 p00 = cursor;
     p00.x = Math.Clamp(p00.x, -1, 1);
     p00.y = Math.Clamp(p00.y, -1, 1);
     p00.z = Math.Clamp(p00.z, -1, 1);
@@ -53,7 +52,7 @@ class ColorCube {
 }
 
 
-// everyone get their own color cube? * held in sub hand *
+// everyone get their own color cube? * held in off hand *
 // or just one?
 // or context sensitive?
 // can it be networked effectively? well its just a bounds with a shader and cursor, should be easy enough :)
