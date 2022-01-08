@@ -25,15 +25,19 @@ public class Con {
   public Btn triggerBtn;
 
   public void Step(bool chirality) {
-    device = Input.Controller(Handed.Right);
+    device = Input.Controller(chirality ? Handed.Right : Handed.Left);
     pos = device.pose.position;
     ori = device.aim.orientation;
     gripBtn.Step(device.grip > 0.5f);
     triggerBtn.Step(device.trigger > 0.5f);
   }
+
+  public Pose Pose() {
+    return new Pose(pos, ori);
+  }
 }
 
-public class Btn {
+public struct Btn {
   public bool frameDown, held, frameUp;
 
   public void Step(bool down) {
@@ -46,6 +50,10 @@ public class Btn {
 public class Monolith {
   public Mic mic;
 
+  public Con rCon = new Con(), lCon = new Con();
+  public Con Con(bool chirality) {
+    return chirality ? rCon : lCon;
+  }
   public Pose rShoulder, lShoulder;
   public Pose Shoulder(bool chirality) {
     return chirality ? rShoulder : lShoulder;
@@ -58,10 +66,6 @@ public class Monolith {
   public Glove Glove(bool chirality) {
     return chirality ? rGlove : lGlove;
   }
-  public Con rCon, lCon;
-  public Con Con(bool chirality) {
-    return chirality ? rCon : lCon;
-  }
 
   public Vec3 rDragStart, lDragStart;
   public float railT;
@@ -72,8 +76,11 @@ public class Monolith {
 
   public void Run() {
     Renderer.SetClip(0.02f, 1000f);
-    // Renderer.
     // mic = new Mic();
+    rGlove = new Glove(this, true);
+    lGlove = new Glove(this, false);
+
+
     Vec3 pos = new Vec3(0, 0, 0);
     Vec3 vel = new Vec3(0, 0, 0);
 
@@ -106,12 +113,6 @@ public class Monolith {
 
     SpatialCursor cubicFlow = new CubicFlow(this);
 
-    Tex camTex = new Tex(TexType.Rendertarget);
-    camTex.SetSize(600, 400);
-    Material camMat = new Material(Shader.Unlit);
-    camMat.SetTexture("diffuse", camTex);
-    Mesh quad = Default.MeshQuad;
-
     Vec3 gripPos = Vec3.Zero;
 
 
@@ -123,9 +124,9 @@ public class Monolith {
 
     while (SK.Step(() => {
       Renderer.CameraRoot = Matrix.T(pos);
+      
       rCon.Step(true);
       lCon.Step(false);
-
 
       // Shoulders
       Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f;
@@ -137,19 +138,29 @@ public class Monolith {
       if (Vec3.Dot(shoulderDir, Input.Head.Forward) < 0) { shoulderDir = -shoulderDir; }
       rShoulder = new Pose(headPos + Quat.LookDir(shoulderDir) * new Vec3(0.2f, -0.2f, 0), Quat.LookDir(shoulderDir));
       lShoulder = new Pose(headPos + Quat.LookDir(shoulderDir) * new Vec3(-0.2f, -0.2f, 0), Quat.LookDir(shoulderDir));
+
+      // Wrists
       rWrist = new Pose(rCon.pos + rCon.ori * new Vec3(0, 0, 0.052f), rCon.ori);
       lWrist = new Pose(lCon.pos + lCon.ori * new Vec3(0, 0, 0.052f), lCon.ori);
+
+      // Gloves
+      rGlove.Step();
+      lGlove.Step();
 
 
       // past this point more questions arise
 
-      cubicFlow.Step(new Pose[] { new Pose(rightReachCursor.p0, rCon.ori), new Pose(leftReachCursor.p0, lCon.ori) }, 1);
-      if (rCon.stick.y > 0.1f || lCon.stick.y > 0.1f) {
-        Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
-        net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
-      } else {
-        net.me.cursor0 = rightReachCursor.p0; net.me.cursor1 = rightReachCursor.p0; net.me.cursor2 = leftReachCursor.p0; net.me.cursor3 = leftReachCursor.p0;
-      }
+      // cubicFlow.Step(new Pose[] { new Pose(rightReachCursor.p0, rCon.ori), new Pose(leftReachCursor.p0, lCon.ori) }, 1);
+      // if (rCon.stick.y > 0.1f || lCon.stick.y > 0.1f) {
+      //   Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
+      //   net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
+      // } else {
+      //   net.me.cursor0 = rightReachCursor.p0; net.me.cursor1 = rightReachCursor.p0; net.me.cursor2 = leftReachCursor.p0; net.me.cursor3 = leftReachCursor.p0;
+      // }
+
+
+
+
 
       // throw yourself (delta -> vel -> momentum)
       // bring rails back

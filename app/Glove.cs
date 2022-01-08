@@ -1,23 +1,22 @@
 using System;
 using StereoKit;
 
-public enum Grab {
+public enum Pull {
   Stretch, Backhanded
 }
 
 public class Glove {
   Monolith mono;
   bool chirality;
-  public ReachCursor reachCursor;
   public Glove(Monolith mono, bool chirality) {
     this.mono = mono;
     this.chirality = chirality;
-    this.reachCursor = new ReachCursor(mono, chirality);
   }
 
-  public Vec3 cursor;
+  public Pose cursor;
+  Vec3 cursorDir;
 
-  public Grab? grabbed = null;
+  public Pull? pulling = null;
   float stretchDeadzone = 0;
   Vec3 pullPoint;
 
@@ -25,39 +24,43 @@ public class Glove {
 
   public void Step() {
     Pose shoulder = mono.Shoulder(chirality);
-    Con con = mono.Con(chirality); // !chirality
+    Con con = mono.Con(chirality), otherCon = mono.Con(!chirality);
 
     pullPoint = con.pos;
+    // cursorDir = (con.pos - pullPoint).Normalized; // WRONG PLACE?
 
-    switch (grabbed) {
-      case Grab.Stretch:
+    switch (pulling) {
+      case Pull.Stretch:
+        pullPoint = otherCon.pos;
+        cursorDir = con.ori * Vec3.Forward;
         break;
 
-      case Grab.Backhanded:
+      case Pull.Backhanded:
+
         break;
 
       default:
-        if (con.gripBtn.frameDown) {
-          // comparison evaluation 
-          grabbed = Grab.Stretch;
+        if (otherCon.gripBtn.frameDown) {
+          // comparison evaluation
+          pulling = Pull.Stretch;
+          stretchDeadzone = Vec3.Distance(con.pos, otherCon.pos);
         }
         break;
     }
 
-    if (!con.gripBtn.held) {
+    if (!otherCon.gripBtn.held) {
       // null
-      grabbed = null;
+      pulling = null;
     }
 
     // Vec3 from = (shoulder.orientation * origin) + shoulder.position;
     float stretch = Vec3.Distance(pullPoint, con.pos);
     stretch = Math.Max(stretch - stretchDeadzone, 0);
 
-    cursor = con.pos + (con.pos - pullPoint).Normalized * stretch * 3;
+    cursor.position = con.pos + cursorDir * stretch * 3;
 
     Lines.Add(pullPoint, con.pos, new Color(1, 0, 1), 0.005f);
-    Lines.Add(con.pos, cursor, new Color(0, 1, 1), 0.005f);
-
+    Lines.Add(con.pos, cursor.position, new Color(0, 1, 1), 0.005f);
 
 
 
@@ -92,5 +95,16 @@ public class Glove {
     //   rightGripDown = false;
     // }
 
+    Render(con.Pose(), cursor);
+  }
+
+  // decouple the rendering
+  // render-relevent DATA that gets streamed over the network
+  // that way we can render the same way for all peers
+  static Mesh mesh = Default.MeshCube;
+  static Material mat = Default.Material;
+  public void Render(Pose pose, Pose cursor) {
+    mesh.Draw(mat, pose.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f)));
+    mesh.Draw(mat, cursor.ToMatrix(Vec3.One * 0.035f));
   }
 }
