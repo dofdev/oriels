@@ -13,98 +13,90 @@ public class Glove {
     this.chirality = chirality;
   }
 
-  public Pose cursor;
-  Vec3 cursorDir;
+  public Pose virtualGlove;
+  Vec3 direction;
 
   public Pull? pulling = null;
   float stretchDeadzone = 0;
   Vec3 pullPoint;
 
-  // bool rightPlanted = false;
+  bool planted = false;
 
   public void Step() {
     Pose shoulder = mono.Shoulder(chirality);
     Con con = mono.Con(chirality), otherCon = mono.Con(!chirality);
+    bool pull = otherCon.gripBtn.frameDown;
 
-    pullPoint = con.pos;
-    // cursorDir = (con.pos - pullPoint).Normalized; // WRONG PLACE?
+    if (!planted) {
+      pullPoint = con.pos;
+    } else {
+      // reach cursor
+      // shoulder stuff
+      // pullPoint = (shoulder.orientation * origin) + shoulder.position;
+      // shoulder.orientation.Inverse * (con.pose.position - shoulder.position)
+      direction = PullRequest.Direction(con.pos, pullPoint);
+    }
 
     switch (pulling) {
+      default:
+        if (con.device.stick.Magnitude > 0.1f) {
+          if (con.device.stick.y < 0f) {
+            planted = true;
+          }
+        } else {
+          planted = false;
+        }
+
+        if (pull) {
+          // need the rotation of the wrist rather than the hand for this to be reliable
+          Vec3 localPos = con.ori.Inverse * (otherCon.pos - con.pos);
+          if (chirality ? localPos.x < 0 : localPos.x > 0) {
+            pulling = Pull.Stretch;
+          } else {
+            pulling = Pull.Backhanded;
+          }
+
+          stretchDeadzone = Vec3.Distance(con.pos, otherCon.pos);
+        } else {
+          stretchDeadzone = 0;
+        }
+        virtualGlove.orientation = con.ori;
+        break;
+
       case Pull.Stretch:
         pullPoint = otherCon.pos;
-        cursorDir = con.ori * Vec3.Forward;
+        direction = con.ori * Vec3.Forward;
+        virtualGlove.orientation = otherCon.ori;
         break;
 
       case Pull.Backhanded:
-
-        break;
-
-      default:
-        if (otherCon.gripBtn.frameDown) {
-          // comparison evaluation
-          pulling = Pull.Stretch;
-          stretchDeadzone = Vec3.Distance(con.pos, otherCon.pos);
-        }
+        pullPoint = otherCon.pos;
+        direction = PullRequest.Direction(con.pos, otherCon.pos);
+        virtualGlove.orientation = con.ori;
         break;
     }
 
     if (!otherCon.gripBtn.held) {
-      // null
       pulling = null;
     }
 
-    // Vec3 from = (shoulder.orientation * origin) + shoulder.position;
     float stretch = Vec3.Distance(pullPoint, con.pos);
     stretch = Math.Max(stretch - stretchDeadzone, 0);
+    virtualGlove.position = con.pos + direction * stretch * 3;
 
-    cursor.position = con.pos + cursorDir * stretch * 3;
-
-    Lines.Add(pullPoint, con.pos, new Color(1, 0, 1), 0.005f);
-    Lines.Add(con.pos, cursor.position, new Color(0, 1, 1), 0.005f);
-
-
-
-    // if (con.stick.Magnitude > 0.1f) {
-    //   if (con.stick.y < 0f) {
-    //     rightPlanted = true;
-    //   }
-    // } else {
-    //   rightPlanted = false;
-    // }
-
-    // if (!rightPlanted) {
-    //   reachCursor.p0 = con.pose.position;
-    //   reachCursor.Calibrate();
-    // }
-
-    // if (con.grip > 0.5f) {
-    //   Vec3 toPos = shoulder.orientation.Inverse * (con.pose.position - shoulder.position);
-    //   if (!rightGripDown) {
-    //     float deadzone = Vec3.Distance(leftReachCursor.origin, toPos);
-    //     if (deadzone < 0.1f) {
-    //       leftReachCursor.deadzone = deadzone;
-    //       rightGripDown = true;
-    //     }
-    //   }
-
-    //   if (rightGripDown) {
-    //     leftReachCursor.origin = toPos;
-    //   }
-    // } else {
-    //   leftReachCursor.deadzone = 0;
-    //   rightGripDown = false;
-    // }
-
-    Render(con.Pose(), cursor);
+    Render(con.Pose(), virtualGlove);
   }
 
   // decouple the rendering
-  // render-relevent DATA that gets streamed over the network
+  // the render-relevent DATA that gets streamed over the network
   // that way we can render the same way for all peers
   static Mesh mesh = Default.MeshCube;
   static Material mat = Default.Material;
-  public void Render(Pose pose, Pose cursor) {
-    mesh.Draw(mat, pose.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f)));
-    mesh.Draw(mat, cursor.ToMatrix(Vec3.One * 0.035f));
+  public void Render(Pose glove, Pose virtualGlove) {
+    Lines.Add(pullPoint, glove.position, new Color(1, 0, 1), 0.005f);
+    Lines.Add(glove.position, virtualGlove.position, new Color(0, 1, 1), 0.005f);
+
+    mesh.Draw(mat, glove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3));
+    mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f)));
   }
 }

@@ -474,4 +474,8 @@ public static class PullRequest {
   public static int RandomRange(int min, int max) {
     return r.Next(min, max);
   }
+
+  public static Vec3 Direction(Vec3 to, Vec3 from) {
+    return (to - from).Normalized;
+  }
 }
