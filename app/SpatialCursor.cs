@@ -87,9 +87,9 @@ public class TwistCursor : SpatialCursor {
     outty = Vec3.Dot(from * Vec3.Up, quat * Vec3.Right * (chirality ? 1 : -1)) > 0;
     
     p0 = pos + quat * Vec3.Forward * twist * str;
-    // model.Draw(Matrix.TS(p0, 0.02f));
 
-    // Lines.Add(pos, pos + from * Vec3.Up * 0.1f, new Color(1, 0, 1), 0.005f);
+    // Render
+    // model.Draw(Matrix.TS(p0, 0.02f));
     Lines.Add(pos, pos + quat * Vec3.Up * 0.1f, new Color(1, 0, 1), 0.005f);
     Lines.Add(pos, p0, new Color(0, 1, 1), 0.005f);
     // draw the twist (angle)
