@@ -23,15 +23,26 @@ public class Glove {
   Vec3 twistPoint;
   bool twistOut;
 
+  int firstFace;
+
   public void Step() {
     Pose shoulder = mono.Shoulder(chirality);
     Pose wrist = mono.Wrist(chirality);
     Con con = mono.Con(chirality), otherCon = mono.Con(!chirality);
-    bool reach = con.device.IsX2Pressed;
     bool pull = otherCon.gripBtn.frameDown;
-    bool lift = con.device.IsX1Pressed;
-    lift = false;
-    bool twist = con.device.IsX1Pressed;
+
+    if (firstFace == 0) { 
+      if (con.device.IsX1JustPressed) { firstFace = 1; }
+      if (con.device.IsX2JustPressed) { firstFace = 2; }
+    }
+    if (!con.device.IsX1Pressed && !con.device.IsX2Pressed) { firstFace = 0; }
+
+    bool twist = firstFace == 1;
+    bool reach = firstFace == 2;
+
+    bool lift = false;
+    if (firstFace == 1 && con.device.IsX2Pressed) { lift = true; }
+    if (firstFace == 2 && con.device.IsX1Pressed) { lift = true; }
 
     // exclusive states?
 
