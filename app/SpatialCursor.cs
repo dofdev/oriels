@@ -192,23 +192,23 @@ public class SupineCursor : SpatialCursor {
   }
   float calibStr;
   Quat calibQuat;
-  Pose dom, sub;
+  Pose rCon, lCon;
   public override void Step(Pose[] poses, float scalar) {
-    dom = poses[0];
-    sub = poses[1];
+    rCon = poses[0];
+    lCon = poses[1];
 
-    Quat rel = Quat.LookAt(Vec3.Zero, sub.orientation * Vec3.Forward);
-    float twist = (Vec3.Dot(rel * -Vec3.Right, sub.orientation * Vec3.Up) + 1) / 2;
-    p0 = dom.position + dom.orientation * calibQuat * Vec3.Forward * calibStr * twist;
+    Quat rel = Quat.LookAt(Vec3.Zero, lCon.orientation * Vec3.Forward);
+    float twist = (Vec3.Dot(rel * -Vec3.Right, lCon.orientation * Vec3.Up) + 1) / 2;
+    p0 = rCon.position + rCon.orientation * calibQuat * Vec3.Forward * calibStr * twist;
 
     model.Draw(Matrix.TS(p0, 0.06f));
   }
   public override void Calibrate() {
     Vec3 target = Input.Head.position + Input.Head.Forward;
-    calibStr = Vec3.Distance(dom.position, target) * 2;
+    calibStr = Vec3.Distance(rCon.position, target) * 2;
 
-    Quat calibAlign = Quat.LookAt(dom.position, target);
-    calibQuat = dom.orientation.Inverse * calibAlign;
+    Quat calibAlign = Quat.LookAt(rCon.position, target);
+    calibQuat = rCon.orientation.Inverse * calibAlign;
   }
 }
 

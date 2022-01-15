@@ -14,14 +14,21 @@ public class Glove {
   }
 
   public Pose virtualGlove;
-  Vec3 direction;
+  Quat projection = Quat.Identity;
+  Vec3 direction {
+    get { return projection * new Vec3(0, 0, -1); }
+    set { projection = Quat.LookDir(value); }
+  }
 
   public Pull? pulling = null;
   float stretch;
   float stretchDeadzone = 0;
   Vec3 pullPoint;
-  Vec3 twistPoint;
+
+  float twist;
   bool twistOut;
+  Quat twistOffset;
+  Quat oldOri;
 
   int firstFace;
 
@@ -37,8 +44,8 @@ public class Glove {
     }
     if (!con.device.IsX1Pressed && !con.device.IsX2Pressed) { firstFace = 0; }
 
-    bool twist = firstFace == 1;
-    bool reach = firstFace == 2;
+    bool twisting = firstFace == 1;
+    bool reaching = firstFace == 2;
 
     bool lift = false;
     if (firstFace == 1 && con.device.IsX2Pressed) { lift = true; }
@@ -46,7 +53,7 @@ public class Glove {
 
     // exclusive states?
 
-    if (reach) {
+    if (reaching) {
       // shoulder stuff
       // pullPoint = (shoulder.orientation * origin) + shoulder.position;
       // shoulder.orientation.Inverse * (con.pose.position - shoulder.position)
@@ -72,7 +79,7 @@ public class Glove {
 
       case Pull.Stretch:
         pullPoint = otherCon.pos;
-        direction = con.ori * Vec3.Forward;
+        projection = con.ori;
         virtualGlove.orientation = otherCon.ori;
         break;
 
@@ -87,21 +94,35 @@ public class Glove {
       pulling = null;
     }
 
-    stretch = Math.Max(Vec3.Distance(pullPoint, con.pos) - stretchDeadzone, 0);
+    if (!twisting) { 
+      stretch = Math.Max(Vec3.Distance(pullPoint, con.pos) - stretchDeadzone, 0);
+      twist = 0;
+      
+      twistOffset = Quat.Identity;
+    }
 
-    if (!twist) { twistPoint = con.ori * Vec3.Up; }
-    Quat twistFrom = Quat.LookAt(Vec3.Zero, con.ori * Vec3.Forward, twistPoint);
-    if (twist) {
-      stretch = (float)(Math.Acos(Vec3.Dot(twistFrom * Vec3.Up, con.ori * Vec3.Up)) / Math.PI);
-      twistOut = Vec3.Dot(twistFrom * Vec3.Up, con.ori * Vec3.Right * (chirality ? 1 : -1)) > 0;
+    float twistDelta = MathF.Acos(Vec3.Dot(con.ori * projection * Vec3.Up, oldOri * projection * Vec3.Up)) / SKMath.Pi;
+    twistOut = Vec3.Dot(con.ori * projection * Vec3.Up, oldOri * projection * Vec3.Right * (chirality ? 1 : -1)) > 0;
+    twistDelta *= twistOut ? -1 : 1;
+    if (!float.IsFinite(twistDelta)) { twistDelta = 0; }
+    if (twisting) {
+      stretch = 0;
 
-      direction = con.ori * Vec3.Forward;
-      virtualGlove.orientation = twistFrom;
+      if (lift) {
+        twistOffset = con.ori.Inverse * projection;
+      } else {
+        twist = twist + twistDelta;
+
+        projection = con.ori * twistOffset;
+      }
+
+      virtualGlove.orientation = con.ori;
     } 
+    oldOri = con.ori;
 
-    virtualGlove.position = con.pos + direction * stretch * 3;
+    virtualGlove.position = con.pos + direction * (stretch + Math.Abs(twist)) * 3;
 
-    Render(con.Pose(), virtualGlove, wrist, twist, stretch, twistOut, twistFrom);
+    Render(con.Pose(), virtualGlove, wrist, stretch, twist, chirality);
   }
 
   // decouple the rendering
@@ -109,26 +130,29 @@ public class Glove {
   // that way we can render the same way for all peers
   static Mesh mesh = Default.MeshCube;
   static Material mat = Default.Material;
-  public void Render(Pose glove, Pose virtualGlove, Pose wrist, bool twist, float stretch, bool twistOut, Quat twistFrom) {
+  public void Render(Pose glove, Pose virtualGlove, Pose wrist, float stretch, float twist, bool chirality) {
     Lines.Add(pullPoint, glove.position, new Color(1, 0, 1), 0.005f);
     Lines.Add(glove.position, virtualGlove.position, new Color(0, 1, 1), 0.005f);
 
     // Twist
-    float twistValue = twist ? stretch : 0;
-    Lines.Add(
-      wrist.position + glove.orientation * Vec3.Up * 0.04f, 
-      wrist.position + glove.orientation * Vec3.Up * 0.05f, 
-      new Color(1, 1, 0), 0.005f
-    );
-    Vec3 lastPos = wrist.position;
-    for (int i = 0; i < 32; i++) {
-      float tw = twistValue * (i / 31f);
-      tw *= twistOut ? -1 : 1;
-      Vec3 nextPos = wrist.position + twistFrom * new Vec3(SKMath.Sin(tw * SKMath.Pi), SKMath.Cos(tw * SKMath.Pi), 0) * 0.05f;
+    float twistAbs = Math.Abs(twist);
+    Vec3 twistStuff = glove.position + projection * glove.orientation.Inverse * (wrist.position - glove.position);
+    int segments = twistAbs == 0 ? -1 : 6 + (int)(twistAbs * 10);
+    LinePoint[] linePoints = new LinePoint[segments + 2];
+    linePoints[0] = new LinePoint(twistStuff, new Color(1, 1, 0), 0.005f);
+    for (int i = 0; i <= segments; i++) {
+      float tw = twistAbs * Math.Min(i / (float)(segments - 1), 1);
+      tw *= chirality ? 1 : -1;
+      tw *= twist > 0 ? 1 : -1;
+      // spiral 3
+      float tighten = Math.Max(1 - (twistAbs / 9), 0);
+      float radius = i == segments ? 0.06f : 0.05f * (1 - (1 - i / (float)segments) * (1 - tighten));
+      Vec3 nextPos = twistStuff + projection * new Vec3(SKMath.Sin(tw * SKMath.Pi), SKMath.Cos(tw * SKMath.Pi), 0) * radius;
 
-      Lines.Add(lastPos, nextPos, new Color(1, 1, 0), 0.005f); // convert to LinePoints ?
-      lastPos = nextPos;
+      // Lines.Add(lastPos, nextPos, new Color(1, 1, 0), 0.005f);
+      linePoints[i + 1] = new LinePoint(nextPos, new Color(1, 1, 0), 0.005f);
     }
+    Lines.Add(linePoints);
 
     mesh.Draw(mat, glove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3));
     mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f)));
