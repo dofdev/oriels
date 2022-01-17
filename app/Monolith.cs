@@ -11,7 +11,7 @@ if (!SK.Initialize(settings))
   Environment.Exit(1);
 
 Input.HandSolid(Handed.Max, false);
-Input.HandVisible(Handed.Max, false);
+// Input.HandVisible(Handed.Max, false);
 // TextStyle style = Text.MakeStyle(Font.FromFile("DMMono-Regular.ttf"), 0.1f, Color.White);
 
 Monolith mono = new Monolith();
@@ -165,20 +165,6 @@ public class Monolith {
       // throw yourself (delta -> vel -> momentum)
       // bring rails back
       // boolean over network to determine if a peers cubic flow should be drawn
-
-
-      for (int i = 0; i < net.me.blocks.Length; i++) {
-        Pose blockPose = net.me.blocks[i].solid.GetPose();
-        Bounds bounds = new Bounds(Vec3.Zero, Vec3.One * net.me.blocks[i].size);
-        if (net.me.blocks[i].active && (
-          bounds.Contains(blockPose.orientation.Inverse * (net.me.cursor0 - blockPose.position)) || 
-          bounds.Contains(blockPose.orientation.Inverse * (net.me.cursor3 - blockPose.position))
-        )) {
-          net.me.blocks[i].color = new Color(0.8f, 1, 1);
-        } else {
-          net.me.blocks[i].color = new Color(1, 1, 1);
-        }
-      }
 
 
       // FULLSTICK
@@ -377,7 +363,7 @@ public class Monolith {
         }
       }
 
-      net.me.Step(rCon, lCon);
+      net.me.Step(this, rCon, lCon);
 
 
 

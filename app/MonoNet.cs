@@ -299,14 +299,38 @@ class Peer {
     // voiceInst = voice.Play(Vec3.Zero, 0.5f);
   }
 
-  BlockCon dBlock = new BlockCon();
-  BlockCon sBlock = new BlockCon();
+  BlockCon rBlock = new BlockCon();
+  BlockCon lBlock = new BlockCon();
 
   CubicCon cubicCon = new CubicCon();
 
-  public void Step(Con rCon, Con lCon) {
-    dBlock.Step(rCon, lCon, cursor0, ref sBlock, ref blocks);
-    sBlock.Step(lCon, rCon, cursor3, ref dBlock, ref blocks);
+  public Vec3 vGlovePos;
+
+
+  public void Step(Monolith mono, Con rCon, Con lCon) { // CLIENT SIDE
+    rBlock.Step(rCon, lCon, mono.rGlove.virtualGlove.position, ref lBlock, ref blocks);
+    lBlock.Step(lCon, rCon, mono.lGlove.virtualGlove.position, ref rBlock, ref blocks);
+
+    // too much in this networking class
+    // should contain only network related data
+    // and not be a weird pitstop for the game logic
+    // does it store a copy of the data?
+    // or just a reference to the data?
+
+    // vGlovePos = mono.rGlove.virtualGlove.position;
+
+    // for (int i = 0; i < blocks.Length; i++) {
+    //   Pose blockPose = blocks[i].solid.GetPose();
+    //   Bounds bounds = new Bounds(Vec3.Zero, Vec3.One * blocks[i].size);
+    //   if (blocks[i].active && (
+    //     bounds.Contains(blockPose.orientation.Inverse * (cursor - blockPose.position)) ||
+    //     bounds.Contains(blockPose.orientation.Inverse * (cursor3 - blockPose.position))
+    //   )) {
+    //     blocks[i].color = new Color(0.8f, 1, 1);
+    //   } else {
+    //     blocks[i].color = new Color(1, 1, 1);
+    //   }
+    // }
 
     cubicCon.Step(rCon, lCon, this, ref cubics);
 

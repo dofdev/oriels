@@ -130,6 +130,7 @@ public class Glove {
   // that way we can render the same way for all peers
   static Mesh mesh = Default.MeshCube;
   static Material mat = Default.Material;
+  static Model model = Model.FromFile("skinned_test.glb", Shader.Default);
   public void Render(Pose glove, Pose virtualGlove, Pose wrist, float stretch, float twist, bool chirality) {
     Lines.Add(pullPoint, glove.position, new Color(1, 0, 1), 0.005f);
     Lines.Add(glove.position, virtualGlove.position, new Color(0, 1, 1), 0.005f);
@@ -140,11 +141,11 @@ public class Glove {
     int segments = twistAbs == 0 ? -1 : 6 + (int)(twistAbs * 10);
     LinePoint[] linePoints = new LinePoint[segments + 2];
     linePoints[0] = new LinePoint(twistStuff, new Color(1, 1, 0), 0.005f);
+
     for (int i = 0; i <= segments; i++) {
       float tw = twistAbs * Math.Min(i / (float)(segments - 1), 1);
       tw *= chirality ? 1 : -1;
       tw *= twist > 0 ? 1 : -1;
-      // spiral 3
       float tighten = Math.Max(1 - (twistAbs / 9), 0);
       float radius = i == segments ? 0.06f : 0.05f * (1 - (1 - i / (float)segments) * (1 - tighten));
       Vec3 nextPos = twistStuff + projection * new Vec3(SKMath.Sin(tw * SKMath.Pi), SKMath.Cos(tw * SKMath.Pi), 0) * radius;
@@ -154,7 +155,27 @@ public class Glove {
     }
     Lines.Add(linePoints);
 
-    mesh.Draw(mat, glove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3));
-    mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f)));
+    mesh.Draw(mat, glove.ToMatrix(new Vec3(0.025f, 0.025f, 0.025f) / 3));
+    mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3));
+    // Lines.AddAxis(glove);
+    // Handed handed = chirality ? Handed.Right : Handed.Left;
+    // Hand hand = Input.Hand(handed);
+    // HandJoint[] joints = hand.fingers;
+    // for (int i = 0; i < joints.Length; i++) {
+    //   joints[i].position = (joints[i].position - glove.position) + virtualGlove.position;
+    // }
+    // Input.HandOverride(chirality ? Handed.Right : Handed.Left, joints);
+    // Input.HandClearOverride(handed);
+
+    // model.Draw(glove.ToMatrix(Vec3.One / 4));
+    // Matrix m4 = model.RootNode.Child.LocalTransform;
+    // Pose mPose = m4.Pose;
+    // mPose.orientation = Quat.FromAngles(Vec3.Right * 45);
+    // m4 = mPose.ToMatrix();
+    // model.RootNode.Child.LocalTransform = m4;
+    // ? for stereo kit nick "can i directly update bone transforms on a skinned mesh"
+
+
+
   }
 }
