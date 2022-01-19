@@ -1,14 +1,13 @@
 using System;
 using StereoKit;
 
-class Block {
+public class Block {
   public static Mesh mesh = Default.MeshCube;
   public static Material mat = Default.Material;
 
   public bool active = false;
   public Solid solid;
 
-  public Color color;
   public float size = 0.5f;
 
   // if you grab someone else's it becomes your own
@@ -16,19 +15,12 @@ class Block {
   // public int request; // request ownership
   // public int owner; // then if owner continue as usual
   // public bool busy; // marked as held so no fighting
-  public Block(SolidType type, Color color) {
+  public Block(SolidType type) {
     this.solid = new Solid(Vec3.Zero, Quat.Identity, type);
     this.size = 0.5f;
     this.solid.AddBox(Vec3.One * size, 3);
-    this.color = color;
     Disable();
   }
-
-  // public Block(Vec3 pos, Quat rot, SolidType type, Color color) {
-  //   this.solid = new Solid(pos, rot, type);
-  //   this.solid.AddBox(Vec3.One, 1);
-  //   this.color = color;
-  // }
 
   public void Enable(Vec3 pos, Quat rot) {
     solid.SetAngularVelocity(Vec3.Zero);
@@ -43,12 +35,19 @@ class Block {
 
   public void Draw() {
     if (active) {
-      mesh.Draw(mat, solid.GetPose().ToMatrix(Vec3.One * size), color);
+      mesh.Draw(mat, solid.GetPose().ToMatrix(Vec3.One * size));
     }
   }
 }
 
-class BlockCon {
+public class BlockCon {
+  Monolith mono;
+  bool chirality;
+  public BlockCon(Monolith mono, bool chirality) {
+    this.mono = mono;
+    this.chirality = chirality;
+  }
+
   public int index = -1;
   public Vec3 offset = Vec3.Zero;
   public Quat heldRot = Quat.Identity, spinRot = Quat.Identity, spinDelta = Quat.Identity;
@@ -58,8 +57,13 @@ class BlockCon {
   float lastPressed = 0;
   bool pressed = false;
 
-  public void Step(Con con, Con otherCon, Vec3 cursor, ref BlockCon otherBlockCon, ref Block[] blocks) {
-    
+  public void Step() {
+    Block[] blocks = mono.blocks;
+    Con con = mono.Con(chirality);
+    Con otherCon = mono.Con(!chirality);
+    Vec3 cursor = mono.Glove(chirality).virtualGlove.position;
+    BlockCon otherBlockCon = mono.BlockCon(!chirality);
+
     bool doublePressed = false;
     if (con.device.trigger > 0.5f) {
       if (!pressed) {

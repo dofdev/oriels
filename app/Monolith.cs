@@ -48,6 +48,7 @@ public struct Btn {
 }
 
 public class Monolith {
+  public MonoNet net;
   public Mic mic;
 
   public Con rCon = new Con(), lCon = new Con();
@@ -66,6 +67,13 @@ public class Monolith {
   public Glove Glove(bool chirality) {
     return chirality ? rGlove : lGlove;
   }
+  public Block[] blocks;
+  public BlockCon rBlock, lBlock;
+  public BlockCon BlockCon(bool chirality) {
+    return chirality ? rBlock : lBlock;
+  }
+  public Cubic[] cubics;
+  public CubicCon cubicCon;
 
   public Vec3 rDragStart, lDragStart;
   public float railT;
@@ -76,9 +84,23 @@ public class Monolith {
 
   public void Run() {
     Renderer.SetClip(0.02f, 1000f);
+
+    net = new MonoNet(this);
+    net.Start();
     // mic = new Mic();
     rGlove = new Glove(this, true);
     lGlove = new Glove(this, false);
+    blocks = new Block[] {
+      new Block(SolidType.Normal), new Block(type), new Block(type),
+      new Block(type), new Block(type), new Block(type)
+    };
+    rBlock = new BlockCon(this, true);
+    lBlock = new BlockCon(this, false);
+    cubics = new Cubic[] {
+      new Cubic(), new Cubic(), new Cubic(),
+      new Cubic(), new Cubic(), new Cubic()
+    };
+    cubicCon = new CubicCon(this);
 
 
     Vec3 pos = new Vec3(0, 0, 0);
@@ -104,9 +126,6 @@ public class Monolith {
     oriel.Start(3);
     // Oriel otherOriel = new Oriel();
     // otherOriel.Start(4);
-
-    MonoNet net = new MonoNet(this);
-    net.Start();
 
     ColorCube colorCube = new ColorCube();
     Vec3 oldLPos = Vec3.Zero;
@@ -147,8 +166,13 @@ public class Monolith {
       rGlove.Step();
       lGlove.Step();
 
+      // Blocks
+      rBlock.Step();
+      lBlock.Step();
 
-      // past this point more questions arise
+      // Cubic
+      cubicCon.Step(rCon, lCon, this);
+
 
       // cubicFlow.Step(new Pose[] { new Pose(rightReachCursor.p0, rCon.ori), new Pose(leftReachCursor.p0, lCon.ori) }, 1);
       // if (rCon.stick.y > 0.1f || lCon.stick.y > 0.1f) {
@@ -330,6 +354,18 @@ public class Monolith {
 
 
 
+
+
+
+
+      // Scene
+      cube.Draw(matFloor, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
+
+
+
+
+
+
       // COLOR CUBE
       // reveal when palm up
       float reveal = lCon.device.pose.Right.y * 1.666f;
@@ -352,38 +388,25 @@ public class Monolith {
       oldLPos = lCon.device.pose.position;
 
 
-      net.me.color = colorCube.color;
-      net.me.headset = Input.Head;
-      net.me.mainHand = new Pose(rCon.pos, rCon.ori);
-      net.me.offHand = new Pose(lCon.pos, lCon.ori);
-      for (int i = 0; i < net.peers.Length; i++) {
-        Peer peer = net.peers[i];
-        if (peer != null) {
-          peer.Draw(true);
-        }
-      }
-
-      net.me.Step(this, rCon, lCon);
-
-
-
-
       oriel.Step(net.me.cursor0, net.me.cursor3);
-
-      // otherOriel.bounds.center = Vec3.Forward * -2;
-      // otherOriel.Step();
-
       // Matrix orbitMatrix = OrbitalView.transform;
       // cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
       // Default.MaterialHand["color"] = cube.color;
 
-      // cursor.Draw(Matrix.S(0.1f));
 
-      
-      // Renderer.RenderTo(camTex, Matrix.TR(Input.Head.position + Vec3.Up * 10, Quat.FromAngles(-90f, 0, 0)), Matrix.Orthographic(2f, 2f, 0.1f, 100f), RenderLayer.All, RenderClear.All);
-      // quad.Draw(camMat, Matrix.TR(Input.Head.Forward, Quat.FromAngles(0, 180, 0)));
-      cube.Draw(matFloor, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
-    })) ;
+
+      net.me.color = colorCube.color;
+      net.me.headset = Input.Head;
+      net.me.mainHand = rCon.Pose();
+      net.me.offHand = lCon.Pose();
+      for (int i = 0; i < net.peers.Length; i++) {
+        Peer peer = net.peers[i];
+        if (peer != null) { peer.Draw(true); }
+      }
+      net.me.Step(this);
+      net.send = true;
+
+    }));
     SK.Shutdown();
   }
 }

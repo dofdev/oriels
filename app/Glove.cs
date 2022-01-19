@@ -128,9 +128,9 @@ public class Glove {
   // decouple the rendering
   // the render-relevent DATA that gets streamed over the network
   // that way we can render the same way for all peers
-  static Mesh mesh = Default.MeshCube;
-  static Material mat = Default.Material;
-  static Model model = Model.FromFile("skinned_test.glb", Shader.Default);
+  Mesh mesh = Default.MeshCube;
+  Material mat = Default.Material;
+  Model model = Model.FromFile("skinned_test.glb", Shader.Default);
   public void Render(Pose glove, Pose virtualGlove, Pose wrist, float stretch, float twist, bool chirality) {
     Lines.Add(pullPoint, glove.position, new Color(1, 0, 1), 0.005f);
     Lines.Add(glove.position, virtualGlove.position, new Color(0, 1, 1), 0.005f);
@@ -167,12 +167,15 @@ public class Glove {
     // Input.HandOverride(chirality ? Handed.Right : Handed.Left, joints);
     // Input.HandClearOverride(handed);
 
-    // model.Draw(glove.ToMatrix(Vec3.One / 4));
-    // Matrix m4 = model.RootNode.Child.LocalTransform;
-    // Pose mPose = m4.Pose;
-    // mPose.orientation = Quat.FromAngles(Vec3.Right * 45);
-    // m4 = mPose.ToMatrix();
-    // model.RootNode.Child.LocalTransform = m4;
+
+    ModelNode top = model.FindNode("Top");
+    top.LocalTransform = Matrix.R(Quat.FromAngles(Vec3.Right * 45));
+    Console.WriteLine(top.Name);
+
+    model.Draw(glove.ToMatrix(Vec3.One / 10));
+
+    // get "Top" node
+    // Console.WriteLine(nodes[].Name);
     // ? for stereo kit nick "can i directly update bone transforms on a skinned mesh"
 
 
