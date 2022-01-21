@@ -2,23 +2,21 @@ using System;
 using StereoKit;
 
 public class Block {
-  public static Mesh mesh = Default.MeshCube;
-  public static Material mat = Default.Material;
-
-  public bool active = false;
+  public bool active;
+  public Color color;
+  public Vec3 scale;
   public Solid solid;
-
-  public float size = 0.5f;
 
   // if you grab someone else's it becomes your own
   // how to communicate to the other peer that you have grabbed it?
   // public int request; // request ownership
   // public int owner; // then if owner continue as usual
   // public bool busy; // marked as held so no fighting
-  public Block(SolidType type) {
+  public Block(SolidType type = SolidType.Normal) {
+    color = Color.White;
+    this.scale = new Vec3(0.2f, 0.2f, 0.34f);
     this.solid = new Solid(Vec3.Zero, Quat.Identity, type);
-    this.size = 0.5f;
-    this.solid.AddBox(Vec3.One * size, 3);
+    this.solid.AddBox(scale, 3);
     Disable();
   }
 
@@ -31,12 +29,6 @@ public class Block {
 
   public void Disable() {
     solid.Enabled = active = false;
-  }
-
-  public void Draw() {
-    if (active) {
-      mesh.Draw(mat, solid.GetPose().ToMatrix(Vec3.One * size));
-    }
   }
 }
 
@@ -108,7 +100,7 @@ public class BlockCon {
 
         for (int i = 0; i < blocks.Length; i++) {
           Pose blockPose = blocks[i].solid.GetPose();
-          Bounds bounds = new Bounds(Vec3.Zero, Vec3.One * blocks[i].size);
+          Bounds bounds = new Bounds(Vec3.Zero, blocks[i].scale);
           if (blocks[i].active && bounds.Contains(blockPose.orientation.Inverse * (cursor - blockPose.position))) {
             index = i;
             if (otherBlockCon.index == i) {

@@ -1,7 +1,7 @@
 using System;
 using StereoKit;
 
-class ColorCube {
+public class ColorCube {
   static Mesh cube = Default.MeshCube;
   static Material mat = new Material(Shader.FromFile("colorcube.hlsl"));
   static Material unlit = Default.MaterialUnlit;

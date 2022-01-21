@@ -13,7 +13,7 @@ public class MonoNet {
     this.mono = mono;
     this.send = false;
     Random rnd = new Random();
-    me = new Peer(rnd.Next(1, 1024 * 8)); // let the server determine the id
+    me = new Peer(this, rnd.Next(1, 1024 * 8)); // let the server determine the id
     // me.block = new Block(new Vec3((float)rnd.NextDouble() * 0.5f, 10, -4), Quat.Identity, SolidType.Normal, Color.White);
   }
   public Socket socket;
@@ -67,7 +67,7 @@ public class MonoNet {
                 break;
               }
             } else {
-              peers[i] = new Peer(id);
+              peers[i] = new Peer(this, id);
               index = i;
               break;
             }
@@ -96,12 +96,11 @@ public class MonoNet {
     bool running = true;
     while (running) {
       Thread.Sleep(60);
-      if (send)
-        continue;
-
-      wHead = 0;
-      me.Write();
-      socket.Send(wData);
+      if (send) {
+        wHead = 0;
+        me.Write();
+        socket.Send(wData);
+      }
     }
   }
 
@@ -215,10 +214,9 @@ public class Peer {
   MonoNet net;
   public int id; // on connect: wait on server sending your peer id
   public Color color;
-  public Vec3 cursor0, cursor1, cursor2, cursor3;
   public Pose headset;
-  public Pose offHand;
-  public Pose mainHand;
+  public Pose rHand, lHand;
+  public Pose rCursor, lCursor;
   NetBlock[] blocks;
   NetCubic[] cubics;
   // public Sound voice;
@@ -231,27 +229,25 @@ public class Peer {
     // voiceInst = voice.Play(Vec3.Zero, 0.5f);
   }
 
-  public Vec3 vGlovePos;
-
-
   public void Step(Monolith mono) { // CLIENT SIDE
-    
-    // too much in this networking class
-    // only contain a copy of network related data
-    // and not be a weird pitstop for game logic
+    color = mono.colorCube.color;
+    headset = Input.Head;
+    rHand = mono.rCon.Pose();
+    lHand = mono.lCon.Pose();
+    rCursor = mono.rGlove.virtualGlove;
+    lCursor = mono.lGlove.virtualGlove;
 
-    // game logic driven for write, flexible for read (SolidType.Immovable)
-    
-    vGlovePos = mono.rGlove.virtualGlove.position;
-
-
-    if (blocks.Length != mono.blocks.Length) { blocks = new NetBlock[mono.blocks.Length]; }
+    if (blocks == null || blocks.Length != mono.blocks.Length) { 
+      blocks = new NetBlock[mono.blocks.Length]; 
+    }
     for (int i = 0; i < blocks.Length; i++) {
       blocks[i].active = mono.blocks[i].active;
+      blocks[i].color = mono.blocks[i].color;
       blocks[i].pose = mono.blocks[i].solid.GetPose();
+      blocks[i].scale = mono.blocks[i].scale;
     }
 
-    if (cubics.Length != mono.cubics.Length) { cubics = new NetCubic[mono.cubics.Length]; }
+    if (cubics == null || cubics.Length != mono.cubics.Length) { cubics = new NetCubic[mono.cubics.Length]; }
     for (int i = 0; i < cubics.Length; i++) {
       cubics[i].active = mono.cubics[i].active;
       cubics[i].color = mono.cubics[i].color;
@@ -274,38 +270,40 @@ public class Peer {
     //   }
     // }
 
-    Draw(false);
+    for (int i = 0; i < net.peers.Length; i++) {
+      Peer peer = net.peers[i];
+      if (peer != null) { peer.Draw(mono, true); }
+    }
+    Draw(mono, false);
   }
 
   public void Write() {
     net.WriteInt(id);
     net.WriteColor(color);
-    net.WriteVec3(cursor0);
-    net.WriteVec3(cursor1);
-    net.WriteVec3(cursor2);
-    net.WriteVec3(cursor3);
     net.WritePose(headset);
-    net.WritePose(offHand);
-    net.WritePose(mainHand);
+    net.WritePose(rHand);
+    net.WritePose(lHand);
+    net.WritePose(rCursor);
+    net.WritePose(lCursor);
     WriteBlock();
     WriteCubic();
   }
   public void Read() {
     color = net.ReadColor();
-    cursor0 = net.ReadVec3();
-    cursor1 = net.ReadVec3();
-    cursor2 = net.ReadVec3();
-    cursor3 = net.ReadVec3();
     headset = net.ReadPose();
-    offHand = net.ReadPose();
-    mainHand = net.ReadPose();
+    rHand = net.ReadPose();
+    lHand = net.ReadPose();
+    rCursor = net.ReadPose();
+    lCursor = net.ReadPose();
     ReadBlock();
     ReadCubic();
   }
 
   struct NetBlock {
     public bool active;
+    public Color color;
     public Pose pose;
+    public Vec3 scale;
   }
   void ReadBlock() {
     int length = net.ReadInt();
@@ -313,7 +311,9 @@ public class Peer {
     for (int i = 0; i < length; i++) {
       NetBlock netBlock = blocks[i];
       netBlock.active = net.ReadBool();
+      netBlock.color = net.ReadColor();
       netBlock.pose = net.ReadPose();
+      netBlock.scale = net.ReadVec3();
     }
   }
   void WriteBlock() {
@@ -321,7 +321,9 @@ public class Peer {
     for (int i = 0; i < blocks.Length; i++) {
       NetBlock netBlock = blocks[i];
       net.WriteBool(netBlock.active);
+      net.WriteColor(netBlock.color);
       net.WritePose(netBlock.pose);
+      net.WriteVec3(netBlock.scale);
     }
   }
 
@@ -355,39 +357,31 @@ public class Peer {
     }
   }
 
-
-
-
-
-  public void Draw(bool body) {
+  public void Draw(Monolith mono, bool body) {
     if (body) {
-      Cube(Matrix.TRS(headset.position + Input.Head.Forward * -0.15f, headset.orientation, Vec3.One * 0.3f), color);
+      PullRequest.BlockOut(Matrix.TRS(headset.position + Input.Head.Forward * -0.15f, headset.orientation, Vec3.One * 0.3f), color);
     }
 
-    Bezier.Draw(cursor0, cur Color.White); // overlap
-    // Cube(offHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
-    // Cube(mainHand.ToMatrix(new Vec3(0.1f, 0.025f, 0.1f)), color);
-  
-    Cube(Matrix.TRS(cursor0, mainHand.orientation, new Vec3(0.025f, 0.1f, 0.1f)), color);
-    Cube(Matrix.TRS(cursor3, offHand.orientation, new Vec3(0.025f, 0.1f, 0.1f)), color);
+    Bezier.Draw(
+      mono.rGlove.virtualGlove.position,
+      mono.rCon.pos,
+      mono.lCon.pos,
+      mono.lGlove.virtualGlove.position,
+      Color.White
+    );
 
     for (int i = 0; i < blocks.Length; i++) {
-      if (blocks[i].solid.GetPose().position.y < -10) {
-        blocks[i].Disable();
-      } else {
-        blocks[i].Draw();
+      NetBlock block = blocks[i];
+      if (block.active) {
+        PullRequest.BlockOut(block.pose.ToMatrix(block.scale), block.color);
       }
     }
 
     for (int i = 0; i < cubics.Length; i++) {
-      cubics[i].Draw();
+      NetCubic cubic = cubics[i];
+      if (cubic.active) {
+        Bezier.Draw(cubic.p0, cubic.p1, cubic.p2, cubic.p3, color);
+      }
     }
-  }
-
-  static Mesh meshCube = Default.MeshCube;
-  static Material matCube = Default.Material;
-  public void Cube(Matrix m, Color color) {
-    matCube.FaceCull = Cull.None;
-    meshCube.Draw(matCube, m, color);
   }
 }

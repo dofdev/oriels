@@ -10,12 +10,6 @@ public class Cubic {
     color = Color.White;
     active = false;
   }
-
-  public void Draw() {
-    if (active) {
-      Bezier.Draw(p0, p1, p2, p3, color);
-    }
-  }
 }
 
 public class CubicCon {
@@ -28,15 +22,26 @@ public class CubicCon {
     Con rCon = mono.rCon;
     Con lCon = mono.lCon;
     Peer peer = mono.net.me;
+    
     bool place = rCon.device.IsStickJustClicked || lCon.device.IsStickJustClicked;
     if (place) {
-      for (int i = 0; i < cubics.Length; i++) {
-        if (!cubics[i].active) {
-          cubics[i].Enable(peer.cursor0, peer.cursor1, peer.cursor2, peer.cursor3, peer.color);
+      for (int i = 0; i < mono.cubics.Length; i++) {
+        if (!mono.cubics[i].active) {
+          mono.cubics[i].active = true;
+          mono.cubics[i].p0 = mono.rGlove.virtualGlove.position;
+          mono.cubics[i].p1 = mono.rCon.pos;
+          mono.cubics[i].p2 = mono.lCon.pos;
+          mono.cubics[i].p3 = mono.lGlove.virtualGlove.position;
+          mono.cubics[i].color = Color.White;
           break;
         }
       }
-      cubics[PullRequest.RandomRange(0, cubics.Length)].Enable(peer.cursor0, peer.cursor1, peer.cursor2, peer.cursor3, peer.color);
+      Cubic cubic = mono.cubics[PullRequest.RandomRange(0, mono.cubics.Length)];
+      cubic.p0 = mono.rGlove.virtualGlove.position; 
+      cubic.p1 = mono.rCon.pos;
+      cubic.p2 = mono.lCon.pos;
+      cubic.p3 = mono.lGlove.virtualGlove.position;
+      cubic.color = Color.White;
     }
   }
 }

@@ -49,6 +49,7 @@ public struct Btn {
 
 public class Monolith {
   public MonoNet net;
+  public Scene scene;
   public Mic mic;
 
   public Con rCon = new Con(), lCon = new Con();
@@ -67,6 +68,7 @@ public class Monolith {
   public Glove Glove(bool chirality) {
     return chirality ? rGlove : lGlove;
   }
+  public ColorCube colorCube = new ColorCube();
   public Block[] blocks;
   public BlockCon rBlock, lBlock;
   public BlockCon BlockCon(bool chirality) {
@@ -85,14 +87,15 @@ public class Monolith {
   public void Run() {
     Renderer.SetClip(0.02f, 1000f);
 
+    scene = new Scene(this);
     net = new MonoNet(this);
     net.Start();
     // mic = new Mic();
     rGlove = new Glove(this, true);
     lGlove = new Glove(this, false);
     blocks = new Block[] {
-      new Block(SolidType.Normal), new Block(type), new Block(type),
-      new Block(type), new Block(type), new Block(type)
+      new Block(), new Block(), new Block(),
+      new Block(), new Block(), new Block()
     };
     rBlock = new BlockCon(this, true);
     lBlock = new BlockCon(this, false);
@@ -106,40 +109,12 @@ public class Monolith {
     Vec3 pos = new Vec3(0, 0, 0);
     Vec3 vel = new Vec3(0, 0, 0);
 
-    Solid floor = new Solid(Vec3.Up * -1.5f, Quat.Identity, SolidType.Immovable);
-    float scale = 64f;
-    Vec3 floorScale = new Vec3(scale, 0.1f, scale);
-    floor.AddBox(floorScale);
-    // box on each side
-    floor.AddBox(new Vec3(scale, scale / 2, 0.1f), 1, new Vec3(0, scale / 4, -scale / 2));
-    floor.AddBox(new Vec3(scale, scale / 2, 0.1f), 1, new Vec3(0, scale / 4, scale / 2));
-    floor.AddBox(new Vec3(0.1f, scale / 2, scale), 1, new Vec3(-scale / 2, scale / 4, 0));
-    floor.AddBox(new Vec3(0.1f, scale / 2, scale), 1, new Vec3(scale / 2, scale / 4, 0));
-    // and ceiling
-    floor.AddBox(new Vec3(scale, 0.1f, scale), 1, new Vec3(0, scale / 2, 0));
-    Material matFloor = new Material(Shader.Default);
-    matFloor.SetTexture("diffuse", Tex.FromFile("floor.png"));
-    matFloor.SetFloat("tex_scale", 32);
-
-
     Oriel oriel = new Oriel();
     oriel.Start(3);
     // Oriel otherOriel = new Oriel();
     // otherOriel.Start(4);
 
-    ColorCube colorCube = new ColorCube();
     Vec3 oldLPos = Vec3.Zero;
-
-    SpatialCursor cubicFlow = new CubicFlow(this);
-
-    Vec3 gripPos = Vec3.Zero;
-
-
-    float grindDir = 1f;
-    bool grinding = false;
-    bool grinded = false;
-    Vec3 grindVel = Vec3.Forward;
-    Vec3[] grindRail = new Vec3[4];
 
     while (SK.Step(() => {
       Renderer.CameraRoot = Matrix.T(pos);
@@ -171,25 +146,13 @@ public class Monolith {
       lBlock.Step();
 
       // Cubic
-      cubicCon.Step(rCon, lCon, this);
+      cubicCon.Step();
 
-
-      // cubicFlow.Step(new Pose[] { new Pose(rightReachCursor.p0, rCon.ori), new Pose(leftReachCursor.p0, lCon.ori) }, 1);
-      // if (rCon.stick.y > 0.1f || lCon.stick.y > 0.1f) {
-      //   Bezier.Draw(cubicFlow.p0, cubicFlow.p1, cubicFlow.p2, cubicFlow.p3, Color.White);
-      //   net.me.cursor0 = cubicFlow.p0; net.me.cursor1 = cubicFlow.p1; net.me.cursor2 = cubicFlow.p2; net.me.cursor3 = cubicFlow.p3;
-      // } else {
-      //   net.me.cursor0 = rightReachCursor.p0; net.me.cursor1 = rightReachCursor.p0; net.me.cursor2 = leftReachCursor.p0; net.me.cursor3 = leftReachCursor.p0;
-      // }
-
-
-
+      // boolean over network to determine if a peers cubic flow should be drawn
 
 
       // throw yourself (delta -> vel -> momentum)
       // bring rails back
-      // boolean over network to determine if a peers cubic flow should be drawn
-
 
       // FULLSTICK
       // Quat rot = Quat.FromAngles(subCon.stick.y * -90, 0, subCon.stick.x * 90);
@@ -201,8 +164,8 @@ public class Monolith {
 
 
       // DRAG DRIFT
-      Vec3 rPos = net.me.cursor0;
-      Vec3 lPos = net.me.cursor3;
+      // Vec3 rPos = net.me.cursor0;
+      // Vec3 lPos = net.me.cursor3;
 
       // use grip grab reach cursor origin it then becoming a backhanded stretch cursor
       // if (rCon.grip > 0.5f) {
@@ -239,96 +202,95 @@ public class Monolith {
 
 
       // CUBIC BEZIER RAIL
-      // Vec3[] rail = new Vec3[] {
-      //   new Vec3(0, 0, -1),
-      //   new Vec3(0, 0, -2),
-      //   new Vec3(1, 2, -3),
-      //   new Vec3(0, 1, -4),
-      // };
-      // Bezier.Draw(rail);
 
-      if (rCon.device.grip > 0.5f) {
-        if (!grinded) {
-          if (!grinding) {
-            int closest = 0;
-            float closestDist = float.MaxValue;
-            Vec3 closestPoint = Vec3.Zero;
-            int closestRail = 0;
-            for (int i = 0; i < net.me.cubics.Length; i++) {
-              if (net.me.cubics[i].active) {
-                Vec3[] rail = new Vec3[] {
-                  net.me.cubics[i].p0,
-                  net.me.cubics[i].p1,
-                  net.me.cubics[i].p2,
-                  net.me.cubics[i].p3,
-                };
-                for (int j = 0; j < rail.Length; j++) {
-                  Vec3 point = Bezier.Sample(rail, (float)j / (rail.Length - 1f));
-                  float dist = Vec3.Distance(point, rCon.pos + vel.Normalized * 0.25f);
-                  if (dist < closestDist && dist < 0.5f) {
-                    closest = j;
-                    closestRail = i;
-                    closestDist = dist;
-                    closestPoint = point;
-                    railT = (float)j / (rail.Length - 1f);
-                    grinding = true;
-                  }
-                }
-              }
-            }
-            if (grinding) {
-              grindRail = new Vec3[] {
-                net.me.cubics[closestRail].p0,
-                net.me.cubics[closestRail].p1,
-                net.me.cubics[closestRail].p2,
-                net.me.cubics[closestRail].p3,
-              };
-              // pos = closestPoint - (subCon.pose.position - pos);
-              grindVel = vel;
-              Vec3 fromPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT);
-              Vec3 toPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT + 0.1f);
-              grindDir = Vec3.Dot((fromPos - toPos).Normalized, grindVel) < 0f ? 1 : -1;
-            }
-          }
+      // float grindDir = 1f;
+      // bool grinding = false;
+      // bool grinded = false;
+      // Vec3 grindVel = Vec3.Forward;
+      // Vec3[] grindRail = new Vec3[4];
 
-          if (grinding) {
-            Vec3 grindPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT);
-            Vec3 nextPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT + 0.1f * grindDir);
+      // if (rCon.device.grip > 0.5f) {
+      //   if (!grinded) {
+      //     if (!grinding) {
+      //       int closest = 0;
+      //       float closestDist = float.MaxValue;
+      //       Vec3 closestPoint = Vec3.Zero;
+      //       int closestRail = 0;
+      //       for (int i = 0; i < net.me.cubics.Length; i++) {
+      //         if (net.me.cubics[i].active) {
+      //           Vec3[] rail = new Vec3[] {
+      //             net.me.cubics[i].p0,
+      //             net.me.cubics[i].p1,
+      //             net.me.cubics[i].p2,
+      //             net.me.cubics[i].p3,
+      //           };
+      //           for (int j = 0; j < rail.Length; j++) {
+      //             Vec3 point = Bezier.Sample(rail, (float)j / (rail.Length - 1f));
+      //             float dist = Vec3.Distance(point, rCon.pos + vel.Normalized * 0.25f);
+      //             if (dist < closestDist && dist < 0.5f) {
+      //               closest = j;
+      //               closestRail = i;
+      //               closestDist = dist;
+      //               closestPoint = point;
+      //               railT = (float)j / (rail.Length - 1f);
+      //               grinding = true;
+      //             }
+      //           }
+      //         }
+      //       }
+      //       if (grinding) {
+      //         grindRail = new Vec3[] {
+      //           net.me.cubics[closestRail].p0,
+      //           net.me.cubics[closestRail].p1,
+      //           net.me.cubics[closestRail].p2,
+      //           net.me.cubics[closestRail].p3,
+      //         };
+      //         // pos = closestPoint - (subCon.pose.position - pos);
+      //         grindVel = vel;
+      //         Vec3 fromPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT);
+      //         Vec3 toPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT + 0.1f);
+      //         grindDir = Vec3.Dot((fromPos - toPos).Normalized, grindVel) < 0f ? 1 : -1;
+      //       }
+      //     }
 
-            // vel += (toPos - fromPos);
+      //     if (grinding) {
+      //       Vec3 grindPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT);
+      //       Vec3 nextPos = Bezier.Sample(grindRail[0], grindRail[1], grindRail[2], grindRail[3], railT + 0.1f * grindDir);
 
-            pos = -(rCon.pos - Input.Head.position) + grindPos - (Input.Head.position - pos);
-            vel = Vec3.Zero;
+      //       // vel += (toPos - fromPos);
 
-            railT += Time.Elapsedf * grindVel.Magnitude * grindDir; // scale based on length of rail * calculate and cache on place
-            // bool clamped = false;
-            // float railTpreClamp = railT;
-            // if
-            railT = Math.Clamp(railT, 0, 1);
+      //       pos = -(rCon.pos - Input.Head.position) + grindPos - (Input.Head.position - pos);
+      //       vel = Vec3.Zero;
 
-            grindVel = (nextPos - grindPos).Normalized * grindVel.Magnitude;
+      //       railT += Time.Elapsedf * grindVel.Magnitude * grindDir; // scale based on length of rail * calculate and cache on place
+      //       // bool clamped = false;
+      //       // float railTpreClamp = railT;
+      //       // if
+      //       railT = Math.Clamp(railT, 0, 1);
 
-            if (railT == 1 || railT == 0) {
-              vel = grindVel;
-              grinding = false;
-              grinded = true;
-              railT = 0f;
-            }
+      //       grindVel = (nextPos - grindPos).Normalized * grindVel.Magnitude;
+
+      //       if (railT == 1 || railT == 0) {
+      //         vel = grindVel;
+      //         grinding = false;
+      //         grinded = true;
+      //         railT = 0f;
+      //       }
 
 
-            cube.Draw(mat, Matrix.TS(grindPos, new Vec3(0.1f, 0.1f, 0.1f)));
-            // cube.Draw(mat, Matrix.TS(toPos, new Vec3(0.1f, 0.1f, 0.1f) * 0.333f));
-            // pos = Vec3.Lerp(pos, Bezier.Sample(net.me.cubics[0].p0, net.me.cubics[0].p1, net.me.cubics[0].p2, net.me.cubics[0].p3, railT) - (subCon.aim.position - pos), Time.Elapsedf * 6f);
-            // how to reliably determine and control which direction to go? (velocity)
-          }
-        }
-      } else {
-        grinded = false;
-        if (grinding) {
-          vel = grindVel;
-          grinding = false;
-        }
-      }
+      //       cube.Draw(mat, Matrix.TS(grindPos, new Vec3(0.1f, 0.1f, 0.1f)));
+      //       // cube.Draw(mat, Matrix.TS(toPos, new Vec3(0.1f, 0.1f, 0.1f) * 0.333f));
+      //       // pos = Vec3.Lerp(pos, Bezier.Sample(net.me.cubics[0].p0, net.me.cubics[0].p1, net.me.cubics[0].p2, net.me.cubics[0].p3, railT) - (subCon.aim.position - pos), Time.Elapsedf * 6f);
+      //       // how to reliably determine and control which direction to go? (velocity)
+      //     }
+      //   }
+      // } else {
+      //   grinded = false;
+      //   if (grinding) {
+      //     vel = grindVel;
+      //     grinding = false;
+      //   }
+      // }
 
       // Console.WriteLine(World.RefreshInterval.ToString());
 
@@ -342,26 +304,14 @@ public class Monolith {
       // not cursor dependent
 
       // pos.x = (float)Math.Sin(Time.Total * 0.1f) * 0.5f;
-      if (!grinding) {
-        pos += vel * Time.Elapsedf;
-      }
+      
+      pos += vel * Time.Elapsedf;
 
-      float preX = pos.x; pos.x = Math.Clamp(pos.x, -scale / 2, scale / 2); if (pos.x != preX) { vel.x = 0; }
-      float preY = pos.y; pos.y = Math.Clamp(pos.y, 0f, scale / 2); if (pos.y != preY) { vel.y = 0; }
-      float preZ = pos.z; pos.z = Math.Clamp(pos.z, -scale / 2, scale / 2); if (pos.z != preZ) { vel.z = 0; }
+      float preX = pos.x; pos.x = Math.Clamp(pos.x, -scene.scale / 2, scene.scale / 2); if (pos.x != preX) { vel.x = 0; }
+      float preY = pos.y; pos.y = Math.Clamp(pos.y, 0f, scene.scale / 2); if (pos.y != preY) { vel.y = 0; }
+      float preZ = pos.z; pos.z = Math.Clamp(pos.z, -scene.scale / 2, scene.scale / 2); if (pos.z != preZ) { vel.z = 0; }
 
       vel *= 1 - Time.Elapsedf * 0.2f;
-
-
-
-
-
-
-
-      // Scene
-      cube.Draw(matFloor, floor.GetPose().ToMatrix(floorScale), Color.White * 0.666f);
-
-
 
 
 
@@ -388,21 +338,13 @@ public class Monolith {
       oldLPos = lCon.device.pose.position;
 
 
-      oriel.Step(net.me.cursor0, net.me.cursor3);
+      oriel.Step(rGlove.virtualGlove.position, lGlove.virtualGlove.position);
       // Matrix orbitMatrix = OrbitalView.transform;
       // cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
       // Default.MaterialHand["color"] = cube.color;
 
+      scene.Step();
 
-
-      net.me.color = colorCube.color;
-      net.me.headset = Input.Head;
-      net.me.mainHand = rCon.Pose();
-      net.me.offHand = lCon.Pose();
-      for (int i = 0; i < net.peers.Length; i++) {
-        Peer peer = net.peers[i];
-        if (peer != null) { peer.Draw(true); }
-      }
       net.me.Step(this);
       net.send = true;
 
@@ -486,5 +428,16 @@ public static class PullRequest {
 
   public static Vec3 Direction(Vec3 to, Vec3 from) {
     return (to - from).Normalized;
+  }
+
+
+  static Mesh meshCube = Default.MeshCube;
+  static Material matCube = Default.Material;
+  public static void BlockOut(Matrix m, Color color, Material mat = null) {
+    if (mat == null) {
+      mat = matCube;
+      mat.FaceCull = Cull.None;
+    }
+    meshCube.Draw(mat, m, color);
   }
 }

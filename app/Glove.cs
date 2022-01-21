@@ -157,28 +157,11 @@ public class Glove {
 
     mesh.Draw(mat, glove.ToMatrix(new Vec3(0.025f, 0.025f, 0.025f) / 3));
     mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3));
-    // Lines.AddAxis(glove);
-    // Handed handed = chirality ? Handed.Right : Handed.Left;
-    // Hand hand = Input.Hand(handed);
-    // HandJoint[] joints = hand.fingers;
-    // for (int i = 0; i < joints.Length; i++) {
-    //   joints[i].position = (joints[i].position - glove.position) + virtualGlove.position;
-    // }
-    // Input.HandOverride(chirality ? Handed.Right : Handed.Left, joints);
-    // Input.HandClearOverride(handed);
 
 
-    ModelNode top = model.FindNode("Top");
-    top.LocalTransform = Matrix.R(Quat.FromAngles(Vec3.Right * 45));
-    Console.WriteLine(top.Name);
-
-    model.Draw(glove.ToMatrix(Vec3.One / 10));
-
-    // get "Top" node
-    // Console.WriteLine(nodes[].Name);
-    // ? for stereo kit nick "can i directly update bone transforms on a skinned mesh"
-
-
-
+    // ModelNode top = model.FindNode("Top");
+    // top.LocalTransform = Matrix.R(Quat.FromAngles(Vec3.Right * 45));
+    // Console.WriteLine(top.Name);
+    // model.Draw(glove.ToMatrix(Vec3.One / 10));
   }
 }
