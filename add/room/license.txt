@@ -1,0 +1,11 @@
+Model Information:
+* title:	White Hart House
+* source:	https://sketchfab.com/3d-models/white-hart-house-7f4084ed27634b0596061a6f9811cb64
+* author:	9of9 (https://sketchfab.com/9of9)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "White Hart House" (https://sketchfab.com/3d-models/white-hart-house-7f4084ed27634b0596061a6f9811cb64) by 9of9 (https://sketchfab.com/9of9) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

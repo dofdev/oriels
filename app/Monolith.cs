@@ -11,7 +11,7 @@ if (!SK.Initialize(settings))
   Environment.Exit(1);
 
 Input.HandSolid(Handed.Max, false);
-// Input.HandVisible(Handed.Max, false);
+Input.HandVisible(Handed.Max, false);
 // TextStyle style = Text.MakeStyle(Font.FromFile("DMMono-Regular.ttf"), 0.1f, Color.White);
 
 Monolith mono = new Monolith();
@@ -68,6 +68,9 @@ public class Monolith {
   public Glove Glove(bool chirality) {
     return chirality ? rGlove : lGlove;
   }
+  public Oriel oriel = new Oriel();
+  // Oriel otherOriel = new Oriel(this);
+  
   public ColorCube colorCube = new ColorCube();
   public Block[] blocks;
   public BlockCon rBlock, lBlock;
@@ -108,11 +111,6 @@ public class Monolith {
 
     Vec3 pos = new Vec3(0, 0, 0);
     Vec3 vel = new Vec3(0, 0, 0);
-
-    Oriel oriel = new Oriel();
-    oriel.Start(3);
-    // Oriel otherOriel = new Oriel();
-    // otherOriel.Start(4);
 
     Vec3 oldLPos = Vec3.Zero;
 
@@ -316,7 +314,7 @@ public class Monolith {
 
 
 
-      // COLOR CUBE
+      // COLOR CUBE (RGB)
       // reveal when palm up
       float reveal = lCon.device.pose.Right.y * 1.666f;
       float look = 1 - Math.Clamp((1 - Math.Clamp(Vec3.Dot((lCon.device.pose.position - Input.Head.position).Normalized, Input.Head.Forward), 0f, 1f)) * 5f, 0f, 1f);
@@ -333,23 +331,50 @@ public class Monolith {
           colorCube.cursor.y = Math.Clamp(colorCube.cursor.y, -1, 1);
           colorCube.cursor.z = Math.Clamp(colorCube.cursor.z, -1, 1);
         }
-        colorCube.Step();
+
+
+
+        // colorCube.Step();
+
+
+
       }
       oldLPos = lCon.device.pose.position;
 
 
-      oriel.Step(rGlove.virtualGlove.position, lGlove.virtualGlove.position);
+
+      oriel.Step(this);
+
       // Matrix orbitMatrix = OrbitalView.transform;
       // cube.Step(Matrix.S(Vec3.One * 0.2f) * orbitMatrix);
       // Default.MaterialHand["color"] = cube.color;
+
 
       scene.Step();
 
       net.me.Step(this);
       net.send = true;
 
+      // if (rCon)
+      ShowWindowButton();
+
     }));
     SK.Shutdown();
+  }
+
+  Pose windowPoseButton = new Pose(0, 0, 0, Quat.Identity);
+  void ShowWindowButton() {
+    UI.WindowBegin("Window Button", ref windowPoseButton);
+
+    if (UI.Button("Reset Oriel Quat")) {
+      oriel.ori = Quat.Identity;
+    }
+
+    if (UI.Button("Draw Oriel Axis")) {
+      oriel.drawAxis = !oriel.drawAxis;
+    }
+
+    UI.WindowEnd();
   }
 }
 
@@ -439,5 +464,37 @@ public static class PullRequest {
       mat.FaceCull = Cull.None;
     }
     meshCube.Draw(mat, m, color);
+  }
+
+  public static Mesh GetMesh(this Model model, string name) {
+    for (int i = 0; i < model.Nodes.Count; i++) {
+      if (model.Nodes[i].Name == name) {
+        return model.Nodes[i].Mesh;
+      }
+    }
+    Console.WriteLine("Mesh not found: " + name);
+    return Mesh.Quad;
+  }
+
+  public static void SetMat(this Material mat, int offset, Cull cull, bool depthWrite) {
+    mat.QueueOffset = offset;
+    mat.FaceCull = cull;
+    mat.DepthWrite = depthWrite;
+  }
+
+  public static Vec3 RandomInCube(Vec3 center, float size) {
+    Random r = new Random();
+    return center + new Vec3(
+      (r.NextSingle() - 0.5f) * size,
+      (r.NextSingle() - 0.5f) * size,
+      (r.NextSingle() - 0.5f) * size
+    );
+  }
+
+  static Bounds _bounds = new Bounds();
+  public static bool ActuallyContains(this Bounds bounds, Quat ori, Vec3 pos, float radius) {
+    _bounds.dimensions = bounds.dimensions;
+    Vec3 p = ori.Inverse * (pos - bounds.center);
+    return _bounds.Contains(p, p, radius);
   }
 }

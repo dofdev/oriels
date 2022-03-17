@@ -48,11 +48,13 @@ exec(vlai)
 
 
 # bookmark(next page)
-lift for all
-
 glove visuals
 *pull points
 *mesh
+
+double tap lift
+set strength
+*draw new line with reach cursor
 
 &nbsp;
 

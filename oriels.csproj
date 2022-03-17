@@ -21,11 +21,17 @@
   <ItemGroup>
     <None Remove="add/oriel.hlsl" />
     <None Remove="add/colorcube.hlsl" />
+    <None Remove="add/panes.hlsl" />
+    <None Remove="add/wireframe.hlsl" />
+    <None Remove="add/room.hlsl" />
   </ItemGroup>
 
   <ItemGroup>
     <SKShader Include="add/oriel.hlsl" />
     <SKShader Include="add/colorcube.hlsl" />
+    <SKShader Include="add/panes.hlsl" />
+    <SKShader Include="add/wireframe.hlsl" />
+    <SKShader Include="add/room.hlsl" />
   </ItemGroup>
 
 </Project>

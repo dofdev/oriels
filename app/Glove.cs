@@ -155,8 +155,8 @@ public class Glove {
     }
     Lines.Add(linePoints);
 
-    mesh.Draw(mat, glove.ToMatrix(new Vec3(0.025f, 0.025f, 0.025f) / 3));
-    mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3));
+    mesh.Draw(mat, glove.ToMatrix(new Vec3(0.02f, 0.08f, 0.08f) / 1));
+    mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 1));
 
 
     // ModelNode top = model.FindNode("Top");
