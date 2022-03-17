@@ -9,8 +9,6 @@ public class Scene {
   public Scene(Monolith mono) {
     this.mono = mono;
 
-    Console.WriteLine("DSJLFDSFJKJSFD:KJLF: " + room.Nodes.Count);
-
     floor = new Solid(World.BoundsPose.position, Quat.Identity, SolidType.Immovable);
     scale = 64f;
     floorScale = new Vec3(scale, 0.1f, scale);

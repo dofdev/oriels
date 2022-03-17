@@ -168,18 +168,18 @@ public class Oriel {
 
 
 
-    Matrix orielSimMatrix = Matrix.TR(new Vec3(0, -bounds.dimensions.y / 2, 0), Quat.Identity).Inverse;
+    Matrix orielSimMatrix = Matrix.TRS(new Vec3(0, -bounds.dimensions.y / 2, 0), Quat.Identity, Vec3.One * 0.1f).Inverse;
 
 
     if (drawAxis) {
       meshAxis.Draw(matOriel,
-        Matrix.TRS(Vec3.Zero, Quat.Identity, Vec3.One * 0.06f) * orielSimMatrix.Inverse * matrix.Inverse,
+        Matrix.TRS(Vec3.Zero, Quat.Identity, Vec3.One * 1f) * orielSimMatrix.Inverse * matrix.Inverse,
         Color.White
       );
     }
 
     Mesh.Quad.Draw(matOriel,
-      Matrix.TRS(Vec3.Zero, Quat.FromAngles(90, 0, 0), Vec3.One * 2f) * orielSimMatrix.Inverse * matrix.Inverse,
+      Matrix.TRS(Vec3.Zero, Quat.FromAngles(90, 0, 0), Vec3.One * 20f) * orielSimMatrix.Inverse * matrix.Inverse,
       new Color(0.3f, 0.9f, 0.3f)
     );
 
@@ -197,16 +197,40 @@ public class Oriel {
     //     Color.White * 0.32f
     //   );
     // }
+    playerPos += new Vec3(-mono.lCon.device.stick.x, 0, -mono.lCon.device.stick.y) * Time.Elapsedf;
+    player.Move(playerPos + simOffset, Quat.Identity);
+    meshCube.Draw(matOriel,
+      Matrix.TRS(player.GetPose().position + (player.GetPose().orientation * Vec3.Up * 0.5f) - simOffset, player.GetPose().orientation, new Vec3(0.4f, 1f, 0.2f)) * orielSimMatrix.Inverse * matrix.Inverse,
+      new Color(0.9f, 0.5f, 0.5f)
+    );
+
+
+    // FULLSTICK
+    Vec3 Fullstick() {
+      Controller con = mono.lCon.device;
+      Quat rot = Quat.FromAngles(con.stick.y * -90, 0, con.stick.x * 90);
+      Vec3 dir = Vec3.Up * (con.IsStickClicked ? -1 : 1);
+      return con.aim.orientation * rot * dir;
+    }
+    Vec3 fullstick = Fullstick();
+    sword.Move(playerPos + simOffset + fullstick, Quat.LookAt(Vec3.Zero, fullstick, Vec3.Up));
+    meshCube.Draw(matOriel,
+      Matrix.TRS(sword.GetPose().position + (Vec3.Up * 0.7f) + (sword.GetPose().orientation * Vec3.Forward * 0.5f) - simOffset, sword.GetPose().orientation, new Vec3(0.1f, 0.03f, 1f)) * orielSimMatrix.Inverse * matrix.Inverse,
+      new Color(0.9f, 0.5f, 0.5f)
+    );
+
     for (int i = 0; i < enemies.Count; i++) {
       Solid enemy = enemies[i];
       meshCube.Draw(matOriel,
-        Matrix.TRS((enemy.GetPose().position - simOffset) / 10, enemy.GetPose().orientation, new Vec3(0.4f, 1f, 0.2f) / 10) * orielSimMatrix.Inverse * matrix.Inverse,
+        Matrix.TRS(enemy.GetPose().position - simOffset, enemy.GetPose().orientation, new Vec3(0.4f, 1f, 0.2f)) * orielSimMatrix.Inverse * matrix.Inverse,
         Color.White * 0.32f
       );
     }
   }
 
   Solid ground;
+  Solid player; Vec3 playerPos;
+  Solid sword;
   List<Solid> enemies = new List<Solid>();
   Vec3 simOffset = new Vec3(0, 100, 0);
 
@@ -243,6 +267,12 @@ public class Oriel {
 
     ground = new Solid(simOffset, Quat.Identity, SolidType.Immovable);
     ground.AddBox(new Vec3(20, 1, 20), 1, new Vec3(0, -0.5f, 0));
+
+    player = new Solid(simOffset + Vec3.Up, Quat.Identity, SolidType.Normal);
+    player.AddBox(new Vec3(0.4f, 1f, 0.2f), 1, new Vec3(0, 0.5f, 0));
+
+    sword = new Solid(simOffset + Vec3.Up, Quat.Identity, SolidType.Normal);
+    sword.AddBox(new Vec3(0.1f, 0.03f, 1f), 1, new Vec3(0, 0.5f, 0));
 
     for (int i = 0; i < 32; i++) {
       Solid solid = new Solid(
