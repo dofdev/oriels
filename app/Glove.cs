@@ -132,8 +132,8 @@ public class Glove {
   Material mat = Default.Material;
   Model model = Model.FromFile("skinned_test.glb", Shader.Default);
   public void Render(Pose glove, Pose virtualGlove, Pose wrist, float stretch, float twist, bool chirality) {
-    Lines.Add(pullPoint, glove.position, new Color(1, 0, 1), 0.005f);
-    Lines.Add(glove.position, virtualGlove.position, new Color(0, 1, 1), 0.005f);
+    Lines.Add(pullPoint, glove.position, new Color(1, 0, 1, 0.1f), 0.005f);
+    Lines.Add(glove.position, virtualGlove.position, new Color(0, 1, 1, 0.1f), 0.005f);
 
     // Twist
     float twistAbs = Math.Abs(twist);
@@ -155,8 +155,8 @@ public class Glove {
     }
     Lines.Add(linePoints);
 
-    mesh.Draw(mat, glove.ToMatrix(new Vec3(0.02f, 0.08f, 0.08f) / 1));
-    mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 1));
+    // mesh.Draw(mat, glove.ToMatrix(new Vec3(0.02f, 0.08f, 0.08f) / 1));
+    mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3));
 
 
     // ModelNode top = model.FindNode("Top");

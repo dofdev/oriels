@@ -367,7 +367,7 @@ public class Peer {
       mono.rCon.pos,
       mono.lCon.pos,
       mono.lGlove.virtualGlove.position,
-      Color.White
+      new Color(1, 1, 1, 0.1f)
     );
 
     for (int i = 0; i < blocks.Length; i++) {

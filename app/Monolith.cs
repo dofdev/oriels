@@ -11,7 +11,7 @@ if (!SK.Initialize(settings))
   Environment.Exit(1);
 
 Input.HandSolid(Handed.Max, false);
-Input.HandVisible(Handed.Max, false);
+Input.HandVisible(Handed.Max, true);
 // TextStyle style = Text.MakeStyle(Font.FromFile("DMMono-Regular.ttf"), 0.1f, Color.White);
 
 Monolith mono = new Monolith();
@@ -491,10 +491,12 @@ public static class PullRequest {
     );
   }
 
-  static Bounds _bounds = new Bounds();
-  public static bool ActuallyContains(this Bounds bounds, Quat ori, Vec3 pos, float radius) {
-    _bounds.dimensions = bounds.dimensions;
-    Vec3 p = ori.Inverse * (pos - bounds.center);
-    return _bounds.Contains(p, p, radius);
+  public static float Lerp(float a, float b, float t) {
+    return a + (b - a) * t;
+  }
+
+  static Pose _pose = new Pose();
+  public static Pose WorldPose(this Pose pose, float scale = 1) {
+    return pose;
   }
 }

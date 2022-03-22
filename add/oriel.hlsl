@@ -3,6 +3,7 @@
 // --name = dofdev/oriel
 float3 _center;
 float3 _dimensions;
+float3 _light;
 float4x4 _matrix;
 
 struct vsIn {
@@ -81,9 +82,11 @@ psOut ps(psIn input) {
 
   clip(distance(input.campos, input.world) - distance(input.campos, ro));
 
-  float t =  1 - (1 + dot(input.normal, normalize(input.world - _center))) / 2;
-  float3 light = lerp(float3(0.05, 0.05, 0.1), float3(0.95, 0.95, 0.9), t);
-  o.color = float4(o.color.rgb * light, 1);
+  // normalize(input.world - _center)
+  float t =  1 - (1 + dot(input.normal, _light)) / 2;
+  // float3 light = lerp(float3(0.05, 0.05, 0.1), float3(0.95, 0.95, 0.9), t);
+  // o.color = float4(o.color.rgb * light, 1);
+  o.color = float4(o.color.rgb * t, 1);
 
 
   // backface
