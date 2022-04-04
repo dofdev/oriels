@@ -16,7 +16,8 @@ public class Scene {
   BufferData data = new BufferData();
 
   Material matFloor = new Material(Shader.Default);
-  Model room = Model.FromFile("room/room.glb", Shader.FromFile("room.hlsl"));
+  // Model room = Model.FromFile("room/room.glb", Shader.FromFile("room.hlsl"));
+  Model room = Model.FromFile("shed/shed.glb", Shader.FromFile("room.hlsl"));
 
 
   Solid floor;
@@ -71,7 +72,7 @@ public class Scene {
     // room.RootNode.Material["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(mono.oriel.matrix);
 
     // Shader.
-
-    room.Draw(Matrix.TRS(new Vec3(0, World.BoundsPose.position.y, -1), Quat.Identity, Vec3.One));
+    // World.BoundsPose.position.y
+    room.Draw(Matrix.TRS(new Vec3(0, -1.6f, 0), Quat.Identity, Vec3.One));
   }
 }

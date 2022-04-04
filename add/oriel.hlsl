@@ -53,12 +53,12 @@ float sdBox(float3 p, float3 b) {
   return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
 
-float raymarch(float3 ro, float3 rd) {
-  ro = mul(float4(ro, 1), _matrix).xyz;
-  rd = mul(float4(rd, 0), _matrix).xyz;
+float raymarch(float3 origin, float3 direction) {
+  origin = mul(float4(origin, 1), _matrix).xyz;
+  direction = mul(float4(direction, 0), _matrix).xyz;
 	float dist = 0.0;
   for (int i = 0; i < 256; i++) {
-    float3 pos = ro + dist * rd;
+    float3 pos = origin + dist * direction;
     float step = sdBox(pos, _dimensions / 2.0); 
     if (step < 0.0001 || dist > 100) break;                       // 100 == distmax
     dist += step;
@@ -72,15 +72,15 @@ psOut ps(psIn input) {
   o.color = input.color;
   o.depth = input.position.z;
 
-  float3 ro = input.campos;
-  float3 rd = normalize(input.world - ro);
-  // ro = ;
-  float ol = raymarch(ro, rd);
+  float3 origin = input.campos;
+  float3 direction = normalize(input.world - origin);
+  // origin = ;
+  float ol = raymarch(origin, direction);
   clip(100 - (ol + 1));
 
-  ro += ol * rd;
+  origin += ol * direction;
 
-  clip(distance(input.campos, input.world) - distance(input.campos, ro));
+  clip(distance(input.campos, input.world) - distance(input.campos, origin));
 
   // normalize(input.world - _center)
   float t =  1 - (1 + dot(input.normal, _light)) / 2;
@@ -90,7 +90,7 @@ psOut ps(psIn input) {
 
 
   // backface
-  if (dot(rd, input.normal) > 0) {
+  if (dot(direction, input.normal) > 0) {
     o.color = float4(0.5, 0.5, 0.5, 1);
   }
   return o;

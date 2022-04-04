@@ -71,7 +71,7 @@ public class Oriel {
     // edge detection = (2 axis)
     // corner detection = (3 axis)
     // Pose pose = new Pose();
-    
+
 
     Vec3 localPos = ori.Inverse * (rGlovePos - bounds.center);
 
@@ -106,7 +106,7 @@ public class Oriel {
       lOffset = ori.Inverse * vOffset;
       qOffset = (ori.Inverse * rGloveRot).Normalized;
       mOffset = matrix;
-      anchor  = bounds.center + ori * -(detect * bounds.dimensions / 2);
+      anchor = bounds.center + ori * -(detect * bounds.dimensions / 2);
 
       adjusting = false;
     } else {
@@ -190,48 +190,55 @@ public class Oriel {
     matOriel["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(matrix);
 
 
-    
 
 
 
 
 
-    Matrix orielSimMatrix = Matrix.TRS(new Vec3(0, -bounds.dimensions.y / 2, 0), Quat.Identity, Vec3.One * 0.5f * bounds.dimensions.y).Inverse;
+
+    // APP
+    Vec3 playerWorldPos = playerPos * 0.5f * bounds.dimensions.y;
+    Matrix orielSimMatrix = Matrix.TRS(
+      new Vec3(0, -bounds.dimensions.y / 2, -playerWorldPos.z), 
+      Quat.Identity, 
+      Vec3.One * 0.5f * bounds.dimensions.y
+    );
 
 
     if (drawAxis) {
       meshAxis.Draw(matOriel,
-        Matrix.TRS(Vec3.Zero, Quat.Identity, Vec3.One * 1f) * orielSimMatrix.Inverse * matrix.Inverse,
+        Matrix.TRS(Vec3.Zero, Quat.Identity, Vec3.One * 1f) * orielSimMatrix * matrix.Inverse,
         Color.White
       );
     }
 
     Mesh.Quad.Draw(matOriel,
-      Matrix.TRS(Vec3.Zero, Quat.FromAngles(90, 0, 0), Vec3.One * 100f) * orielSimMatrix.Inverse * matrix.Inverse,
+      Matrix.TRS(Vec3.Zero, Quat.FromAngles(90, 0, 0), Vec3.One * 100f) * orielSimMatrix * matrix.Inverse,
       new Color(1.0f, 1.0f, 1.0f) * 0.3f
     );
 
-    meshCube.Draw(matOriel, 
+    meshCube.Draw(matOriel,
       mono.rGlove.virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3 * 1.05f),
       new Color(0.3f, 0.3f, 0.6f)
     );
 
-    // draw relative to oriel matrix
-    // for (int i = 0; i < asteroids.Count; i++) {
-    //   Asteroid asteroid = asteroids[i];
-    //   asteroid.pose.orientation = Quat.FromAngles(Time.Elapsedf * 10 * asteroid.scale, 0, 0) * asteroid.pose.orientation;
-    //   meshAsteroid.Draw(matOriel,
-    //     asteroid.pose.ToMatrix(Vec3.One * asteroid.scale) * matrix.Inverse,
-    //     Color.White * 0.32f
-    //   );
-    // }
-    playerPos += new Vec3(-mono.lCon.device.stick.x, 0, -mono.lCon.device.stick.y) * Time.Elapsedf;
-    player.Move(playerPos + simOffset, Quat.Identity);
+
+
+
+    float fwd = Input.Key(Key.W).IsActive() ? 1 : 0;
+    playerPos += new Vec3(-mono.lCon.device.stick.x, 0, -mono.lCon.device.stick.y + fwd) * Time.Elapsedf;
     meshCube.Draw(matOriel,
-      Matrix.TRS(player.GetPose().position + (player.GetPose().orientation * Vec3.Up * 0.5f) - simOffset, player.GetPose().orientation, new Vec3(0.4f, 1f, 0.2f)) * orielSimMatrix.Inverse * matrix.Inverse,
+      Matrix.TRS(playerPos, Quat.Identity, new Vec3(0.4f, 1f, 0.2f)) * orielSimMatrix * matrix.Inverse,
       new Color(1.0f, 0.0f, 0.05f)
     );
 
+    // destroy enemies that are too close to the playerPos
+    for (int i = 0; i < enemies.Count; i++) {
+      if (Vec3.Distance(enemies[i], playerPos) < 0.5f) {
+        enemies.RemoveAt(i);
+        i--;
+      }
+    }
 
     // FULLSTICK
     // Vec3 Fullstick() {
@@ -243,77 +250,61 @@ public class Oriel {
     // Vec3 fullstick = Fullstick();
     // sword.Move(playerPos + simOffset + fullstick, Quat.LookAt(Vec3.Zero, fullstick, Vec3.Up));
     // meshCube.Draw(matOriel,
-    //   Matrix.TRS(sword.GetPose().position + (Vec3.Up * 0.7f) + (sword.GetPose().orientation * Vec3.Forward * -0.5f) - simOffset, sword.GetPose().orientation, new Vec3(0.1f, 0.03f, 1f)) * orielSimMatrix.Inverse * matrix.Inverse,
+    //   Matrix.TRS(sword.GetPose().position + (Vec3.Up * 0.7f) + (sword.GetPose().orientation * Vec3.Forward * -0.5f) - simOffset, sword.GetPose().orientation, new Vec3(0.1f, 0.03f, 1f)) * orielSimMatrix * matrix.Inverse,
     //   new Color(0.9f, 0.5f, 0.5f)
     // );
 
+    if (Time.Totalf > spawnTime) {
+      enemies.Add(playerPos + Quat.FromAngles(0, mono.noise.value * 360f, 0) * Vec3.Forward * 8);
+      spawnTime = Time.Totalf + 1;
+    }
 
     for (int i = 0; i < enemies.Count; i++) {
-      Solid enemy = enemies[i];
-      Pose pose = enemy.GetPose();
+
       // move towards player
-      enemy.Move(pose.position + (playerPos - pose.position).Normalized * Time.Elapsedf * 0.5f, pose.orientation);
+      Vec3 toPlayer = (playerPos - enemies[i]).Normalized;
+      Vec3 newPos = enemies[i] + toPlayer * Time.Elapsedf * 0.5f;
+
+      // if far enough away from other enemies than set new pos
+      bool setNewPos = true;
+      for (int j = 0; j < enemies.Count; j++) {
+        if (i == j) continue;
+        if ((newPos - enemies[j]).Length < 0.5f) {
+          setNewPos = false;
+          break;
+        }
+      }
+
+      if (setNewPos) {
+        enemies[i] = newPos;
+      }
+
+
+
+
       meshCube.Draw(matOriel,
-        Matrix.TRS(pose.position - simOffset, pose.orientation, new Vec3(0.4f, 1f, 0.2f) * 0.99f) * orielSimMatrix.Inverse * matrix.Inverse,
+        Matrix.TRS(enemies[i],
+          Quat.LookAt(enemies[i], playerPos, Vec3.Up),
+          new Vec3(0.4f, 1f, 0.2f)
+        ) * orielSimMatrix * matrix.Inverse,
         Color.White * 0.62f
       );
     }
+
   }
 
-  Solid ground;
-  Solid player; Vec3 playerPos;
-  Solid sword;
-  List<Solid> enemies = new List<Solid>();
-  Vec3 simOffset = new Vec3(0, 100, 0);
+  // Custom > Physics
+  // issue that we are having is we don't have enough access to the physics sim
+  // and because of that we run into issues where solutions we've learned of in Unity
+  // will not carry over simply due to what we have current access to.
 
-  Mesh meshAsteroid, meshAxis;
+  // getting over these physics hurdles is worthwhile, but not when we have a viable alternate solution
+  Vec3 playerPos;
+  List<Vec3> enemies = new List<Vec3>();
+  float spawnTime;
 
-  static Model modelAsteroids = Model.FromFile("asteroids.glb");
-  class Asteroid {
-    public Pose pose;
-    public float scale;
-
-    public Asteroid(Pose pose, float scale) {
-      this.pose = pose;
-      this.scale = scale;
-    }
-  }
-  List<Asteroid> asteroids = new List<Asteroid>();
+  Mesh meshAxis;
   void Gen() {
     meshAxis = model.GetMesh("Axis");
-    meshAsteroid = modelAsteroids.GetMesh("1 Meteor");
-    asteroids.Clear();
-    Random random = new Random();
-
-    // for (int i = 0; i < 128; i++) {
-    //   Pose pose = new Pose(
-    //     PullRequest.RandomInCube(Vec3.Up * bounds.dimensions.y * 1, bounds.dimensions.x * 2),
-    //     Quat.FromAngles(
-    //       random.Next(360),
-    //       random.Next(360),
-    //       random.Next(360)
-    //     )
-    //   );
-    //   asteroids.Add(new Asteroid(pose, 0.1f + random.NextSingle() * 0.4f));
-    // }
-
-    ground = new Solid(simOffset, Quat.Identity, SolidType.Immovable);
-    ground.AddBox(new Vec3(20, 1, 20), 1, new Vec3(0, -0.5f, 0));
-
-    player = new Solid(simOffset + Vec3.Up, Quat.Identity, SolidType.Normal);
-    player.AddBox(new Vec3(0.4f, 1f, 0.2f), 1, new Vec3(0, 0.5f, 0));
-
-    sword = new Solid(simOffset + Vec3.Up, Quat.Identity, SolidType.Normal);
-    sword.AddBox(new Vec3(0.1f, 0.03f, 1f), 1, new Vec3(0, 0, -0.5f));
-
-    for (int i = 0; i < 32; i++) {
-      Solid solid = new Solid(
-        simOffset + Vec3.Up * i,
-        Quat.Identity,
-        SolidType.Normal
-      );
-      solid.AddBox(new Vec3(0.4f, 1f, 0.2f), 1);
-      enemies.Add(solid);
-    }
   }
 }

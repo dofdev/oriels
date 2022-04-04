@@ -48,6 +48,8 @@ public struct Btn {
 }
 
 public class Monolith {
+  public PullRequest.Noise noise;
+
   public MonoNet net;
   public Scene scene;
   public Mic mic;
@@ -89,6 +91,10 @@ public class Monolith {
 
   public void Run() {
     Renderer.SetClip(0.02f, 1000f);
+
+    noise = new PullRequest.Noise(978235461);
+
+    Console.WriteLine("noise = " + noise.value);
 
     scene = new Scene(this);
     net = new MonoNet(this);
@@ -333,7 +339,6 @@ public class Monolith {
         }
 
 
-
         // colorCube.Step();
 
 
@@ -498,5 +503,57 @@ public static class PullRequest {
   static Pose _pose = new Pose();
   public static Pose WorldPose(this Pose pose, float scale = 1) {
     return pose;
+  }
+
+  [Serializable]
+  public class Noise {
+    const uint CAP = 4294967295;
+    const uint BIT_NOISE1 = 0xB5297A4D;
+    const uint BIT_NOISE2 = 0x68E31DA4;
+    const uint BIT_NOISE3 = 0x1B56C4E9;
+
+    public uint seed;
+
+    public Noise(uint seed) {
+      this.seed = seed;
+    }
+
+    int position;
+    public float value {
+      get {
+        float v = RNG(position, seed) / (float)CAP;
+        position++;
+        return v;
+      }
+    }
+
+    public float D1(int position) {
+      return RNG(position, seed) / (float)CAP;
+    }
+
+    public float D2(int x, int y) {
+      // large prime number with non-boring bits
+      const int PRIME = 198491317;
+      return RNG(x + (PRIME * y), seed) / (float)CAP;
+    }
+
+    public float D3(int x, int y, int z) {
+      // large prime number with non-boring bits
+      const int PRIME1 = 198491317;
+      const int PRIME2 = 6542989;
+      return RNG(x + (PRIME1 * y) + (PRIME2 * z), seed) / (float)CAP;
+    }
+
+    public uint RNG(int position, uint seed) {
+      uint mangled = (uint)position;
+      mangled *= BIT_NOISE1;
+      mangled += seed;
+      mangled ^= mangled >> 8;
+      mangled += BIT_NOISE2;
+      mangled ^= mangled << 8;
+      mangled *= BIT_NOISE3;
+      mangled ^= mangled >> 8;
+      return mangled;
+    }
   }
 }
