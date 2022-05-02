@@ -56,20 +56,22 @@ public class Mono {
     Renderer.SetClip(0.02f, 1000f);
   }
 
-  Vec3 pos = new Vec3(0f, 0f, 0f); // see below
+  Vec3 pos = new Vec3(0f, 0f, 0f);
+  Quat ori = Quat.Identity;
+  float yy = 0f;
   public void Step() {
-    Renderer.CameraRoot = Matrix.T(pos);
+    Renderer.CameraRoot = Matrix.TR(pos, ori);
 
     rig.Step();
     scene.Step();
 
     // -------------------------------------------------
 
-    rGlove.Step(); lGlove.Step();
+    // rGlove.Step(); lGlove.Step();
 
-    rBlock.Step(); lBlock.Step();
+    // rBlock.Step(); lBlock.Step();
 
-    cubicCon.Step();
+    // cubicCon.Step();
 
     // Vec3 fullstick = rig.Fullstick(false);
 
@@ -77,7 +79,34 @@ public class Mono {
 
     // oriel.Step();
 
-    pos.z += Time.Elapsedf * 0.1f;
+    // board
+    // use the active con position to point from the head *top down perspective (y = 0)
+    // to determine the board direction
+    Con handleCon = rig.HandleCon();
+    Vec3 boardDir = (handleCon.pos.X0Z - rig.Head().position.X0Z).Normalized;
+    Quat boardRot = Quat.LookDir(boardDir);
+
+    // boardDir = (handleCon.pos.X0Z - head.position.X0Z).normalized
+    // boardRot = Quat.LookDir(boardDir)
+    // boardPos += boardDir * handleCon.trigger * speed * delta
+
+    pos += boardDir * handleCon.device.trigger * Time.Elapsedf;
+    yy += handleCon.device.stick.x * 90 * Time.Elapsedf;
+    ori = Quat.FromAngles(0f, yy, 0f); // stick.x -> twist z
+
+
+    Vec3 boardPos = pos + Vec3.Up * -1.35f; // rig.Head().position.X0Z
+    Mesh.Cube.Draw(Material.Default, Matrix.TRS(boardPos, boardRot, new Vec3(0.18f, 0.06f, 0.6f)));
+
+    // having a board underneath my feet and a virtual handlebar in my hand
+    // did a lot to improve the quality of the experience (+immersion -sickness)
+
+    // don't do more just yet!
+    // these are all important, but lets start small and scrappy + it's 9AM
+    // twist turning
+    // handleCon
+    // tighter boardDir
+    // lean turning (head moving in relation to hand, doesn't that happen a little already?)
 
     // -------------------------------------------------
 

@@ -10,6 +10,16 @@ public class Rig {
 
   public Con rCon = new Con(), lCon = new Con();
   public Con Con(bool chirality) { return chirality ? rCon : lCon; }
+  bool handleChirality = false;
+  public Con HandleCon() {
+    return Con(handleChirality);
+  }
+
+  public Pose Head() {
+    Pose pose = Input.Head;
+    pose.position += pose.orientation * Vec3.Forward * -0.1f;
+    return pose;
+  }
 
   public Pose rShoulder, lShoulder;
   public Pose Shoulder(bool chirality) { return chirality ? rShoulder : lShoulder; }
@@ -22,8 +32,11 @@ public class Rig {
     rCon.Step(true);
     lCon.Step(false);
 
+    if (rCon.gripBtn.frameDown) { handleChirality = true; }
+    if (lCon.gripBtn.frameDown) { handleChirality = false; }
+
     // Shoulders
-    Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f;
+    Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f; // Input.Head -> Head() ?
     Vec3 shoulderDir = (
       (lCon.pos.X0Z - headPos.X0Z).Normalized +
       (rCon.pos.X0Z - headPos.X0Z).Normalized

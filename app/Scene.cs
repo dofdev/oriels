@@ -47,6 +47,25 @@ public class Scene {
     Oriel oriel = Mono.inst.oriel;
     data.matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrix);
     data.dimensions = oriel.bounds.dimensions;
+
+
+
+
+
+
+
+
+    data.dimensions = Vec3.Zero;
+
+
+
+
+
+
+
+
+
+
     
     buffer.Set(data);
 

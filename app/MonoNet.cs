@@ -360,13 +360,13 @@ public class Peer {
       PullRequest.BlockOut(Matrix.TRS(headset.position + Input.Head.Forward * -0.15f, headset.orientation, Vec3.One * 0.3f), color);
     }
 
-    Bezier.Draw(
-      mono.rGlove.virtualGlove.position,
-      mono.rig.rCon.pos,
-      mono.rig.lCon.pos,
-      mono.lGlove.virtualGlove.position,
-      new Color(1, 1, 1, 0.1f)
-    );
+    // Bezier.Draw(
+    //   mono.rGlove.virtualGlove.position,
+    //   mono.rig.rCon.pos,
+    //   mono.rig.lCon.pos,
+    //   mono.lGlove.virtualGlove.position,
+    //   new Color(1, 1, 1, 0.1f)
+    // );
 
     for (int i = 0; i < blocks.Length; i++) {
       NetBlock block = blocks[i];
