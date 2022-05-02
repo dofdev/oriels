@@ -44,28 +44,16 @@ public class Oriel {
     Gen();
   }
 
-  public class Transform {
-    public string name;
-    public Pose pose;
-    public float scale;
-
-    public Transform() {
-
-    }
-
-    public Vec3 LocalPos() {
-      return pose.position;
-    }
-  }
-
   Vec3 detect = Vec3.Zero;
   int detectCount = 0;
-  public void Step(Monolith mono) {
+  public void Step() {
     matrix = Matrix.TR(bounds.center, ori).Inverse;
 
-    Vec3 rGlovePos = mono.rGlove.virtualGlove.position;
-    Quat rGloveRot = mono.rGlove.virtualGlove.orientation;
-    // Vec3 lGlovePos = mono.lGlove.virtualGlove.position;
+    Rig rig = Mono.inst.rig;
+    Glove rGlove = Mono.inst.rGlove;
+    Vec3 rGlovePos = rGlove.virtualGlove.position;
+    Quat rGloveRot = rGlove.virtualGlove.orientation;
+    // Vec3 lGlovePos = rig.lGlove.virtualGlove.position;
 
     // face detection = (1 axis)
     // edge detection = (2 axis)
@@ -78,7 +66,7 @@ public class Oriel {
 
 
 
-    if (!mono.rCon.triggerBtn.held) {
+    if (!rig.rCon.triggerBtn.held) {
       float margin = PullRequest.Lerp(0.03f, 0.5f, bounds.dimensions.y / 2);
       Vec3 newDetect = Vec3.Zero;
       if ((bounds.dimensions.x / 2) - MathF.Abs(localPos.x) < 0) newDetect.x = 1 * MathF.Sign(localPos.x);
@@ -218,7 +206,7 @@ public class Oriel {
     );
 
     meshCube.Draw(matOriel,
-      mono.rGlove.virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3 * 1.05f),
+      rGlove.virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3 * 1.05f),
       new Color(0.3f, 0.3f, 0.6f)
     );
 
@@ -226,7 +214,7 @@ public class Oriel {
 
 
     float fwd = Input.Key(Key.W).IsActive() ? 1 : 0;
-    playerPos += new Vec3(-mono.lCon.device.stick.x, 0, -mono.lCon.device.stick.y + fwd) * Time.Elapsedf;
+    playerPos += new Vec3(-rig.lCon.device.stick.x, 0, -rig.lCon.device.stick.y + fwd) * Time.Elapsedf;
     meshCube.Draw(matOriel,
       Matrix.TRS(playerPos, Quat.Identity, new Vec3(0.4f, 1f, 0.2f)) * orielSimMatrix * matrix.Inverse,
       new Color(1.0f, 0.0f, 0.05f)
@@ -242,7 +230,7 @@ public class Oriel {
 
     // FULLSTICK
     // Vec3 Fullstick() {
-    //   Controller con = mono.lCon.device;
+    //   Controller con = rig.lCon.device;
     //   Quat rot = Quat.FromAngles(con.stick.y * -90, 0, con.stick.x * 90);
     //   Vec3 dir = Vec3.Up * (con.IsStickClicked ? -1 : 1);
     //   return con.aim.orientation * rot * dir;
@@ -255,7 +243,7 @@ public class Oriel {
     // );
 
     if (Time.Totalf > spawnTime) {
-      enemies.Add(playerPos + Quat.FromAngles(0, mono.noise.value * 360f, 0) * Vec3.Forward * 8);
+      enemies.Add(playerPos + Quat.FromAngles(0, Mono.inst.noise.value * 360f, 0) * Vec3.Forward * 8);
       spawnTime = Time.Totalf + 1;
     }
 

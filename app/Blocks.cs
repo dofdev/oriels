@@ -33,10 +33,8 @@ public class Block {
 }
 
 public class BlockCon {
-  Monolith mono;
   bool chirality;
-  public BlockCon(Monolith mono, bool chirality) {
-    this.mono = mono;
+  public BlockCon(bool chirality) {
     this.chirality = chirality;
   }
 
@@ -50,11 +48,12 @@ public class BlockCon {
   bool pressed = false;
 
   public void Step() {
-    Block[] blocks = mono.blocks;
-    Con con = mono.Con(chirality);
-    Con otherCon = mono.Con(!chirality);
-    Vec3 cursor = mono.Glove(chirality).virtualGlove.position;
-    BlockCon otherBlockCon = mono.BlockCon(!chirality);
+    Block[] blocks = Mono.inst.blocks;
+    Rig rig = Mono.inst.rig;
+    Con con = rig.Con(chirality);
+    Con otherCon = rig.Con(!chirality);
+    Vec3 cursor = Mono.inst.Glove(chirality).virtualGlove.position;
+    BlockCon otherBlockCon = Mono.inst.BlockCon(!chirality);
 
     bool doublePressed = false;
     if (con.device.trigger > 0.5f) {

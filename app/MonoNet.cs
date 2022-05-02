@@ -7,15 +7,8 @@ using System.Threading.Tasks;
 using StereoKit;
 
 public class MonoNet {
-  public Monolith mono;
   public bool send;
-  public MonoNet(Monolith mono) {
-    this.mono = mono;
-    this.send = false;
-    Random rnd = new Random();
-    me = new Peer(this, rnd.Next(1, 1024 * 8)); // let the server determine the id
-    // me.block = new Block(new Vec3((float)rnd.NextDouble() * 0.5f, 10, -4), Quat.Identity, SolidType.Normal, Color.White);
-  }
+
   public Socket socket;
   int bufferSize = 1024;
   byte[] rData; int rHead;
@@ -24,7 +17,13 @@ public class MonoNet {
   public Peer me;
   public Peer[] peers;
 
-  public void Start() {
+  public MonoNet() {
+    this.send = false;
+    Random rnd = new Random();
+    me = new Peer(this, rnd.Next(1, 1024 * 8)); // let the server determine the id
+    // me.block = new Block(new Vec3((float)rnd.NextDouble() * 0.5f, 10, -4), Quat.Identity, SolidType.Normal, Color.White);
+
+
     socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
     string ip = "192.168.1.70";
     ip = "139.177.201.219";
@@ -42,9 +41,6 @@ public class MonoNet {
     readThread.Start();
     Thread writeThread = new Thread(Write);
     writeThread.Start();
-
-
-    // socket.Close();
   }
 
   void Read() {
@@ -229,11 +225,12 @@ public class Peer {
     // voiceInst = voice.Play(Vec3.Zero, 0.5f);
   }
 
-  public void Step(Monolith mono) { // CLIENT SIDE
+  public void Step() { // CLIENT SIDE
+    Mono mono = Mono.inst;
     color = mono.colorCube.color;
     headset = Input.Head;
-    rHand = mono.rCon.Pose();
-    lHand = mono.lCon.Pose();
+    rHand = mono.rig.rCon.Pose();
+    lHand = mono.rig.lCon.Pose();
     rCursor = mono.rGlove.virtualGlove;
     lCursor = mono.lGlove.virtualGlove;
 
@@ -272,9 +269,9 @@ public class Peer {
 
     for (int i = 0; i < net.peers.Length; i++) {
       Peer peer = net.peers[i];
-      if (peer != null) { peer.Draw(mono, true); }
+      if (peer != null) { peer.Draw(true); }
     }
-    Draw(mono, false);
+    Draw(false);
   }
 
   public void Write() {
@@ -357,15 +354,16 @@ public class Peer {
     }
   }
 
-  public void Draw(Monolith mono, bool body) {
+  public void Draw(bool body) {
+    Mono mono = Mono.inst;
     if (body) {
       PullRequest.BlockOut(Matrix.TRS(headset.position + Input.Head.Forward * -0.15f, headset.orientation, Vec3.One * 0.3f), color);
     }
 
     Bezier.Draw(
       mono.rGlove.virtualGlove.position,
-      mono.rCon.pos,
-      mono.lCon.pos,
+      mono.rig.rCon.pos,
+      mono.rig.lCon.pos,
       mono.lGlove.virtualGlove.position,
       new Color(1, 1, 1, 0.1f)
     );

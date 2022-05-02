@@ -6,10 +6,8 @@ public enum Pull {
 }
 
 public class Glove {
-  Monolith mono;
   bool chirality;
-  public Glove(Monolith mono, bool chirality) {
-    this.mono = mono;
+  public Glove(bool chirality) {
     this.chirality = chirality;
   }
 
@@ -33,9 +31,10 @@ public class Glove {
   int firstFace;
 
   public void Step() {
-    Pose shoulder = mono.Shoulder(chirality);
-    Pose wrist = mono.Wrist(chirality);
-    Con con = mono.Con(chirality), otherCon = mono.Con(!chirality);
+    Rig rig = Mono.inst.rig;
+    Pose shoulder = rig.Shoulder(chirality);
+    Pose wrist = rig.Wrist(chirality);
+    Con con = rig.Con(chirality), otherCon = rig.Con(!chirality);
     bool pull = otherCon.gripBtn.frameDown;
 
     if (firstFace == 0) { 

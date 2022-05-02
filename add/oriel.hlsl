@@ -59,7 +59,7 @@ float raymarch(float3 origin, float3 direction) {
 	float dist = 0.0;
   for (int i = 0; i < 256; i++) {
     float3 pos = origin + dist * direction;
-    float step = sdBox(pos, _dimensions / 2.0); 
+    float step = sdBox(pos, _dimensions / 2.0);
     if (step < 0.0001 || dist > 100) break;                       // 100 == distmax
     dist += step;
   }

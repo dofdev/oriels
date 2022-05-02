@@ -30,10 +30,8 @@ public class StretchCursor : SpatialCursor {
 }
 
 public class ReachCursor : SpatialCursor {
-  Monolith mono;
   bool chirality;
-  public ReachCursor(Monolith mono, bool chirality) {
-    this.mono = mono;
+  public ReachCursor(bool chirality) {
     this.chirality = chirality;
     this.min = 1f;
     this.str = 3f;
@@ -44,8 +42,8 @@ public class ReachCursor : SpatialCursor {
   public float deadzone;
   public override void Step(Pose[] poses, float scalar) {
     Vec3 pos = poses[0].position;
-    Vec3 wrist = mono.Wrist(chirality).position;
-    Pose shoulder = mono.Shoulder(chirality);
+    Vec3 wrist = Mono.inst.rig.Wrist(chirality).position;
+    Pose shoulder = Mono.inst.rig.Shoulder(chirality);
 
     Vec3 from = (shoulder.orientation * origin) + shoulder.position;
 
@@ -61,17 +59,15 @@ public class ReachCursor : SpatialCursor {
     Lines.Add(pos, p0, new Color(0, 1, 1), 0.005f);
   }
   public override void Calibrate() {
-    Vec3 wrist = mono.Wrist(chirality).position;
-    Pose shoulder = mono.Shoulder(chirality);
+    Vec3 wrist = Mono.inst.rig.Wrist(chirality).position;
+    Pose shoulder = Mono.inst.rig.Shoulder(chirality);
     origin = shoulder.orientation.Inverse * (wrist - shoulder.position);
   }
 }
 
 public class TwistCursor : SpatialCursor {
-  Monolith mono;
   bool chirality;
-  public TwistCursor(Monolith mono, bool chirality) {
-    this.mono = mono;
+  public TwistCursor(bool chirality) {
     this.chirality = chirality;
     this.min = 1f;
     this.str = 6f;
@@ -79,9 +75,8 @@ public class TwistCursor : SpatialCursor {
   }
   Vec3 twistFrom = -Vec3.Right;
   public override void Step(Pose[] poses, float scalar) {
-    
     Vec3 pos = poses[0].position;
-    Quat quat = mono.Con(chirality).ori;
+    Quat quat = Mono.inst.rig.Con(chirality).ori;
     Quat from = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward, twistFrom);
     float twist = (float)(Math.Acos(Vec3.Dot(from * Vec3.Up, quat * Vec3.Up)) / Math.PI);
     outty = Vec3.Dot(from * Vec3.Up, quat * Vec3.Right * (chirality ? 1 : -1)) > 0;
@@ -104,7 +99,7 @@ public class TwistCursor : SpatialCursor {
     }
   }
   public override void Calibrate() {
-    Quat quat = mono.Con(chirality).ori;
+    Quat quat = Mono.inst.rig.Con(chirality).ori;
     twistFrom = quat * Vec3.Up;
   }
 
@@ -112,40 +107,39 @@ public class TwistCursor : SpatialCursor {
 }
 
 public class CubicFlow : SpatialCursor {
-  Monolith mono;
   TwistCursor domTwist;
   TwistCursor subTwist;
-  public CubicFlow(Monolith mono) {
-    this.mono = mono;
+  public CubicFlow() {
     this.min = 1f;
     this.str = 3f;
     this.max = 10f;
-    this.domTwist = new TwistCursor(mono, true);
-    this.subTwist = new TwistCursor(mono, false);
+    this.domTwist = new TwistCursor(true);
+    this.subTwist = new TwistCursor(false);
   }
   bool domTwisting = false; bool domUp = false;
   bool subTwisting = false; bool subUp = false;
   public override void Step(Pose[] poses, float scalar) {
     Pose dom = poses[0];
     Pose sub = poses[1];
+    Rig rig = Mono.inst.rig;
 
-    if (mono.rCon.device.stick.y < 0.1f) {
+    if (rig.rCon.device.stick.y < 0.1f) {
       domTwist.Calibrate();
       domTwisting = false;
     } else {
       if (!domTwisting) {
-        domUp = mono.rCon.device.stick.x > 0;
+        domUp = rig.rCon.device.stick.x > 0;
         domTwisting = true;
       }
     }
     domTwist.Step(new Pose[] { dom }, scalar);
 
-    if (mono.lCon.device.stick.y < 0.1f) {
+    if (rig.lCon.device.stick.y < 0.1f) {
       subTwist.Calibrate();
       subTwisting = false;
     } else {
       if (!subTwisting) {
-        subUp = mono.lCon.device.stick.x < 0;
+        subUp = rig.lCon.device.stick.x < 0;
         subTwisting = true;
       }
     }

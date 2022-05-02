@@ -49,6 +49,31 @@ public class ColorCube {
     cube.Draw(unlit, Matrix.TS(p0s, Vec3.One * thicc * 2), color);
     cube.Draw(unlit, Matrix.TS(raw, Vec3.One * thicc), Color.White);
   }
+
+  public void Palm(Controller con) {
+    // reveal when palm up
+    float reveal = con.pose.Right.y * 1.666f;
+    float look = 1 - Math.Clamp((1 - Math.Clamp(Vec3.Dot((con.pose.position - Input.Head.position).Normalized, Input.Head.Forward), 0f, 1f)) * 5f, 0f, 1f);
+    reveal *= look;
+    size = ogSize * Math.Clamp(reveal, 0, 1);
+    center = con.pose.position + con.pose.Right * 0.0666f;
+    // move with grip
+    if (reveal > thicc) { // !leftPlanted
+      if (reveal > 1f && con.trigger > 0.5f) {
+        cursor -= (con.pose.position - oldConPos) / ogSize * 2;
+      } else {
+        // clamp 0 - 1
+        cursor.x = Math.Clamp(cursor.x, -1, 1);
+        cursor.y = Math.Clamp(cursor.y, -1, 1);
+        cursor.z = Math.Clamp(cursor.z, -1, 1);
+      }
+
+
+      Step();
+    }
+    oldConPos = con.pose.position;
+  }
+  Vec3 oldConPos = Vec3.Zero;
 }
 
 
