@@ -78,24 +78,37 @@ public class Mono {
     // colorCube.Palm(lCon.device);
 
     // oriel.Step();
+    ////
 
-    // board
-    // use the active con position to point from the head *top down perspective (y = 0)
-    // to determine the board direction
+
+    // °board
+    // trigger & stick.x will be remapped to tracked motions next
+
+    // str = 100±
+    // speed = 10±
+    // con.grip.frameDown: handleCon = con
+
+    // turn = handleCon.stick.x
+    // rig.rot *= Quat(0f, turn * strength * delta, 0f);
+
+    // accel = handleCon.trigger
+    // rig.pos += boardDir * accel * speed * delta
+
+    // board.pos = rig.floorCenter + rig.pos
+    // board.dir = (handleCon.pos.X0Z - board.pos.X0Z).normalized
+    // board.rot = Quat(board.dir, Vec3.up)
+
+
     Con handleCon = rig.HandleCon();
-    Vec3 boardDir = (handleCon.pos.X0Z - rig.Head().position.X0Z).Normalized;
+    Vec3 boardDir = (handleCon.pos.X0Z - pos.X0Z).Normalized;
     Quat boardRot = Quat.LookDir(boardDir);
-
-    // boardDir = (handleCon.pos.X0Z - head.position.X0Z).normalized
-    // boardRot = Quat.LookDir(boardDir)
-    // boardPos += boardDir * handleCon.trigger * speed * delta
 
     pos += boardDir * handleCon.device.trigger * Time.Elapsedf;
     yy += handleCon.device.stick.x * 90 * Time.Elapsedf;
     ori = Quat.FromAngles(0f, yy, 0f); // stick.x -> twist z
 
 
-    Vec3 boardPos = pos + Vec3.Up * -1.35f; // rig.Head().position.X0Z
+    Vec3 boardPos = pos.X0Z + Vec3.Up * -1.35f; // rig.Head().position.X0Z
     Mesh.Cube.Draw(Material.Default, Matrix.TRS(boardPos, boardRot, new Vec3(0.18f, 0.06f, 0.6f)));
 
     // having a board underneath my feet and a virtual handlebar in my hand
