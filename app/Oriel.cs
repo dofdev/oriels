@@ -33,6 +33,7 @@ public class Oriel {
     );
 
     ori = Quat.Identity;
+    matrix = Matrix.TR(bounds.center, ori).Inverse;
 
     matFrame.SetMat(102, Cull.None, true);
     matPanes.SetMat(100, Cull.Front, false);
