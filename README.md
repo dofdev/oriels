@@ -6,66 +6,41 @@
 
 <img src='zrc/markberg.png' width="100%">
 
+
+(*making some little spatial gifs will make this format click!)
+
 # pos
-net.read()
-
-c[] = reach-cursor * trackballer || cubic-flow
-
-blocks.step(c[0].pose, c[3].pose)
-
-cubics.step(c[0].pos, c[1].pos, c[2].pos, c[3].pos)
-
-net.write()
-
-oriel.raymarch()
+some good code scattered underneath, so now we just need to bring it together through a discrete app layer of sorts that we can render out as oriels and more.
 
 &nbsp;
 
 # dir
-= (dof - paperParadigm).normalized
-
-accounts = web3()
+= (dofParadigm - paperParadigm).normalized
 
 &nbsp;
 
 
-# m++
-refactor(hackathon.result())
-
-oriel manipulation
-
-dofs.debug(CMY)
-
-cursor combinatory mechanism
+# mas++
+glove visuals  
+*pull points  
+*mesh  
 
 oriels.dofs == site.dofs
 
 init(oriel-game)
 
-exec(vlai)
-
 &nbsp;
 
 
-# bookmark(next page)
-glove visuals
-*pull points
-*mesh
-
-double tap lift
-set strength
-*draw new line with reach cursor
-
-&nbsp;
-
-
-# m--
-unity
+# mas--
+migrated from Unity  
+shelved crypto centric design  
+shifted from making a public product to an inhouse tool  
 
 &nbsp;
 
 ## p = effort * <a href='https://dofdev.org'>funds</a>
-## vel = p / m
+## vel = p / mas
 ## pos += dir * vel * time
 
 &nbsp;
@@ -74,7 +49,7 @@ unity
 
 &nbsp;
 
-mapped out by:
-<a href='https://ethanmerchant.com'>@spatialfree</a> x <a href='https://twitter.com/opendegree'>@opendegree</a>
+mapped out by:  
+<a href='https://ethanmerchant.com'>@spatialfree</a> &times; <a href='https://twitter.com/opendegree'>@opendegree</a>
 
 </code>

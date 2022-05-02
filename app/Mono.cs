@@ -54,8 +54,6 @@ public class Mono {
 
   public Mono() {
     Renderer.SetClip(0.02f, 1000f);
-
-    // Console.WriteLine("noise = " + noise.value);
   }
 
   Vec3 pos = new Vec3(0f, 0f, 0f); // see below
@@ -67,26 +65,19 @@ public class Mono {
 
     // -------------------------------------------------
 
-    // Gloves
-    rGlove.Step();
-    lGlove.Step();
+    rGlove.Step(); lGlove.Step();
 
-    // Blocks
-    rBlock.Step();
-    lBlock.Step();
+    rBlock.Step(); lBlock.Step();
 
-    // Cubic
     cubicCon.Step();
 
-    // Fullstick
-    Vec3 fullstick = rig.Fullstick(false);
+    // Vec3 fullstick = rig.Fullstick(false);
 
-    // COLOR CUBE (RGB)
     // colorCube.Palm(lCon.device);
 
+    // oriel.Step();
 
 
-    oriel.Step();
 
     // -------------------------------------------------
 
