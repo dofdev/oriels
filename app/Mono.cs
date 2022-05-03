@@ -56,12 +56,8 @@ public class Mono {
     Renderer.SetClip(0.02f, 1000f);
   }
 
-  Vec3 pos = new Vec3(0f, 0f, 0f);
-  Quat ori = Quat.Identity;
-  float yy = 0f;
+  Vec3 boardDir = Vec3.Forward;
   public void Step() {
-    Renderer.CameraRoot = Matrix.TR(pos, ori);
-
     rig.Step();
     scene.Step();
 
@@ -81,44 +77,59 @@ public class Mono {
     ////
 
 
+
     // °board
-    // trigger & stick.x will be remapped to tracked motions next
-
-    // str = 100±
+    // handling = 200±
     // speed = 10±
-    // con.grip.frameDown: handleCon = con
+    // board.dir = Vec3.fwd
 
-    // turn = handleCon.stick.x
-    // rig.rot *= Quat(0f, turn * strength * delta, 0f);
+    // con.grip.frameDown: 
+    //   handle = con
 
-    // accel = handleCon.trigger
-    // rig.pos += boardDir * accel * speed * delta
+    // board.pos = FloorCenter
+    // newDir = handle.pos.X0Z - board.pos.X0Z
+    // board.dir = newDir.MagSq > 0.001f ? newDir.normalized : board.dir
+    // board.ori = Quat.LookDir(board.dir)
 
-    // board.pos = rig.floorCenter + rig.pos
-    // board.dir = (handleCon.pos.X0Z - board.pos.X0Z).normalized
-    // board.rot = Quat(board.dir, Vec3.up)
+    // twist = handle.grip * -(Quat.LookDir(board.dir).Inverse * handle.backhandDir).x
+    // rig.ori *= Quat(0, twist * handling * delta, 0)
 
-
-    Con handleCon = rig.HandleCon();
-    Vec3 boardDir = (handleCon.pos.X0Z - pos.X0Z).Normalized;
-    Quat boardRot = Quat.LookDir(boardDir);
-
-    pos += boardDir * handleCon.device.trigger * Time.Elapsedf;
-    yy += handleCon.device.stick.x * 90 * Time.Elapsedf;
-    ori = Quat.FromAngles(0f, yy, 0f); // stick.x -> twist z
+    // accel = handle.trigger
+    // rig.pos += board.dir * accel * speed * delta
 
 
-    Vec3 boardPos = pos.X0Z + Vec3.Up * -1.35f; // rig.Head().position.X0Z
-    Mesh.Cube.Draw(Material.Default, Matrix.TRS(boardPos, boardRot, new Vec3(0.18f, 0.06f, 0.6f)));
+
+    // °board
+    float handling = 200;
+    float speed = 10;
+
+    Vec3 boardPos = rig.FloorCenter;
+    Vec3 newDir = rig.HandleCon.pos.X0Z - boardPos.X0Z;
+    boardDir = newDir.MagnitudeSq > 0.001f ? newDir.Normalized : boardDir;
+    Quat boardOri = Quat.LookDir(boardDir);
+
+    float twist = rig.HandleCon.device.grip * -(Quat.LookDir(boardDir).Inverse * rig.HandleCon.backhandDir).x;
+    rig.ori *= Quat.FromAngles(0f, twist * handling * Time.Elapsedf, 0f);
+    
+    float accel = rig.HandleCon.device.trigger;
+    rig.pos += boardDir * accel * speed * Time.Elapsedf;
+
+    // Lines.Add(rig.HandleCon.pos, rig.HandleCon.pos + rig.HandleCon.backhandDir, Color.White, 0.01f);
+    Mesh.Cube.Draw(Material.Default, Matrix.TRS(boardPos, boardOri, new Vec3(0.18f, 0.06f, 0.6f)));
+
+    // DEPRECATED
+    // PullRequest.Slerp(boardDir.Normalized, handleDelta.Normalized, handleDelta.Magnitude * handling * Time.Elapsedf) : boardDir;
+    // Quat from = Quat.LookAt(rig.Head.position, rig.HandleCon.pos);
+    // Lines.Add(rig.HandleCon.pos, rig.HandleCon.pos + from * Vec3.Up, Color.Black, 0.01f);
+
+
+    // does the FloorCenter move with the CameraRoot?
 
     // having a board underneath my feet and a virtual handlebar in my hand
     // did a lot to improve the quality of the experience (+immersion -sickness)
+    // the ability and quality at which this can be propagated is higher than I first imagined
 
-    // don't do more just yet!
-    // these are all important, but lets start small and scrappy + it's 9AM
-    // twist turning
-    // handleCon
-    // tighter boardDir
+    // next?
     // lean turning (head moving in relation to hand, doesn't that happen a little already?)
 
     // -------------------------------------------------

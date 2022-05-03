@@ -88,6 +88,17 @@ public static class PullRequest {
     return a + (b - a) * t;
   }
 
+  public static Vec3 Slerp(Vec3 a, Vec3 b, float t) {
+    // spherical linear interpolation
+    float dot = Vec3.Dot(a, b);
+    if (dot > 0.9995f) {
+      return Vec3.Lerp(a, b, t);
+    }
+    float theta = (float)Math.Acos(dot);
+    float sinTheta = (float)Math.Sin(theta);
+    return Vec3.Lerp(a * (float)Math.Sin(theta - theta * t) / sinTheta, b * (float)Math.Sin(theta * t) / sinTheta, t);
+  }
+
   static Pose _pose = new Pose();
   public static Pose WorldPose(this Pose pose, float scale = 1) {
     return pose;

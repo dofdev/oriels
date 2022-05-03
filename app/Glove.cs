@@ -23,7 +23,7 @@ public class Glove {
   float stretchDeadzone = 0;
   Vec3 pullPoint;
 
-  float twist;
+  public float twist;
   bool twistOut;
   Quat twistOffset;
   Quat oldOri;

@@ -2,23 +2,36 @@ using System;
 using StereoKit;
 
 public class Rig {
-  public Mic mic;
+  public Mic mic = new Mic();
+  public Vec3 pos = new Vec3(0, 0, 0);
+  public Quat ori = Quat.Identity;
 
   public Rig() {
-    mic = new Mic();
+    if (World.HasBounds) {
+      // pos.XZ = World.BoundsPose.position.XZ;
+      // pos.y = World.BoundsPose.position.y;
+      // ori = World.BoundsPose.orientation;
+    }
   }
 
-  public Con rCon = new Con(), lCon = new Con();
-  public Con Con(bool chirality) { return chirality ? rCon : lCon; }
-  bool handleChirality = false;
-  public Con HandleCon() {
-    return Con(handleChirality);
+  // public Vec3 center;
+  // public void Recenter() {
+  //   center = World.BoundsPose.position.X0Z - Head.position.X0Z;
+  // }
+
+  public Vec3 FloorCenter {
+    get {
+      if (World.HasBounds) { return World.BoundsPose.position; }
+      return new Vec3(0, 0, 0);
+    }
   }
 
-  public Pose Head() {
-    Pose pose = Input.Head;
-    pose.position += pose.orientation * Vec3.Forward * -0.1f;
-    return pose;
+  public Pose Head {
+    get {
+      Pose pose = Input.Head; // between eyes pose
+      pose.position += pose.orientation * Vec3.Forward * -0.1f;
+      return pose;
+    }
   }
 
   public Pose rShoulder, lShoulder;
@@ -27,7 +40,17 @@ public class Rig {
   public Pose rWrist, lWrist;
   public Pose Wrist(bool chirality) { return chirality ? rWrist : lWrist; }
 
+  public Con rCon = new Con(), lCon = new Con();
+  public Con Con(bool chirality) { return chirality ? rCon : lCon; }
+  bool handleChirality = false;
+  public Con HandleCon {
+    get { return Con(handleChirality); }
+  }
+
+
   public void Step() {
+    Renderer.CameraRoot = Matrix.TR(pos, ori);
+
     // Controllers
     rCon.Step(true);
     lCon.Step(false);
@@ -63,6 +86,7 @@ public class Con {
   public Controller device;
   public Vec3 pos;
   public Quat ori;
+  public Vec3 backhandDir;
   public Btn gripBtn;
   public Btn triggerBtn;
 
@@ -70,6 +94,7 @@ public class Con {
     device = Input.Controller(chirality ? Handed.Right : Handed.Left);
     pos = device.pose.position;
     ori = device.aim.orientation;
+    backhandDir = ori * (chirality ? Vec3.Right : -Vec3.Right);
     gripBtn.Step(device.grip > 0.5f);
     triggerBtn.Step(device.trigger > 0.5f);
   }
