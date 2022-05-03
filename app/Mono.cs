@@ -78,7 +78,7 @@ public class Mono {
 
 
 
-    // °board
+    // °board [ pseudo code ]
     // handling = 200±
     // speed = 10±
     // board.dir = Vec3.fwd
@@ -98,8 +98,7 @@ public class Mono {
     // rig.pos += board.dir * accel * speed * delta
 
 
-
-    // °board
+    // °board [ implementation ]
     float handling = 200;
     float speed = 10;
 
