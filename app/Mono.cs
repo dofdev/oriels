@@ -63,7 +63,7 @@ public class Mono {
 
     // -------------------------------------------------
 
-    // rGlove.Step(); lGlove.Step();
+    rGlove.Step(); lGlove.Step();
 
     // rBlock.Step(); lBlock.Step();
 
@@ -73,48 +73,51 @@ public class Mono {
 
     // colorCube.Palm(lCon.device);
 
-    // oriel.Step();
+    oriel.Step();
     ////
 
-
-
     // °board [ pseudo code ]
-    // handling = 200±
-    // speed = 10±
-    // board.dir = Vec3.fwd
+    // // handling = 200±
+    // // speed = 10±
+    // // board.dir = Vec3.fwd
 
-    // con.grip.frameDown: 
-    //   handle = con
+    // // con.grip.frameDown: 
+    // //   handle = con
 
-    // board.pos = FloorCenter
-    // newDir = handle.pos.X0Z - board.pos.X0Z
-    // board.dir = newDir.MagSq > 0.001f ? newDir.normalized : board.dir
-    // board.ori = Quat.LookDir(board.dir)
+    // // board.pos = FloorCenter
+    // // newDir = handle.pos.X0Z - board.pos.X0Z
+    // // board.dir = newDir.MagSq > 0.001f ? newDir.normalized : board.dir
+    // // board.ori = Quat.LookDir(board.dir)
 
-    // twist = handle.grip * -(Quat.LookDir(board.dir).Inverse * handle.backhandDir).x
-    // rig.ori *= Quat(0, twist * handling * delta, 0)
+    // // twist = handle.grip * -(Quat.LookDir(board.dir).Inverse * handle.backhandDir).x
+    // // rig.ori *= Quat(0, twist * handling * delta, 0)
 
-    // accel = handle.trigger
-    // rig.pos += board.dir * accel * speed * delta
+    // // accel = handle.trigger
+    // // rig.pos += board.dir * accel * speed * delta
 
 
-    // °board [ implementation ]
-    float handling = 200;
-    float speed = 10;
+    // // °board [ implementation ]
+    // float handling = 200;
+    // float speed = 10;
 
-    Vec3 boardPos = rig.FloorCenter;
-    Vec3 newDir = rig.HandleCon.pos.X0Z - boardPos.X0Z;
-    boardDir = newDir.MagnitudeSq > 0.001f ? newDir.Normalized : boardDir;
-    Quat boardOri = Quat.LookDir(boardDir);
+    // Vec3 boardPos = rig.FloorCenter;
+    // Vec3 newDir = rig.HandleCon.pos.X0Z - boardPos.X0Z;
+    // boardDir = newDir.MagnitudeSq > 0.001f ? newDir.Normalized : boardDir;
+    // Quat boardOri = Quat.LookDir(boardDir);
 
-    float twist = rig.HandleCon.device.grip * -(Quat.LookDir(boardDir).Inverse * rig.HandleCon.backhandDir).x;
-    rig.ori *= Quat.FromAngles(0f, twist * handling * Time.Elapsedf, 0f);
+    // float twist = rig.HandleCon.device.grip * -(Quat.LookDir(boardDir).Inverse * rig.HandleCon.backhandDir).x;
+    // rig.ori *= Quat.FromAngles(0f, twist * handling * Time.Elapsedf, 0f);
     
-    float accel = rig.HandleCon.device.trigger;
-    rig.pos += boardDir * accel * speed * Time.Elapsedf;
+    // float accel = rig.HandleCon.device.trigger;
+    // rig.pos += boardDir * accel * speed * Time.Elapsedf;
 
-    // Lines.Add(rig.HandleCon.pos, rig.HandleCon.pos + rig.HandleCon.backhandDir, Color.White, 0.01f);
-    Mesh.Cube.Draw(Material.Default, Matrix.TRS(boardPos, boardOri, new Vec3(0.18f, 0.06f, 0.6f)));
+    // // Lines.Add(rig.HandleCon.pos, rig.HandleCon.pos + rig.HandleCon.backhandDir, Color.White, 0.01f);
+    // Mesh.Cube.Draw(Material.Default, Matrix.TRS(boardPos, boardOri, new Vec3(0.18f, 0.06f, 0.6f)));
+
+
+
+
+
 
     // DEPRECATED
     // PullRequest.Slerp(boardDir.Normalized, handleDelta.Normalized, handleDelta.Magnitude * handling * Time.Elapsedf) : boardDir;

@@ -53,6 +53,10 @@ float sdBox(float3 p, float3 b) {
   return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
 
+float sdSphere(float3 p, float r) {
+  return length(p) - r;
+}
+
 float raymarch(float3 origin, float3 direction) {
   origin = mul(float4(origin, 1), _matrix).xyz;
   direction = mul(float4(direction, 0), _matrix).xyz;
@@ -60,6 +64,7 @@ float raymarch(float3 origin, float3 direction) {
   for (int i = 0; i < 256; i++) {
     float3 pos = origin + dist * direction;
     float step = sdBox(pos, _dimensions / 2.0);
+    // float step = sdSphere(pos, _dimensions.y / 2.0);
     if (step < 0.0001 || dist > 100) break;                       // 100 == distmax
     dist += step;
   }
@@ -90,6 +95,13 @@ psOut ps(psIn input) {
 
 
   // backface
+  float3 localPos = mul(float4(input.world, 1), _matrix).xyz;
+  
+  // localPos.y < -_dimensions.y / 2.99
+  if (localPos.y < -_dimensions.y / 2.99) {
+    clip(-1);
+  }
+
   if (dot(direction, input.normal) > 0) {
     o.color = float4(0.5, 0.5, 0.5, 1);
   }

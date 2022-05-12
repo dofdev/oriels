@@ -1,0 +1,11 @@
+Model Information:
+* title:	Megaman X4 - Cyber Space
+* source:	https://sketchfab.com/3d-models/megaman-x4-cyber-space-5fdca251c4734ec49e77c72903b1d234
+* author:	Sah Niemeyer (https://sketchfab.com/sahailaway)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Megaman X4 - Cyber Space" (https://sketchfab.com/3d-models/megaman-x4-cyber-space-5fdca251c4734ec49e77c72903b1d234) by Sah Niemeyer (https://sketchfab.com/sahailaway) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

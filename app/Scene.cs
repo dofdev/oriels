@@ -15,7 +15,8 @@ public class Scene {
 
   Material matFloor = new Material(Shader.Default);
   // Model room = Model.FromFile("room/room.glb", Shader.FromFile("room.hlsl"));
-  Model room = Model.FromFile("shed/shed.glb", Shader.FromFile("room.hlsl"));
+  Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("room.hlsl"));
+  // Model skatepark = Model.FromFile("skatepark/scene.gltf", Shader.FromFile("room.hlsl"));
 
 
   Solid floor;
@@ -55,7 +56,7 @@ public class Scene {
 
 
 
-    data.dimensions = Vec3.Zero;
+    // data.dimensions = Vec3.Zero;
 
 
 
@@ -70,7 +71,7 @@ public class Scene {
     buffer.Set(data);
 
     // PullRequest.BlockOut(floor.GetPose().ToMatrix(floorScale), Color.White * 0.333f, matFloor);
-    foreach (ModelNode node in room.Visuals) {
+    // foreach (ModelNode node in shed.Visuals) {
 
       // Console.WriteLine(i + " - " + node.Name);
 
@@ -82,13 +83,14 @@ public class Scene {
 
       // node.Mesh.Draw(matRoom, Matrix.TRS(new Vec3(0, World.BoundsPose.position.y, -1), Quat.Identity, Vec3.One));
       // Console.WriteLine(matRoom.ParamCount + " test " + node.Material.ParamCount);
-    }
+    // }
     // room.RootNode.Material.SetVector("_center", oriel.bounds.center);
     // room.RootNode.Material.SetVector("_dimensions", oriel.bounds.dimensions);
     // room.RootNode.Material["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrix);
 
     // Shader.
     // World.BoundsPose.position.y
-    room.Draw(Matrix.TRS(new Vec3(0, -1.6f, 0), Quat.Identity, Vec3.One));
+    shed.Draw(Matrix.TRS(new Vec3(0, -1.6f, 0), Quat.Identity, Vec3.One));
+    // skatepark.Draw(Matrix.TRS(new Vec3(0, -5.6f, 0), Quat.Identity, Vec3.One));
   }
 }

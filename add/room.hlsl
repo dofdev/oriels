@@ -57,6 +57,10 @@ float sdBox(float3 p, float3 b) {
   return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
 }
 
+float sdSphere(float3 p, float r) {
+  return length(p) - r;
+}
+
 float raymarch(float3 ro, float3 rd) {
   ro = mul(float4(ro, 1), oriel_matrix).xyz;
   rd = mul(float4(rd, 0), oriel_matrix).xyz;
@@ -64,6 +68,7 @@ float raymarch(float3 ro, float3 rd) {
   for (int i = 0; i < 256; i++) {
     float3 pos = ro + dist * rd;
     float step = sdBox(pos, dimensions / 2.0); 
+    // float step = sdSphere(pos, dimensions.y / 2.0); 
     if (step < 0.0001 || dist > 100) break;              // 100 == distmax
     dist += step;
   }

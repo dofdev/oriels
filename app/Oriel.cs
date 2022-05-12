@@ -7,6 +7,7 @@ public class Oriel {
   static Material matFrame = new Material(Shader.FromFile("wireframe.hlsl"));
   static Material matPanes = new Material(Shader.FromFile("panes.hlsl"));
   static Material matOriel = new Material(Shader.FromFile("oriel.hlsl"));
+  static Model modelArena = Model.FromFile("megaman/scene.gltf");
   static Model model = Model.FromFile("colorball.glb");
   Mesh meshCube, meshFrame;
 
@@ -28,7 +29,7 @@ public class Oriel {
 
   public Oriel() {
     bounds = new Bounds(
-      Input.Head.position + new Vec3(-0.5f, 0, -1f),
+      new Vec3(-1.0f, -0.5f, 0.0f),
       new Vec3(0.8f, 0.5f, 0.5f)
     );
 
@@ -41,6 +42,35 @@ public class Oriel {
 
     meshFrame = model.GetMesh("Wireframe");
     meshCube = Mesh.Cube;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    meshCube = Mesh.Sphere;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     Gen();
   }
@@ -156,10 +186,10 @@ public class Oriel {
     matFrame.Wireframe = true;
     matFrame.DepthTest = DepthTest.Always;
     matFrame.SetVector("_rGlovePos", rGlovePos);
-    meshFrame.Draw(matFrame,
-      Matrix.TRS(bounds.center, ori, bounds.dimensions),
-      new Color(0.1f, 0.1f, 0.1f)
-    );
+    // meshFrame.Draw(matFrame,
+    //   Matrix.TRS(bounds.center, ori, bounds.dimensions),
+    //   new Color(0.1f, 0.1f, 0.1f)
+    // );
     if (detectCount > 0) {
       meshCube.Draw(Material.Default,
         Matrix.TS(detect * (bounds.dimensions / 2), Vec3.One * 0.01f) * matrix.Inverse
@@ -168,15 +198,24 @@ public class Oriel {
 
     // matPanes.DepthTest = DepthTest.Greater;
     matPanes["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(matrix);
-    meshCube.Draw(matPanes,
-      Matrix.TRS(bounds.center, ori, bounds.dimensions),
-      new Color(0.0f, 0.0f, 0.5f)
-    );
+    // meshCube.Draw(matPanes,
+    //   Matrix.TRS(bounds.center, ori, bounds.dimensions),
+    //   new Color(0.0f, 0.0f, 0.5f)
+    // );
 
     matOriel.SetVector("_center", bounds.center);
     matOriel.SetVector("_dimensions", bounds.dimensions);
     matOriel.SetVector("_light", ori * new Vec3(0.6f, -0.9f, 0.3f));
     matOriel["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(matrix);
+
+
+
+
+    // modelArena.Draw(Matrix.TRS(
+    //   new Vec3(-1, -0.6f, 1.8f), 
+    //   Quat.FromAngles(0, -90, 0),
+    //   Vec3.One * 0.002f
+    // ));
 
 
 
@@ -188,7 +227,15 @@ public class Oriel {
     // APP
     Vec3 playerWorldPos = playerPos * 0.5f * bounds.dimensions.y;
     Matrix orielSimMatrix = Matrix.TRS(
-      new Vec3(0, -bounds.dimensions.y / 2, -playerWorldPos.z), 
+
+
+
+      // new Vec3(0, -bounds.dimensions.y / 2, -playerWorldPos.z), 
+      new Vec3(0, -bounds.dimensions.y / 3, -playerWorldPos.z), 
+
+
+
+
       Quat.Identity, 
       Vec3.One * 0.5f * bounds.dimensions.y
     );
@@ -224,8 +271,9 @@ public class Oriel {
     // destroy enemies that are too close to the playerPos
     for (int i = 0; i < enemies.Count; i++) {
       if (Vec3.Distance(enemies[i], playerPos) < 0.5f) {
-        enemies.RemoveAt(i);
-        i--;
+        // enemies.RemoveAt(i);
+        // i--;
+        enemies[i] = playerPos + Quat.FromAngles(0, Mono.inst.noise.value * 360f, 0) * Vec3.Forward * 8;
       }
     }
 
@@ -243,25 +291,44 @@ public class Oriel {
     //   new Color(0.9f, 0.5f, 0.5f)
     // );
 
-    if (Time.Totalf > spawnTime) {
+    if (enemies.Count < 100 && Time.Totalf > spawnTime) {
       enemies.Add(playerPos + Quat.FromAngles(0, Mono.inst.noise.value * 360f, 0) * Vec3.Forward * 8);
-      spawnTime = Time.Totalf + 1;
+      spawnTime = Time.Totalf + 0.05f;
     }
 
     for (int i = 0; i < enemies.Count; i++) {
 
       // move towards player
       Vec3 toPlayer = (playerPos - enemies[i]).Normalized;
+      float variation = Mono.inst.noise.D1(i);
+      toPlayer *= Quat.FromAngles(0, MathF.Sin(Time.Totalf * variation) * 90 * variation, 0);
       Vec3 newPos = enemies[i] + toPlayer * Time.Elapsedf * 0.5f;
 
       // if far enough away from other enemies than set new pos
       bool setNewPos = true;
-      for (int j = 0; j < enemies.Count; j++) {
-        if (i == j) continue;
-        if ((newPos - enemies[j]).Length < 0.5f) {
-          setNewPos = false;
-          break;
+      int iteration = 0;
+      while (iteration < 6) {
+        for (int j = 0; j < enemies.Count; j++) {
+          if (i == j) continue;
+          // intersection depth
+          float radius = 0.5f;
+          // (newPos - enemies[j]).Length
+          float depth = (newPos - enemies[j]).Length - radius;
+          if (depth < 0) {
+            // pull back
+            Vec3 toEnemy = (enemies[j] - newPos).Normalized;
+            newPos = enemies[j] - toEnemy * radius * 1.01f;
+
+            // bump
+            // enemies[j] += toEnemy * Time.Elapsedf * 0.5f;
+
+            // setNewPos = false;
+            // break;
+            // break;
+          }
         }
+
+        iteration++;
       }
 
       if (setNewPos) {
