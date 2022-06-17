@@ -99,11 +99,6 @@ public static class PullRequest {
     return Vec3.Lerp(a * (float)Math.Sin(theta - theta * t) / sinTheta, b * (float)Math.Sin(theta * t) / sinTheta, t);
   }
 
-  static Pose _pose = new Pose();
-  public static Pose WorldPose(this Pose pose, float scale = 1) {
-    return pose;
-  }
-
   [Serializable]
   public class Noise {
     const uint CAP = 4294967295;

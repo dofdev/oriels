@@ -14,14 +14,11 @@ public class Scene {
   BufferData data = new BufferData();
 
   Material matFloor = new Material(Shader.Default);
-  // Model room = Model.FromFile("room/room.glb", Shader.FromFile("room.hlsl"));
-  Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("room.hlsl"));
-  // Model skatepark = Model.FromFile("skatepark/scene.gltf", Shader.FromFile("room.hlsl"));
+  Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("/shaders/room.hlsl"));
 
 
   Solid floor;
   public Scene() {
-    // Shader.FromFile("room.hlsl")
     buffer = new MaterialBuffer<BufferData>(3); // index
 
 
@@ -53,16 +50,7 @@ public class Scene {
 
 
 
-
-
-
     // data.dimensions = Vec3.Zero;
-
-
-
-
-
-
 
 
 

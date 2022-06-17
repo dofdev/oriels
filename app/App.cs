@@ -1,16 +1,5 @@
-using System;
-using StereoKit;
-
-interface IApp<T> {
-  void Step();
-}
-
-public class App {
-  public App() {
-
-  }
-
-  public void Step() {
-
-  }
+interface IApp { // <T> ?
+  void Initialize();
+  void Update();
+  void Shutdown();
 }

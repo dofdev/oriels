@@ -4,12 +4,11 @@ using System.Collections.Generic;
 using StereoKit;
 
 public class Oriel {
-  static Material matFrame = new Material(Shader.FromFile("wireframe.hlsl"));
-  static Material matPanes = new Material(Shader.FromFile("panes.hlsl"));
-  static Material matOriel = new Material(Shader.FromFile("oriel.hlsl"));
-  static Model modelArena = Model.FromFile("megaman/scene.gltf");
+  static Material matFrame = new Material(Shader.FromFile("shaders/wireframe.hlsl"));
+  static Material matPanes = new Material(Shader.FromFile("shaders/panes.hlsl"));
+  static Material matOriel = new Material(Shader.FromFile("shaders/oriel.hlsl"));
   static Model model = Model.FromFile("colorball.glb");
-  Mesh meshCube, meshFrame;
+  Mesh meshCube;
 
   public Bounds bounds;
   public Quat ori;
@@ -18,9 +17,6 @@ public class Oriel {
   public bool drawAxis = false;
 
   bool adjusting = false;
-  // bool scalingOriel = false;
-  // bool draggingOriel = false;
-  // bool rotatingOriel = false;
   Quat qOffset = Quat.Identity;
   Vec3 vOffset = Vec3.Zero;
   Vec3 lOffset = Vec3.Zero;
@@ -37,40 +33,12 @@ public class Oriel {
     matrix = Matrix.TR(bounds.center, ori).Inverse;
 
     matFrame.SetMat(102, Cull.None, true);
+    matFrame.Transparency = Transparency.Add;
     matPanes.SetMat(100, Cull.Front, false);
     matOriel.SetMat(101, Cull.None, true);
 
-    meshFrame = model.GetMesh("Wireframe");
+    // meshFrame = model.GetMesh("Wireframe");
     meshCube = Mesh.Cube;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    meshCube = Mesh.Sphere;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     Gen();
   }
@@ -146,10 +114,6 @@ public class Oriel {
           detect.z == 0 ? 1 : 0
         );
 
-        // Quat q = Quat.FromAngles(up * Vec2.AngleBetween(dir.XZ, detect.XZ));
-
-        // a quick reset function, as the rotation gets fucked
-
         Quat q = Quat.LookAt(Vec3.Zero, dir, up);
 
         if (!adjusting) {
@@ -169,24 +133,13 @@ public class Oriel {
     }
 
 
-
-    // meet the user halfway, as there is a lot of context provided with where they grab the oriel
-    // instead of a discrete handle and interaction
-
-
-    // circle around center
-    // bounds.center = Vec3.Forward * 3 + Quat.FromAngles(0, 0, Time.Totalf * 60) * Vec3.Up * 0.3f;
-    // bounds.dimensions.y = _dimensions.y * (1f + (MathF.Sin(Time.Totalf * 3) * 0.6f));
-
-
     matrix = Matrix.TR(bounds.center, ori).Inverse;
 
 
-
-    matFrame.Wireframe = true;
+    // matFrame.Wireframe = true;
     matFrame.DepthTest = DepthTest.Always;
     matFrame.SetVector("_rGlovePos", rGlovePos);
-    // meshFrame.Draw(matFrame,
+    // meshCube.Draw(matFrame,
     //   Matrix.TRS(bounds.center, ori, bounds.dimensions),
     //   new Color(0.1f, 0.1f, 0.1f)
     // );
@@ -198,10 +151,10 @@ public class Oriel {
 
     // matPanes.DepthTest = DepthTest.Greater;
     matPanes["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(matrix);
-    // meshCube.Draw(matPanes,
-    //   Matrix.TRS(bounds.center, ori, bounds.dimensions),
-    //   new Color(0.0f, 0.0f, 0.5f)
-    // );
+    meshCube.Draw(matPanes,
+      Matrix.TRS(bounds.center, ori, bounds.dimensions),
+      new Color(0.0f, 0.0f, 0.5f)
+    );
 
     matOriel.SetVector("_center", bounds.center);
     matOriel.SetVector("_dimensions", bounds.dimensions);
@@ -210,32 +163,10 @@ public class Oriel {
 
 
 
-
-    // modelArena.Draw(Matrix.TRS(
-    //   new Vec3(-1, -0.6f, 1.8f), 
-    //   Quat.FromAngles(0, -90, 0),
-    //   Vec3.One * 0.002f
-    // ));
-
-
-
-
-
-
-
-
-    // APP
+    // placeholder "app"
     Vec3 playerWorldPos = playerPos * 0.5f * bounds.dimensions.y;
     Matrix orielSimMatrix = Matrix.TRS(
-
-
-
-      // new Vec3(0, -bounds.dimensions.y / 2, -playerWorldPos.z), 
-      new Vec3(0, -bounds.dimensions.y / 3, -playerWorldPos.z), 
-
-
-
-
+      new Vec3(0, -bounds.dimensions.y / 2.01f, -playerWorldPos.z), 
       Quat.Identity, 
       Vec3.One * 0.5f * bounds.dimensions.y
     );
@@ -247,6 +178,9 @@ public class Oriel {
         Color.White
       );
     }
+
+
+
 
     Mesh.Quad.Draw(matOriel,
       Matrix.TRS(Vec3.Zero, Quat.FromAngles(90, 0, 0), Vec3.One * 100f) * orielSimMatrix * matrix.Inverse,
