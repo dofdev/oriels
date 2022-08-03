@@ -1,3 +1,4 @@
+namespace Oriels;
 public static class PullRequest {
   public static void BoundsDraw(Bounds b, float thickness, Color color) {
     Vec3 c = Vec3.One / 2;
