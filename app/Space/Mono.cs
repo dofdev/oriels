@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 
-// stretch cursor move
-// trackballer spin
-// orbital view
-// dummy enemies
-// points (point of reference *all around)
-// roll dodge move
+// [X] stretch cursor move
+// [ ] points (point of reference *all around)
+// [ ] trackballer spin
+// [ ] orbital view
+// [ ] dummy enemies
+// [ ] roll dodge move
 
 namespace Space;
 public class Mono {
