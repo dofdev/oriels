@@ -162,8 +162,9 @@ public static class PullRequest {
     public float p, i;
     float integral = 0f;
     float value = 0f;
+    // float scalar = 1f;
 
-    public PID(float p, float i) {
+    public PID(float p = 1, float i = 0.1f) {
       this.p = p;
       this.i = i;
     }

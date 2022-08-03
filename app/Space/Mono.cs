@@ -14,6 +14,10 @@ public class Mono {
   List<Vec3> enemies = new List<Vec3>();
   float spawnTime;
 
+  Oriels.PullRequest.PID pidX = new Oriels.PullRequest.PID();
+  Oriels.PullRequest.PID pidY = new Oriels.PullRequest.PID();
+  Oriels.PullRequest.PID pidZ = new Oriels.PullRequest.PID();
+
   Mesh meshCube;
 
   public Mono() {
@@ -143,11 +147,6 @@ public class Mono {
   }
 
   // design variables
-  
-  // move back up and put 2 variables instead down here
-  // instantiate with default values
-  // scalar functionality for PID
-  Oriels.PullRequest.PID pidX = new Oriels.PullRequest.PID(8, 0.3f); 
-  Oriels.PullRequest.PID pidY = new Oriels.PullRequest.PID(8, 0.3f);
-  Oriels.PullRequest.PID pidZ = new Oriels.PullRequest.PID(8, 0.3f);
+  float moveP = 8f;
+  float moveI = 0.2f;
 }
