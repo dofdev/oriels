@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 
 // [X] stretch cursor move
-// [ ] points (point of reference *all around)
-// [ ] trackballer spin
+// [ ] points *arbitrary for now
+// [ ] follow player *cam? matrix? name?
 // [ ] orbital view
 // [ ] dummy enemies
+// [ ] trackballer spin
 // [ ] roll dodge move
 
 namespace Space;
@@ -32,7 +33,7 @@ public class Mono {
     Rig rig = Oriels.Mono.inst.rig;
     Oriel oriel = Oriels.Mono.inst.oriel;
 
-    Matrix orielSimMatrix = Matrix.TRS(
+    Matrix simMatrix = Matrix.TRS(
       new Vec3(0, 0, 0), //-oriel.bounds.dimensions.y / 2.01f, -playerWorldPos.z), 
       Quat.Identity,
       Vec3.One * 0.5f * oriel.bounds.dimensions.y
@@ -49,7 +50,7 @@ public class Mono {
     float stretch = Vec3.Distance(rig.lCon.pos, rig.rCon.pos);
     stretch = Math.Max(stretch - deadzone, 0);
     Vec3 cursor = rig.rCon.pos + rig.rCon.ori * Vec3.Forward * stretch * 3;
-    Vec3 localCursor = orielSimMatrix.Inverse.Transform(oriel.matrix.Transform(cursor));
+    Vec3 localCursor = simMatrix.Inverse.Transform(oriel.matrix.Transform(cursor));
 
     // fly player towards cursor:
     // playerPos += (localCursor - playerPos).Normalized * 1f * Time.Elapsedf;
@@ -71,7 +72,7 @@ public class Mono {
       new Color(1f, 1f, 1f)
     );
     meshCube.Draw(oriel.matOriel,
-      Matrix.TRS(localCursor, Quat.Identity, Vec3.One * 0.02f) * orielSimMatrix * oriel.matrix.Inverse,
+      Matrix.TRS(localCursor, Quat.Identity, Vec3.One * 0.02f) * simMatrix * oriel.matrix.Inverse,
       new Color(0f, 0f, 0f)
     );
     meshCube.Draw(oriel.matOriel,
@@ -79,7 +80,7 @@ public class Mono {
         playerPos,
         Quat.LookDir((localCursor - playerPos).Normalized),
         new Vec3(0.4f, 0.2f, 0.4f)
-      ) * orielSimMatrix * oriel.matrix.Inverse,
+      ) * simMatrix * oriel.matrix.Inverse,
       new Color(1.0f, 0.0f, 0.05f)
     );
 
@@ -142,7 +143,7 @@ public class Mono {
         Matrix.TRS(enemies[i],
           Quat.LookAt(enemies[i], playerPos, Vec3.Up),
           new Vec3(0.4f, 1f, 0.2f)
-        ) * orielSimMatrix * oriel.matrix.Inverse,
+        ) * simMatrix * oriel.matrix.Inverse,
         Color.White * 0.62f
       );
     }
