@@ -1,10 +1,9 @@
-using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
-using StereoKit;
+
+namespace Oriels;
 
 public class MonoNet {
   public bool send;
@@ -27,7 +26,7 @@ public class MonoNet {
     socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
     string ip = "192.168.1.70";
     ip = "139.177.201.219";
-    
+
 
     EndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), 1234);
     socket.Connect(serverEndPoint);
@@ -234,8 +233,8 @@ public class Peer {
     rCursor = mono.rGlove.virtualGlove;
     lCursor = mono.lGlove.virtualGlove;
 
-    if (blocks == null || blocks.Length != mono.blocks.Length) { 
-      blocks = new NetBlock[mono.blocks.Length]; 
+    if (blocks == null || blocks.Length != mono.blocks.Length) {
+      blocks = new NetBlock[mono.blocks.Length];
     }
     for (int i = 0; i < blocks.Length; i++) {
       blocks[i].active = mono.blocks[i].active;

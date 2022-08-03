@@ -1,5 +1,4 @@
-using System;
-using StereoKit;
+namespace Oriels;
 
 public class Rig {
   public Mic mic = new Mic();
@@ -42,9 +41,10 @@ public class Rig {
 
   public Con rCon = new Con(), lCon = new Con();
   public Con Con(bool chirality) { return chirality ? rCon : lCon; }
-  bool handleChirality = false;
-  public Con HandleCon {
-    get { return Con(handleChirality); }
+
+
+  public Vec3 LocalPos(Vec3 p) {
+    return ori.Inverse * (p - pos);
   }
 
 
@@ -54,9 +54,6 @@ public class Rig {
     // Controllers
     rCon.Step(true);
     lCon.Step(false);
-
-    if (rCon.gripBtn.frameDown) { handleChirality = true; }
-    if (lCon.gripBtn.frameDown) { handleChirality = false; }
 
     // Shoulders
     Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f; // Input.Head -> Head() ?

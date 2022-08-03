@@ -1,5 +1,4 @@
-using System;
-using StereoKit;
+namespace Oriels;
 
 public class Mic {
   public float[] bufferRaw = new float[0];

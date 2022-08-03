@@ -1,6 +1,3 @@
-using System;
-using StereoKit;
-
 public static class PullRequest {
   public static void BoundsDraw(Bounds b, float thickness, Color color) {
     Vec3 c = Vec3.One / 2;
@@ -148,6 +145,33 @@ public static class PullRequest {
       mangled *= BIT_NOISE3;
       mangled ^= mangled >> 8;
       return mangled;
+    }
+  }
+
+  public static float Clamp01(float v) {
+    return MathF.Max(0, MathF.Min(1, v));
+  }
+
+  public static float Clamp(float v, float min, float max) {
+    return MathF.Max(min, MathF.Min(max, v));
+  }
+
+  [Serializable]
+  public class PID {
+    public float p, i;
+    float integral = 0f;
+    float value = 0f;
+
+    public PID(float p, float i) {
+      this.p = p;
+      this.i = i;
+    }
+
+    public float Update(float target) {
+      float error = value - target;
+      integral += error;
+      float delta = ((p * error) + (i * integral));
+      return value -= delta * Time.Elapsedf;
     }
   }
 

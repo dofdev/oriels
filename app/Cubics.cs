@@ -1,5 +1,4 @@
-using System;
-using StereoKit;
+namespace Oriels;
 
 public class Cubic {
   public bool active;
@@ -13,7 +12,7 @@ public class Cubic {
 }
 
 public class CubicCon {
-  public CubicCon() {}
+  public CubicCon() { }
 
   public void Step() {
     Cubic[] cubics = Mono.inst.cubics;
@@ -22,7 +21,7 @@ public class CubicCon {
     Con lCon = rig.lCon;
     Vec3 rPos = Mono.inst.rGlove.virtualGlove.position;
     Vec3 lPos = Mono.inst.lGlove.virtualGlove.position;
-    
+
     bool place = rCon.device.IsStickJustClicked || lCon.device.IsStickJustClicked;
     if (place) {
       for (int i = 0; i < cubics.Length; i++) {
@@ -37,7 +36,7 @@ public class CubicCon {
         }
       }
       Cubic cubic = cubics[PullRequest.RandomRange(0, cubics.Length)];
-      cubic.p0 = rPos; 
+      cubic.p0 = rPos;
       cubic.p1 = rig.rCon.pos;
       cubic.p2 = rig.lCon.pos;
       cubic.p3 = lPos;

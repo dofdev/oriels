@@ -1,5 +1,4 @@
-using System;
-using StereoKit;
+namespace Oriels;
 
 public enum Pull {
   Stretch, Backhanded
@@ -37,7 +36,7 @@ public class Glove {
     Con con = rig.Con(chirality), otherCon = rig.Con(!chirality);
     bool pull = otherCon.gripBtn.frameDown;
 
-    if (firstFace == 0) { 
+    if (firstFace == 0) {
       if (con.device.IsX1JustPressed) { firstFace = 1; }
       if (con.device.IsX2JustPressed) { firstFace = 2; }
     }
@@ -93,10 +92,10 @@ public class Glove {
       pulling = null;
     }
 
-    if (!twisting) { 
+    if (!twisting) {
       stretch = Math.Max(Vec3.Distance(pullPoint, con.pos) - stretchDeadzone, 0);
       twist = 0;
-      
+
       twistOffset = Quat.Identity;
     }
 
@@ -116,7 +115,7 @@ public class Glove {
       }
 
       virtualGlove.orientation = con.ori;
-    } 
+    }
     oldOri = con.ori;
 
     virtualGlove.position = con.pos + direction * (stretch + Math.Abs(twist)) * 3;

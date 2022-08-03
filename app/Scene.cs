@@ -1,7 +1,6 @@
-using System;
 using System.Runtime.InteropServices;
-using StereoKit;
 
+namespace Oriels;
 [StructLayout(LayoutKind.Sequential)]
 struct BufferData {
   public Matrix matrix;
@@ -15,6 +14,7 @@ public class Scene {
 
   Material matFloor = new Material(Shader.Default);
   Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("/shaders/room.hlsl"));
+  Mesh cube = Mesh.Cube;
 
 
   Solid floor;
@@ -55,22 +55,22 @@ public class Scene {
 
 
 
-    
+
     buffer.Set(data);
 
     // PullRequest.BlockOut(floor.GetPose().ToMatrix(floorScale), Color.White * 0.333f, matFloor);
     // foreach (ModelNode node in shed.Visuals) {
 
-      // Console.WriteLine(i + " - " + node.Name);
+    // Console.WriteLine(i + " - " + node.Name);
 
-      // node.Material.SetVector("_center", oriel.bounds.center);
-      // node.Material.SetVector("_dimensions", oriel.bounds.dimensions);
-      // node.Material["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrix);
+    // node.Material.SetVector("_center", oriel.bounds.center);
+    // node.Material.SetVector("_dimensions", oriel.bounds.dimensions);
+    // node.Material["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrix);
 
-      // Console.WriteLine("Shader: " + node.Material.Shader.Name);
+    // Console.WriteLine("Shader: " + node.Material.Shader.Name);
 
-      // node.Mesh.Draw(matRoom, Matrix.TRS(new Vec3(0, World.BoundsPose.position.y, -1), Quat.Identity, Vec3.One));
-      // Console.WriteLine(matRoom.ParamCount + " test " + node.Material.ParamCount);
+    // node.Mesh.Draw(matRoom, Matrix.TRS(new Vec3(0, World.BoundsPose.position.y, -1), Quat.Identity, Vec3.One));
+    // Console.WriteLine(matRoom.ParamCount + " test " + node.Material.ParamCount);
     // }
     // room.RootNode.Material.SetVector("_center", oriel.bounds.center);
     // room.RootNode.Material.SetVector("_dimensions", oriel.bounds.dimensions);
@@ -78,7 +78,20 @@ public class Scene {
 
     // Shader.
     // World.BoundsPose.position.y
+
+
     shed.Draw(Matrix.TRS(new Vec3(0, -1.6f, 0), Quat.Identity, Vec3.One));
-    // skatepark.Draw(Matrix.TRS(new Vec3(0, -5.6f, 0), Quat.Identity, Vec3.One));
+
+
+    // draw a grid of cube pillars spaced out evenly along the XZ plane
+    // for (int i = 0; i < 20; i++) {
+    //   for (int j = 0; j < 20; j++) {
+    //     float x = i * 4 - 20;
+    //     float z = j * 4 - 20;
+    //     float y = 0;
+    //     Matrix m = Matrix.TRS(new Vec3(x, y, z), Quat.Identity, new Vec3(0.25f, 6f, 0.25f));
+    //     cube.Draw(matFloor, m);
+    //   }
+    // }
   }
 }

@@ -22,7 +22,7 @@
     <None Remove="add/shaders/oriel.hlsl" />
     <None Remove="add/shaders/colorcube.hlsl" />
     <None Remove="add/shaders/panes.hlsl" />
-    <None Remove="add/shaders/wireframe.hlsl" />
+    <None Remove="add/shaders/frame.hlsl" />
     <None Remove="add/shaders/room.hlsl" />
   </ItemGroup>
 
@@ -30,7 +30,7 @@
     <SKShader Include="add/shaders/oriel.hlsl" />
     <SKShader Include="add/shaders/colorcube.hlsl" />
     <SKShader Include="add/shaders/panes.hlsl" />
-    <SKShader Include="add/shaders/wireframe.hlsl" />
+    <SKShader Include="add/shaders/frame.hlsl" />
     <SKShader Include="add/shaders/room.hlsl" />
   </ItemGroup>
 

@@ -1,5 +1,4 @@
-using System;
-using StereoKit;
+namespace Oriels;
 
 public class ColorCube {
   static Mesh cube = Default.MeshCube;
@@ -13,9 +12,9 @@ public class ColorCube {
 
   public Color color = Color.White * 0.5f;
 
-	public ColorCube() {
+  public ColorCube() {
     // SetColor(Vec3.Zero);
-	}
+  }
 
   public void Step() {
     mat.SetVector("_pos", center);
@@ -25,7 +24,7 @@ public class ColorCube {
     for (int i = 0; i < 4; i++) {
       Quat q = Quat.FromAngles(i * 90, 0, 0);
       cube.Draw(mat, Matrix.TS(center + q * new Vec3(0, offset, offset), new Vec3(size, thicc, thicc)));
-      for (int j = -1; j <= 1; j+=2) {
+      for (int j = -1; j <= 1; j += 2) {
         Vec3 scale = q * new Vec3(thicc, size, thicc);
         scale = new Vec3(Math.Abs(scale.x), Math.Abs(scale.y), Math.Abs(scale.z));
         cube.Draw(mat, Matrix.TS(center + q * new Vec3(offset * j, 0, offset), scale));

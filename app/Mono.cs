@@ -1,24 +1,4 @@
-using System;
-using StereoKit;
-
-SKSettings settings = new SKSettings {
-  appName = "oriels",
-  assetsFolder = "add",
-  depthMode = DepthMode.D32,
-  disableUnfocusedSleep = true,
-};
-if (!SK.Initialize(settings))
-  Environment.Exit(1);
-
-Input.HandSolid(Handed.Max, false);
-Input.HandVisible(Handed.Max, true);
-
-Mono mono = Mono.inst;
-while (SK.Step(() => {
-  mono.Step();
-})) ;
-SK.Shutdown();
-
+namespace Oriels;
 
 public class Mono {
   private static readonly Lazy<Mono> lazy = new Lazy<Mono>(() => new Mono());
@@ -39,13 +19,13 @@ public class Mono {
 
   public BlockCon rBlock = new BlockCon(true), lBlock = new BlockCon(false);
   public BlockCon BlockCon(bool chirality) { return chirality ? rBlock : lBlock; }
-  public Block[] blocks = new Block[] { 
-    new Block(), new Block(), new Block(), new Block(), new Block(), new Block() 
+  public Block[] blocks = new Block[] {
+    new Block(), new Block(), new Block(), new Block(), new Block(), new Block()
   };
 
   public CubicCon cubicCon = new CubicCon();
-  public Cubic[] cubics = new Cubic[] { 
-    new Cubic(), new Cubic(), new Cubic(), new Cubic(), new Cubic(), new Cubic() 
+  public Cubic[] cubics = new Cubic[] {
+    new Cubic(), new Cubic(), new Cubic(), new Cubic(), new Cubic(), new Cubic()
   };
   // -------------------------------------------------
 
@@ -53,9 +33,20 @@ public class Mono {
 
   public Mono() {
     Renderer.SetClip(0.02f, 1000f);
+
+    spaceMono.Init();
   }
 
-  Vec3 boardDir = Vec3.Forward;
+
+  // -------------------------------------------------
+
+  Space.Mono spaceMono = new Space.Mono();
+
+
+  PullRequest.PID pid = new PullRequest.PID(8, 0.8f);
+
+  // -------------------------------------------------
+
   public void Step() {
 
     rig.Step();
@@ -75,6 +66,7 @@ public class Mono {
 
     // -------------------------------------------------
 
+    spaceMono.Frame();
 
     // -------------------------------------------------
 
@@ -84,12 +76,12 @@ public class Mono {
     ShowWindowButton();
   }
 
-  Pose windowPoseButton = new Pose(0, 0, 0, Quat.Identity);
+  Pose windowPoseButton = new Pose(0, 0, -1, Quat.Identity);
   void ShowWindowButton() {
     UI.WindowBegin("Window Button", ref windowPoseButton);
 
     if (UI.Button("Reset Oriel Quat")) { oriel.ori = Quat.Identity; }
-    if (UI.Button("Draw Oriel Axis")) { oriel.drawAxis = !oriel.drawAxis; }
+    // if (UI.Button("Draw Oriel Axis")) { oriel.drawAxis = !oriel.drawAxis; }
 
     UI.WindowEnd();
   }
