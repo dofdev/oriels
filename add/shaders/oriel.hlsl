@@ -96,13 +96,10 @@ psOut ps(psIn input) {
   float t =  1 - (1 + dot(input.normal, _light)) / 2;
   o.color = float4(o.color.rgb * t, 1);
 
-
-  // backface
-  float3 localPos = mul(float4(input.world, 1), _matrix).xyz;
-  
-  if (localPos.y < -_dimensions.y / 2) {
-    clip(-1);
-  }
+  // float3 localPos = mul(float4(input.world, 1), _matrix).xyz;
+  // if (localPos.y < -_dimensions.y / 2) {
+  //   clip(-1);
+  // }
 
   if (dot(direction, input.normal) > 0) {
     o.color = float4(0.5, 0.5, 0.5, 1);
