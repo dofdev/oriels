@@ -53,6 +53,8 @@ public class Mono {
 
     // fly player towards cursor:
     // playerPos += (localCursor - playerPos).Normalized * 1f * Time.Elapsedf;
+    pidX.p = moveP; pidY.p = moveP; pidZ.p = moveP; 
+    pidX.i = moveI; pidY.i = moveI; pidZ.i = moveI;
     playerPos = new Vec3(
       pidX.Update(localCursor.x), 
       pidY.Update(localCursor.y), 
