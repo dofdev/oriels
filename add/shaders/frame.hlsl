@@ -20,13 +20,13 @@ struct psIn {
   float3 campos : POSITION2;
   float3 camdir : NORMAL1;
   uint view_id  : SV_RenderTargetArrayIndex;
-  uint id       : SV_VertexID;
+  // uint id       : SV_InstanceID;
 };
 
 psIn vs(vsIn input, uint id : SV_InstanceID) {
   psIn o;
-  o.view_id    = id % sk_view_count;
-  id           = id / sk_view_count;
+  o.view_id = id % sk_view_count;
+  id        = id / sk_view_count;
 
   o.world = mul(input.pos, sk_inst[id].world);
   o.pos   = mul(o.world, sk_viewproj[o.view_id]);
@@ -37,7 +37,7 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
   o.campos = sk_camera_pos[o.view_id].xyz;
   o.camdir = sk_camera_dir[o.view_id].xyz;
 
-  o.id = id;
+  // o.id      = id;
   return o;
 }
 
@@ -68,7 +68,7 @@ float4 ps(psIn input) : SV_TARGET {
 
   float3 flatnorm = (input.col.rgb - float3(0.5, 0.5, 0.5)) * 2;
 
-  flatnorm = normalize(mul(flatnorm, (float3x3)sk_inst[input.id].world));
+  // flatnorm = normalize(mul(flatnorm, (float3x3)sk_inst[input.id].world));
   
   // float3 cross = input.camDir * input.norm;
   float dist = length(input.world.xyz - input.campos);

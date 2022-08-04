@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 
 // [X] stretch cursor move
-// [ ] points *arbitrary for now
-// [ ] follow player *cam? matrix? name?
+// [X] nodes *point of reference rather than interest for now
+// [X] follow player *cam? matrix? name?
 // [ ] orbital view
 // [ ] dummy enemies
 // [ ] trackballer spin
@@ -27,15 +27,17 @@ public class Mono {
 
   public void Init() {
     Oriels.PullRequest.Noise noise = Oriels.Mono.inst.noise;
-    
+
     // place nodes around a 10x4x10 cube
+    float scalar = 3f;
     for (int i = 0; i < nodes.Length; i++) {
       nodes[i] = new Node(
         new Vec3(
-          noise.value * 5f,
-          noise.value * 2f,
-          noise.value * 5f
-        )
+          noise.value * 5f * scalar,
+          noise.value * 2f * scalar,
+          noise.value * 5f * scalar
+        ),
+        noise.uvalue
       );
     }
 
@@ -45,12 +47,13 @@ public class Mono {
   public void Frame() {
     Oriels.Rig rig = Oriels.Mono.inst.rig;
     Oriels.Oriel oriel = Oriels.Mono.inst.oriel;
-
+    
     Matrix simMatrix = Matrix.TRS(
-      new Vec3(0, 0, 0), //-oriel.bounds.dimensions.y / 2.01f, -playerWorldPos.z), 
+      -playerPos * 0.5f * oriel.bounds.dimensions.y, //-oriel.bounds.dimensions.y / 2.01f, -playerWorldPos.z), 
       Quat.Identity,
       Vec3.One * 0.5f * oriel.bounds.dimensions.y
     );
+
 
     // stretch cursor pattern:
     // stretch = dist(offHand, mainHand)
@@ -64,6 +67,12 @@ public class Mono {
     stretch = Math.Max(stretch - deadzone, 0);
     Vec3 cursor = rig.rCon.pos + rig.rCon.ori * Vec3.Forward * stretch * 3;
     Vec3 localCursor = simMatrix.Inverse.Transform(oriel.matrix.Transform(cursor));
+
+    localCursor = new Vec3(
+      MathF.Sin(Time.Totalf * 2f) * 3f,
+      MathF.Sin(Time.Totalf * 0.5f) * 3f,
+      MathF.Sin(Time.Totalf * 1f) * 3f
+    );
 
     // fly player towards cursor:
     // playerPos += (localCursor - playerPos).Normalized * 1f * Time.Elapsedf;
@@ -82,7 +91,7 @@ public class Mono {
     for (int i = 0; i < nodes.Length; i++) {
       meshCube.Draw(oriel.matOriel,
         Matrix.TRS(nodes[i].pos, Quat.Identity, Vec3.One * 1f) * simMatrix * oriel.matrix.Inverse,
-        Color.White
+        Color.HSV(nodes[i].hue, 1f, 1f)
       );
     }
 
@@ -175,8 +184,10 @@ public class Mono {
 
 public class Node {
   public Vec3 pos;
+  public float hue;
 
-  public Node(Vec3 pos) {
+  public Node(Vec3 pos, float hue) {
     this.pos = pos;
+    this.hue = hue;
   }
 }

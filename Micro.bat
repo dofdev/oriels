@@ -1,3 +1,5 @@
+@REM make console window active
+@REM powershell -window normal -command ""
 dotnet build
 pause
 cd bin/Debug
