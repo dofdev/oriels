@@ -1,8 +1,8 @@
 namespace Oriels;
 
 public class Mono {
-  private static readonly Lazy<Mono> lazy = new Lazy<Mono>(() => new Mono());
-  public static Mono inst { get { return lazy.Value; } }
+  private static readonly Lazy<Oriels.Mono> lazy = new Lazy<Oriels.Mono>(() => new Oriels.Mono());
+  public static Oriels.Mono inst { get { return lazy.Value; } }
 
   public PullRequest.Noise noise = new PullRequest.Noise(939949595);
 
@@ -34,6 +34,9 @@ public class Mono {
   public Mono() {
     Renderer.SetClip(0.02f, 1000f);
 
+  }
+
+  public void Init() {
     spaceMono.Init();
   }
 

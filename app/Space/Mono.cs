@@ -10,7 +10,7 @@ using System.Collections.Generic;
 
 namespace Space;
 public class Mono {
-
+  Node[] nodes = new Node[18];
   Vec3 playerPos;
   List<Vec3> enemies = new List<Vec3>();
   float spawnTime;
@@ -26,12 +26,25 @@ public class Mono {
   }
 
   public void Init() {
+    Oriels.PullRequest.Noise noise = Oriels.Mono.inst.noise;
+    
+    // place nodes around a 10x4x10 cube
+    for (int i = 0; i < nodes.Length; i++) {
+      nodes[i] = new Node(
+        new Vec3(
+          noise.value * 5f,
+          noise.value * 2f,
+          noise.value * 5f
+        )
+      );
+    }
+
     meshCube = Mesh.Cube;
   }
 
   public void Frame() {
-    Rig rig = Oriels.Mono.inst.rig;
-    Oriel oriel = Oriels.Mono.inst.oriel;
+    Oriels.Rig rig = Oriels.Mono.inst.rig;
+    Oriels.Oriel oriel = Oriels.Mono.inst.oriel;
 
     Matrix simMatrix = Matrix.TRS(
       new Vec3(0, 0, 0), //-oriel.bounds.dimensions.y / 2.01f, -playerWorldPos.z), 
@@ -65,8 +78,14 @@ public class Mono {
 
 
 
-
     // RENDER
+    for (int i = 0; i < nodes.Length; i++) {
+      meshCube.Draw(oriel.matOriel,
+        Matrix.TRS(nodes[i].pos, Quat.Identity, Vec3.One * 1f) * simMatrix * oriel.matrix.Inverse,
+        Color.White
+      );
+    }
+
     meshCube.Draw(oriel.matOriel,
       Matrix.TRS(cursor, Quat.Identity, Vec3.One * 0.02f),
       new Color(1f, 1f, 1f)
@@ -152,4 +171,12 @@ public class Mono {
   // design variables
   float moveP = 8f;
   float moveI = 0.2f;
+}
+
+public class Node {
+  public Vec3 pos;
+
+  public Node(Vec3 pos) {
+    this.pos = pos;
+  }
 }

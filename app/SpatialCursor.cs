@@ -1,5 +1,4 @@
-using System;
-using StereoKit;
+namespace Oriels;
 
 public abstract class SpatialCursor {
   public Vec3 p0, p1, p2, p3;
@@ -26,7 +25,7 @@ public class StretchCursor : SpatialCursor {
 
     model.Draw(Matrix.TS(p0, 0.06f));
   }
-  public override void Calibrate() {}
+  public override void Calibrate() { }
 }
 
 public class ReachCursor : SpatialCursor {
@@ -80,7 +79,7 @@ public class TwistCursor : SpatialCursor {
     Quat from = Quat.LookAt(Vec3.Zero, quat * Vec3.Forward, twistFrom);
     float twist = (float)(Math.Acos(Vec3.Dot(from * Vec3.Up, quat * Vec3.Up)) / Math.PI);
     outty = Vec3.Dot(from * Vec3.Up, quat * Vec3.Right * (chirality ? 1 : -1)) > 0;
-    
+
     p0 = pos + quat * Vec3.Forward * twist * str;
 
     // Render
@@ -174,7 +173,7 @@ public class CubicFlow : SpatialCursor {
     // if toggle
   }
 
-  public override void Calibrate() {}
+  public override void Calibrate() { }
 }
 
 // a more symmetrical one would be cool

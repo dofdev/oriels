@@ -1,6 +1,6 @@
 global using System;
 global using StereoKit;
-global using Oriels;
+// global using Oriels;
 
 SKSettings settings = new SKSettings {
   appName = "oriels",
@@ -14,8 +14,9 @@ if (!SK.Initialize(settings))
 Input.HandSolid(Handed.Max, false);
 Input.HandVisible(Handed.Max, true);
 
-Mono mono = Mono.inst;
+Oriels.Mono mono = Oriels.Mono.inst;
+mono.Init();
 while (SK.Step(() => {
   mono.Step();
-})) ;
+}));
 SK.Shutdown();

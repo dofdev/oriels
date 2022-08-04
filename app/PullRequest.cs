@@ -111,7 +111,7 @@ public static class PullRequest {
     }
 
     int position;
-    public float value {
+    public float uvalue {
       get {
         float v = RNG(position, seed) / (float)CAP;
         position++;
@@ -119,8 +119,14 @@ public static class PullRequest {
       }
     }
 
-    public float D1(int position) {
-      return RNG(position, seed) / (float)CAP;
+    public float value { // not ideal *loss of precision*
+      get {
+        return uvalue * 2 - 1;
+      }
+    }
+
+    public float D1(int pos) {
+      return RNG(pos, seed) / (float)CAP;
     }
 
     public float D2(int x, int y) {
@@ -136,8 +142,8 @@ public static class PullRequest {
       return RNG(x + (PRIME1 * y) + (PRIME2 * z), seed) / (float)CAP;
     }
 
-    public uint RNG(int position, uint seed) {
-      uint mangled = (uint)position;
+    public uint RNG(int pos, uint seed) {
+      uint mangled = (uint)pos;
       mangled *= BIT_NOISE1;
       mangled += seed;
       mangled ^= mangled >> 8;
