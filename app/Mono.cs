@@ -37,13 +37,15 @@ public class Mono {
   }
 
   public void Init() {
-    spaceMono.Init();
+    // spaceMono.Init();
+    greenyard.Init();
   }
 
 
   // -------------------------------------------------
 
-  Space.Mono spaceMono = new Space.Mono();
+  // Space.Mono spaceMono = new Space.Mono();
+  Greenyard.Mono greenyard = new Greenyard.Mono();
 
 
   PullRequest.PID pid = new PullRequest.PID(8, 0.8f);
@@ -69,7 +71,8 @@ public class Mono {
 
     // -------------------------------------------------
 
-    spaceMono.Frame();
+    // spaceMono.Frame();
+    greenyard.Frame();
 
     // -------------------------------------------------
 

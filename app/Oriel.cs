@@ -34,7 +34,8 @@ public class Oriel {
     matPanes.SetMat(100, Cull.Front, false);
     matOriel.SetMat(101, Cull.None, true);
 
-    meshCube = model.GetMesh("oriel");
+    meshCube = Mesh.Cube;
+    // meshCube = model.GetMesh("oriel");
   }
 
   Vec3 detect = Vec3.Zero;
@@ -154,6 +155,7 @@ public class Oriel {
     matOriel.SetVector("_center", bounds.center);
     matOriel.SetVector("_dimensions", bounds.dimensions);
     matOriel.SetVector("_light", ori * new Vec3(0.6f, -0.9f, 0.3f));
+    matOriel.SetFloat("_lit", 1);
     matOriel["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(matrix);
   }
 }

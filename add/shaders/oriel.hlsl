@@ -1,8 +1,10 @@
 #include "stereokit.hlsli"
 
-// --name = dofdev/oriel
-//--diffuse     = white
+// --name    = dofdev/oriel
+//--diffuse  = white
 
+float        _lit;
+float        _lit2; // power of 2
 float3       _center;
 float3       _dimensions;
 float3       _light;
@@ -94,15 +96,17 @@ psOut ps(psIn input) {
   clip(distance(input.campos, input.world) - distance(input.campos, origin));
 
   float t =  1 - (1 + dot(input.normal, _light)) / 2;
-  o.color = float4(o.color.rgb * t, 1);
+  // o.color = float4(o.color.rgb * t, 1);
+  o.color = lerp(o.color, float4(o.color.rgb * t, 1), _lit);
 
   // float3 localPos = mul(float4(input.world, 1), _matrix).xyz;
   // if (localPos.y < -_dimensions.y / 2) {
   //   clip(-1);
   // }
 
-  if (dot(direction, input.normal) > 0) {
-    o.color = float4(0.5, 0.5, 0.5, 1);
-  }
+  // if (dot(direction, input.normal) > 0) {
+  //   o.color = float4(0.5, 0.5, 0.5, 1);
+  // }
+
   return o;
 }

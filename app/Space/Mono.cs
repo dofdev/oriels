@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Oriels;
 
 // [X] stretch cursor move
 // [X] nodes *point of reference rather than interest for now
@@ -20,6 +21,9 @@ public class Mono {
   Oriels.PullRequest.PID pidZ = new Oriels.PullRequest.PID();
 
   Mesh meshCube;
+  // Model skyboxModel = Model.FromFile("fantasy_skybox.glb");
+  // Mesh skybox;
+  // Material skyboxMat = new Material(Shader.FromFile("/shaders/oriel.hlsl"));
 
   public Mono() {
 
@@ -42,6 +46,9 @@ public class Mono {
     }
 
     meshCube = Mesh.Cube;
+    // skybox = skyboxModel.GetMesh("sky");
+    // skyboxMat.SetMat(101, Cull.None, true);
+    // skyboxMat.SetTexture("diffuse", Tex.FromFile("fantasy_skybox.jpeg"));
   }
 
   public void Frame() {
@@ -111,6 +118,23 @@ public class Mono {
       ) * simMatrix * oriel.matrix.Inverse,
       new Color(1.0f, 0.0f, 0.05f)
     );
+
+
+    // skyboxMat.SetVector("_center", oriel.bounds.center);
+    // skyboxMat.SetVector("_dimensions", oriel.bounds.dimensions);
+    // skyboxMat.SetVector("_light", oriel.ori * new Vec3(0.6f, -0.9f, 0.3f));
+    // skyboxMat.SetFloat("_lit", 0);
+    // skyboxMat["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrix);
+    // skybox.Draw(skyboxMat,
+    //   Matrix.TRS(
+    //     playerPos,
+    //     Quat.Identity,
+    //     new Vec3(10f, 10f, 10f)
+    //   ) * simMatrix * oriel.matrix.Inverse,
+    //   Color.White
+    // );
+
+    
 
     // meshCube.Draw(oriel.matOriel,
     //   rGlove.virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3 * 1.05f),

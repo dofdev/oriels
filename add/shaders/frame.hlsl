@@ -57,6 +57,8 @@ float remap_tri(float v)
 
 float4 ps(psIn input) : SV_TARGET {
 
+  
+
   // float4 c = input.col;
   // float3 rLocal = (input.world.xyz - _rGlovePos) / 2;
   // c.r = 1 - min(abs(rLocal.x), 1.0);
@@ -66,15 +68,14 @@ float4 ps(psIn input) : SV_TARGET {
   // float m = min(c.r, min(c.g, c.b));
   // c.rgb *= m;
 
-  float3 flatnorm = (input.col.rgb - float3(0.5, 0.5, 0.5)) * 2;
-
+  // float3 flatnorm = (input.col.rgb - float3(0.5, 0.5, 0.5)) * 2;
   // flatnorm = normalize(mul(flatnorm, (float3x3)sk_inst[input.id].world));
   
   // float3 cross = input.camDir * input.norm;
-  float dist = length(input.world.xyz - input.campos);
+  // float dist = length(input.world.xyz - input.campos);
   float3 raydir = normalize(input.world.xyz - input.campos);
 
-  float facing = 1 - dot(raydir, input.camdir);
+  // float facing = 1 - dot(raydir, input.camdir);
   // facing = (1 + facing) / 2;
   // facing = facing;
 
@@ -91,7 +92,7 @@ float4 ps(psIn input) : SV_TARGET {
 
   // d = remap_tri(d);
 
-  return float4(hsv2rgb(float3(h, 1, 1)), facing * facing * d * 24);
+  return float4(hsv2rgb(float3(h, 1, 1)), h * h);
 
   // float4 col = float4(1, 1, 1, 0);
   // float n = saturate(dot(raydir, input.norm));
