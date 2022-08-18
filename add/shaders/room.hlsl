@@ -83,6 +83,7 @@ float4 ps(psIn input) : SV_TARGET {
   float3 ro = input.campos;
   float3 rd = normalize(input.world - ro);
   float ol = raymarch(ro, rd);
+
   clip(-(100 - (ol + 1)));
   // if ((100 - (ol + 1)) > 0) {
   //   col *= 0.1;

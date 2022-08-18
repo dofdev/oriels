@@ -43,7 +43,7 @@ public class Scene {
 
   public void Step() {
     Oriel oriel = Mono.inst.oriel;
-    data.matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrix);
+    data.matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrixInv);
     data.dimensions = oriel.bounds.dimensions;
 
 

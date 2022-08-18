@@ -73,7 +73,7 @@ public class Mono {
     float stretch = Vec3.Distance(rig.lCon.pos, rig.rCon.pos);
     stretch = Math.Max(stretch - deadzone, 0);
     Vec3 cursor = rig.rCon.pos + rig.rCon.ori * Vec3.Forward * stretch * 3;
-    Vec3 localCursor = simMatrix.Inverse.Transform(oriel.matrix.Transform(cursor));
+    Vec3 localCursor = simMatrix.Inverse.Transform(oriel.matrixInv.Transform(cursor));
 
     localCursor = new Vec3(
       MathF.Sin(Time.Totalf * 2f) * 3f,
@@ -97,7 +97,7 @@ public class Mono {
     // RENDER
     for (int i = 0; i < nodes.Length; i++) {
       meshCube.Draw(oriel.matOriel,
-        Matrix.TRS(nodes[i].pos, Quat.Identity, Vec3.One * 1f) * simMatrix * oriel.matrix.Inverse,
+        Matrix.TRS(nodes[i].pos, Quat.Identity, Vec3.One * 1f) * simMatrix * oriel.matrix,
         Color.HSV(nodes[i].hue, 1f, 1f)
       );
     }
@@ -107,7 +107,7 @@ public class Mono {
       new Color(1f, 1f, 1f)
     );
     meshCube.Draw(oriel.matOriel,
-      Matrix.TRS(localCursor, Quat.Identity, Vec3.One * 0.02f) * simMatrix * oriel.matrix.Inverse,
+      Matrix.TRS(localCursor, Quat.Identity, Vec3.One * 0.02f) * simMatrix * oriel.matrix,
       new Color(0f, 0f, 0f)
     );
     meshCube.Draw(oriel.matOriel,
@@ -115,7 +115,7 @@ public class Mono {
         playerPos,
         Quat.LookDir((localCursor - playerPos).Normalized),
         new Vec3(0.4f, 0.2f, 0.4f)
-      ) * simMatrix * oriel.matrix.Inverse,
+      ) * simMatrix * oriel.matrix,
       new Color(1.0f, 0.0f, 0.05f)
     );
 
@@ -130,7 +130,7 @@ public class Mono {
     //     playerPos,
     //     Quat.Identity,
     //     new Vec3(10f, 10f, 10f)
-    //   ) * simMatrix * oriel.matrix.Inverse,
+    //   ) * simMatrix * oriel.matrix,
     //   Color.White
     // );
 
@@ -195,7 +195,7 @@ public class Mono {
         Matrix.TRS(enemies[i],
           Quat.LookAt(enemies[i], playerPos, Vec3.Up),
           new Vec3(0.4f, 1f, 0.2f)
-        ) * simMatrix * oriel.matrix.Inverse,
+        ) * simMatrix * oriel.matrix,
         Color.White * 0.62f
       );
     }

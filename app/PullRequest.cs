@@ -46,6 +46,16 @@ public static class PullRequest {
     return (to - from).Normalized;
   }
 
+  // swizzle
+  public static Vec3 JustX(this Vec3 v) {
+    return new Vec3(v.x, 0, 0);
+  }
+  public static Vec3 JustY(this Vec3 v) {
+    return new Vec3(0, v.y, 0);
+  }
+  public static Vec3 JustZ(this Vec3 v) {
+    return new Vec3(0, 0, v.z);
+  }
 
   static Mesh meshCube = Default.MeshCube;
   static Material matCube = Default.Material;
