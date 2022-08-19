@@ -104,9 +104,9 @@ psOut ps(psIn input) {
   //   clip(-1);
   // }
 
-  // if (dot(direction, input.normal) > 0) {
-  //   o.color = float4(0.5, 0.5, 0.5, 1);
-  // }
+  if (dot(direction, input.normal) > 0) {
+    o.color = float4(0, 0, 0, 1);
+  }
 
   return o;
 }

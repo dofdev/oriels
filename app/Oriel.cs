@@ -33,8 +33,10 @@ public class Oriel {
 
     bounds = new Bounds(
       new Vec3(-1.0f, -0.5f, 0.5f),
+      // Vec3.Zero,
       new Vec3(0.8f, 0.5f, 0.5f)
     );
+    ori = Quat.FromAngles(0, 90, 0);
     matrix = Matrix.TR(bounds.center, ori);
     matrixInv = matrix.Inverse;
 
@@ -54,15 +56,17 @@ public class Oriel {
   int detectCount = 0;
   public Vec3 LocalAnchor { get { return detect * bounds.dimensions / 2; } }
   public Vec3 Anchor { get { return matrix.Transform(LocalAnchor); } }
-
-  Vec3 cornerDetect = Vec3.Zero;
-
-  Vec3 anchorOffset = Vec3.Zero;
-  Vec3 localAnchorOffset = Vec3.Zero;
   Quat qOffset = Quat.Identity;
   Vec3 vOffset = Vec3.Zero;
   Vec3 lOffset = Vec3.Zero;
   Matrix mOffset = Matrix.Identity;
+
+  Vec3 cornerDetect = Vec3.Zero;
+  public Vec3 XAnchor { get { return LocalAnchor - detect.JustX() * cornerRadius; } }
+  public Vec3 YAnchor { get { return LocalAnchor - detect.JustY() * cornerRadius; } }
+  public Vec3 ZAnchor { get { return LocalAnchor - detect.JustZ() * cornerRadius; } }
+  Vec3 anchorOffset = Vec3.Zero;
+  
   public void Frame() {
     // input
     Rig rig = Mono.inst.rig;
@@ -70,11 +74,10 @@ public class Oriel {
     Quat rGloveRot = rGlove.virtualGlove.orientation;
     // Vec3 lGlovePos = rig.lGlove.virtualGlove.position;
 
-    cursor = rGlove.virtualGlove.position;
-
     bool onpress = rig.rCon.triggerBtn.frameDown;
     bool held = rig.rCon.triggerBtn.held;
     bool onlift = rig.rCon.triggerBtn.frameUp;
+    cursor = rGlove.virtualGlove.position;
 
     // bool onpress = Input.Key(Key.Space).IsJustActive();
     // bool held = Input.Key(Key.Space).IsActive();
@@ -150,40 +153,27 @@ public class Oriel {
         // } else {
         //   ori = (q * qOffset).Normalized;
         // }
+
+        interacting = held;
       } 
       else if (detectCount == 3) { // Scale (corner -> corner)
         if (!scaling) {
-          Vec3 xAnchor = Anchor - ori * detect.JustX() * cornerRadius;
-          Vec3 yAnchor = Anchor - ori * detect.JustY() * cornerRadius;
-          Vec3 zAnchor = Anchor - ori * detect.JustZ() * cornerRadius;
           cornerDetect = new Vec3(
-            MathF.Max(cursorRadius - Vec3.Distance(xAnchor, cursor), 0),
-            MathF.Max(cursorRadius - Vec3.Distance(yAnchor, cursor), 0),
-            MathF.Max(cursorRadius - Vec3.Distance(zAnchor, cursor), 0)
+            MathF.Max(cursorRadius - Vec3.Distance(XAnchor, localCursor), 0),
+            MathF.Max(cursorRadius - Vec3.Distance(YAnchor, localCursor), 0),
+            MathF.Max(cursorRadius - Vec3.Distance(ZAnchor, localCursor), 0)
           );
 
-          anchorOffset = cursor - Anchor;
-          localAnchorOffset = localCursor - LocalAnchor;
+          anchorOffset = localCursor - LocalAnchor;
 
           scaling = onlift;
         }
 
         if (scaling) {
-          if (cornerDetect.x > 0) {
-            float distX = Math.Abs(-LocalAnchor.x - localCursor.x + localAnchorOffset.x);
-            bounds.center.x = PullRequest.Lerp(matrix.Transform(-LocalAnchor).x, cursor.x - anchorOffset.x, 0.5f);
-            bounds.dimensions.x = distX;
-          }
-          if (cornerDetect.y > 0) {
-            float distY = Math.Abs(-LocalAnchor.y - localCursor.y + localAnchorOffset.y);
-            bounds.center.y = PullRequest.Lerp(matrix.Transform(-LocalAnchor).y, cursor.y - anchorOffset.y, 0.5f);
-            bounds.dimensions.y = distY;
-          }
-          if (cornerDetect.z > 0) {
-            float distZ = Math.Abs(-LocalAnchor.z - localCursor.z + localAnchorOffset.z);
-            bounds.center.z = PullRequest.Lerp(matrix.Transform(-LocalAnchor).z, cursor.z - anchorOffset.z, 0.5f);
-            bounds.dimensions.z = distZ;
-          }
+          Vec3 oldAnchor = Anchor;
+          Vec3 delta = ((localCursor - anchorOffset) + LocalAnchor).Abs();
+          bounds.dimensions = bounds.dimensions.Splice(delta, cornerDetect, true);
+          bounds.center += Anchor - oldAnchor;
 
           scaling = !held;
           interacting = !held;
@@ -265,24 +255,21 @@ public class Oriel {
       // draw cube(s) on intersecting corner ends
 
 
-      Vec3 xAnchor = Anchor - ori * detect.JustX() * cornerRadius;
       if (cornerDetect.x > 0) {
         meshCube.Draw(matClear, 
-          Matrix.TS(xAnchor, Vec3.One * thk * 2),
+          Matrix.TS(XAnchor, Vec3.One * thk * 2) * matrix,
           new Color(1, 0, 0)
         );
       }
-      Vec3 yAnchor = Anchor - ori * detect.JustY() * cornerRadius;
       if (cornerDetect.y > 0) {
         meshCube.Draw(matClear, 
-          Matrix.TS(yAnchor, Vec3.One * thk * 2),
+          Matrix.TS(YAnchor, Vec3.One * thk * 2) * matrix,
           new Color(0, 1, 0)
         );
       }
-      Vec3 zAnchor = Anchor - ori * detect.JustZ() * cornerRadius;
       if (cornerDetect.z > 0) {
         meshCube.Draw(matClear, 
-          Matrix.TS(zAnchor, Vec3.One * thk * 2),
+          Matrix.TS(ZAnchor, Vec3.One * thk * 2) * matrix,
           new Color(0, 0, 1)
         );
       }

@@ -7,6 +7,7 @@ public class Mono {
   // Material greenyardMat = new Material(Shader.FromFile("/shaders/oriel.hlsl"));
 
   Vec3 offset = new Vec3(2, 0, -2);
+  Vec3 angle = new Vec3(0, 0, 0);
 
   Thing[] thing;
   Model model = Model.FromFile("/backrooms/backrooms.glb");
@@ -56,6 +57,21 @@ public class Mono {
     Oriels.Rig rig = Oriels.Mono.inst.rig;
     Oriels.Oriel oriel = Oriels.Mono.inst.oriel;
 
+    // angle.x += rig.rCon.device.stick.y * Time.Elapsedf;
+    angle.y += rig.rCon.device.stick.x * -60f * Time.Elapsedf;
+
+    Vec3 input = new Vec3(
+      rig.lCon.device.stick.x,
+      0,
+      rig.lCon.device.stick.y
+    );
+    if (input.MagnitudeSq > 0.01f) {
+      offset += Quat.FromAngles(0, angle.y, 0).Inverse * input * Time.Elapsedf;
+    }
+
+    
+
+
     // Oriel
     float scale = oriel.scale * oriel.multiplier;
     if (oriel.scaleHeight) {
@@ -64,7 +80,7 @@ public class Mono {
 
     Matrix simMatrix = Matrix.TRS(
       new Vec3(0, -oriel.bounds.dimensions.y / 2.01f, 0), 
-      Quat.Identity,
+      Quat.FromAngles(0, angle.y, 0),
       Vec3.One * scale
     );
 

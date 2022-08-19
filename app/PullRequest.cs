@@ -65,6 +65,25 @@ public static class PullRequest {
     );
   }
 
+  public static Vec3 Sign(this Vec3 v) {
+    return new Vec3(
+      MathF.Sign(v.x),
+      MathF.Sign(v.y),
+      MathF.Sign(v.z)
+    );
+  }
+
+  /// <summary>
+  /// a(1,1,1) b(2,2,2) t(0,1,0.5) return(1,2,1.5)
+  /// </summary>
+  public static Vec3 Splice(this Vec3 a, Vec3 b, Vec3 t, bool nor = false) {
+    return new Vec3(
+      Lerp(a.x, b.x, nor ? MathF.Sign(t.x) : t.x),
+      Lerp(a.y, b.y, nor ? MathF.Sign(t.y) : t.y),
+      Lerp(a.z, b.z, nor ? MathF.Sign(t.z) : t.z)
+    );
+  }
+
   static Mesh meshCube = Default.MeshCube;
   static Material matCube = Default.Material;
   public static void BlockOut(Matrix m, Color color, Material mat = null) {
