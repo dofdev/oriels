@@ -67,24 +67,28 @@ public class Oriel {
     // input
     Rig rig = Mono.inst.rig;
     Glove rGlove = Mono.inst.rGlove;
-    // cursor = rGlove.virtualGlove.position;
     Quat rGloveRot = rGlove.virtualGlove.orientation;
     // Vec3 lGlovePos = rig.lGlove.virtualGlove.position;
-    // onpress held onlift
-    bool onpress = Input.Key(Key.Space).IsJustActive();
-    bool held = Input.Key(Key.Space).IsActive(); // rig.rCon.triggerBtn.held
-    bool onlift = Input.Key(Key.Space).IsJustInactive();
 
-    if (!Input.Key(Key.Shift).IsActive()) {
-      Vec3 input = new Vec3(
-        (Input.Key(Key.S).IsActive() ? 1 : 0) - (Input.Key(Key.A).IsActive() ? 1 : 0),
-        (Input.Key(Key.F).IsActive() ? 1 : 0) - (Input.Key(Key.Q).IsActive() ? 1 : 0),
-        (Input.Key(Key.R).IsActive() ? 1 : 0) - (Input.Key(Key.W).IsActive() ? 1 : 0)
-      );
-      if (input.Length > 0) {
-        cursor += input.Normalized * Time.Elapsedf * 0.4f;
-      }
-    }
+    cursor = rGlove.virtualGlove.position;
+
+    bool onpress = rig.rCon.triggerBtn.frameDown;
+    bool held = rig.rCon.triggerBtn.held;
+    bool onlift = rig.rCon.triggerBtn.frameUp;
+
+    // bool onpress = Input.Key(Key.Space).IsJustActive();
+    // bool held = Input.Key(Key.Space).IsActive();
+    // bool onlift = Input.Key(Key.Space).IsJustInactive();
+    // if (!Input.Key(Key.Shift).IsActive()) {
+    //   Vec3 input = new Vec3(
+    //     (Input.Key(Key.S).IsActive() ? 1 : 0) - (Input.Key(Key.A).IsActive() ? 1 : 0),
+    //     (Input.Key(Key.F).IsActive() ? 1 : 0) - (Input.Key(Key.Q).IsActive() ? 1 : 0),
+    //     (Input.Key(Key.R).IsActive() ? 1 : 0) - (Input.Key(Key.W).IsActive() ? 1 : 0)
+    //   );
+    //   if (input.Length > 0) {
+    //     cursor += input.Normalized * Time.Elapsedf * 0.4f;
+    //   }
+    // }
 
     Vec3 localCursor = matrixInv.Transform(cursor);
 
