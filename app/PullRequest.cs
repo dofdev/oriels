@@ -57,6 +57,14 @@ public static class PullRequest {
     return new Vec3(0, 0, v.z);
   }
 
+  public static Vec3 Abs(this Vec3 v) {
+    return new Vec3(
+      MathF.Abs(v.x),
+      MathF.Abs(v.y),
+      MathF.Abs(v.z)
+    );
+  }
+
   static Mesh meshCube = Default.MeshCube;
   static Material matCube = Default.Material;
   public static void BlockOut(Matrix m, Color color, Material mat = null) {

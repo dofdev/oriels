@@ -87,7 +87,7 @@ public class Mono {
     ShowWindowButton();
   }
 
-  Pose windowPoseButton = new Pose(0, 0, -0.5f, Quat.Identity);
+  Pose windowPoseButton = new Pose(0, 0, 0.25f, Quat.Identity);
   void ShowWindowButton() {
     UI.WindowBegin("Window Button", ref windowPoseButton);
 
