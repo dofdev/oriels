@@ -49,6 +49,8 @@ public class Oriel {
   public bool scaling;
 
   public Vec3 cursor = Vec3.Zero;
+  public Quat cursorOri = Quat.Identity;
+  public Color cursorColor = Color.White;
   public float cursorRadius = 0.1f;
   public float cornerRadius;
   
@@ -71,13 +73,13 @@ public class Oriel {
     // input
     Rig rig = Mono.inst.rig;
     Glove rGlove = Mono.inst.rGlove;
-    Quat rGloveRot = rGlove.virtualGlove.orientation;
     // Vec3 lGlovePos = rig.lGlove.virtualGlove.position;
 
     bool onpress = rig.rCon.triggerBtn.frameDown;
     bool held = rig.rCon.triggerBtn.held;
     bool onlift = rig.rCon.triggerBtn.frameUp;
     cursor = rGlove.virtualGlove.position;
+    cursorOri = rGlove.virtualGlove.orientation;
 
     // bool onpress = Input.Key(Key.Space).IsJustActive();
     // bool held = Input.Key(Key.Space).IsActive();
@@ -92,11 +94,11 @@ public class Oriel {
     //     cursor += input.Normalized * Time.Elapsedf * 0.4f;
     //   }
     // }
+    // cursorOri = Quat.FromAngles(MathF.Sin(Time.Totalf) * 15, 0, 0);
+
+
 
     Vec3 localCursor = matrixInv.Transform(cursor);
-
-    // ori = Quat.FromAngles(0, MathF.Sin(Time.Totalf) * 90f, 0);
-
 
     if (!interacting) {
       // generate all the potential anchors
@@ -106,6 +108,7 @@ public class Oriel {
       for (int i = 0; i < anchors.Length; i++) {
         Vec3 a = matrix.Transform(anchors[i] * bounds.dimensions / 2);
         float dist = (a - cursor).Length;
+        // Vec3.Dot((bounds.center - rig.Head.position).Normalized, (matrix.Transform(anchors[i]) - bounds.center).Normalized) > 0 &&
         if (dist < minDist) {
           minDist = dist;
           v = anchors[i];
@@ -117,7 +120,7 @@ public class Oriel {
 
       vOffset = cursor - bounds.center;
       lOffset = ori.Inverse * vOffset;
-      qOffset = (ori.Inverse * rGloveRot).Normalized;
+      qOffset = (ori.Inverse * cursorOri).Normalized;
       mOffset = matrix;
 
       interacting = onpress;
@@ -127,7 +130,13 @@ public class Oriel {
 
     if (interacting) {
       if (detectCount == 1) { // Move (face -> crown *face)
-        ori = (rGloveRot * qOffset.Inverse).Normalized;
+        ori = (cursorOri * qOffset.Inverse).Normalized;
+        // gravity snapping (within 6 degrees) *horizontal
+        // always? *here **tilt = nosnap
+        if (Vec3.Dot(-Vec3.Up, ori * -Vec3.Up) > 0.9998f) {
+          Vec3 fwd = ori * Vec3.Forward;
+          ori = Quat.LookDir(fwd.X0Z.Normalized);
+        }
         bounds.center = cursor - ori * lOffset;
 
         interacting = held;
@@ -215,7 +224,7 @@ public class Oriel {
 
 
     // cursor
-    Color col = new Color(0.333f, 0.333f, 0.333f);
+    Color col = new Color(0.15f, 0.15f, 0.15f);
     float thk = 0.005f;
     if (detectCount == 1 || detectCount == 2) {
       Vec3 edge = Vec3.One - detect.Abs();
@@ -281,8 +290,8 @@ public class Oriel {
     }
 
     meshCube.Draw(Material.Default,
-      Matrix.TS(cursor, new Vec3(0.01f, 0.01f, 0.01f)),
-      new Color(1f, 1f, 1f)
+      Matrix.TRS(cursor, cursorOri, new Vec3(0.04f, 0.01f, 0.04f)),
+      cursorColor
     );
 
     meshSphere.Draw(matClear,

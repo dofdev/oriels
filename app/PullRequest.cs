@@ -57,6 +57,10 @@ public static class PullRequest {
     return new Vec3(0, 0, v.z);
   }
 
+  // public static Vec3 Down {
+  //   get { return new Vec3(0, -1, 0); }
+  // }
+
   public static Vec3 Abs(this Vec3 v) {
     return new Vec3(
       MathF.Abs(v.x),
