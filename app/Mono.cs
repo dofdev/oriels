@@ -93,7 +93,7 @@ public class Mono {
 
     if (UI.Button("Reset Oriel Quat")) { oriel.ori = Quat.Identity; }
     // if (UI.Button("Draw Oriel Axis")) { oriel.drawAxis = !oriel.drawAxis; }
-    if (UI.Button("Scale w/Height")) { oriel.scaleHeight = !oriel.scaleHeight; }
+    if (UI.Button("Scale w/Height")) { oriel.scaleWithHeight = !oriel.scaleWithHeight; }
     UI.HSlider("Scale", ref oriel.scale, 0.1f, 1f, 0.1f);
     UI.HSlider("Multiplier", ref oriel.multiplier, 0.1f, 1f, 0.1f);
 

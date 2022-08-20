@@ -76,8 +76,27 @@ float raymarch(float3 ro, float3 rd) {
   return dist;
 }
 
+// float4 read(float2 head, float x, float y) {
+//   head += float2(x, y);
+//   return diffuse.Sample(tex, head);
+// }
+
 float4 ps(psIn input) : SV_TARGET {
 	float4 col = diffuse.Sample(diffuse_s, input.uv);
+  
+  // float2 head = float2(0, 0);
+
+  // if (read(head, 0, 0).r > 0) {
+  //   float4x4 m = float4x4(
+  //     diffuse.Sample(tex, head + float2(1, 0)),
+  //     diffuse.Sample(tex, head + float2(2, 0)),
+  //     diffuse.Sample(tex, head + float2(3, 0)),
+  //     diffuse.Sample(tex, head + float2(4, 0))
+  //   );
+  // }
+  // float3 dim = float3(
+  //   diffuse.Sample(tex, head + float2(1, 0)),
+  // );
 
 
   float3 ro = input.campos;

@@ -66,7 +66,7 @@ public class Mono {
       rig.lCon.device.stick.y
     );
     if (input.MagnitudeSq > 0.01f) {
-      offset += Quat.FromAngles(0, angle.y, 0).Inverse * input * Time.Elapsedf;
+      offset += (Quat.FromAngles(0, angle.y, 0).Inverse * rig.lCon.ori).Normalized * input * Time.Elapsedf;
     }
 
     
@@ -74,12 +74,12 @@ public class Mono {
 
     // Oriel
     float scale = oriel.scale * oriel.multiplier;
-    if (oriel.scaleHeight) {
+    if (oriel.scaleWithHeight) {
       scale *= oriel.bounds.dimensions.y;
     }
 
     Matrix simMatrix = Matrix.TRS(
-      new Vec3(0, -oriel.bounds.dimensions.y / 2.01f, 0), 
+      Vec3.Zero, // -oriel.bounds.dimensions.y / 2.01f
       Quat.FromAngles(0, angle.y, 0),
       Vec3.One * scale
     );

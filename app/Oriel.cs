@@ -15,7 +15,7 @@ public class Oriel {
   public Quat ori = Quat.Identity;
 
   // inner matrix
-  public bool scaleHeight = true;
+  public bool scaleWithHeight = false;
   public float scale = 0.5f;
   public float multiplier = 1f;
 
