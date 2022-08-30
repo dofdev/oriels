@@ -62,6 +62,7 @@ public class Oriel {
   Quat qOffset = Quat.Identity;
   Vec3 vOffset = Vec3.Zero;
   Vec3 lOffset = Vec3.Zero;
+  Vec3 dirOrigin = Vec3.Zero;
   Matrix mOffset = Matrix.Identity;
 
   Vec3 cornerDetect = Vec3.Zero;
@@ -140,6 +141,9 @@ public class Oriel {
 
       vOffset = cursor - bounds.center;
       lOffset = ori.Inverse * vOffset;
+
+      dirOrigin = (localCursor * detect.Abs()).Normalized;
+
       qOffset = (ori.Inverse * cursorOri).Normalized;
       mOffset = matrix;
 
@@ -149,7 +153,7 @@ public class Oriel {
     } 
 
     if (interacting) {
-      if (detectCount == 1) { // Move (face -> crown *face)
+      if (detectCount == 1) { // Grab (face -> crown *face)
         ori = (cursorOri * qOffset.Inverse).Normalized;
         // gravity snapping (within 6 degrees) *horizontal
         // always? *here **tilt = nosnap
@@ -161,27 +165,12 @@ public class Oriel {
 
         interacting = held;
       } 
-      else if (detectCount == 2) { // Rotate (edge -> edge)
-        // localPos = mOffset.Inverse.Transform(cursor);
-        // Vec3 dir = new Vec3(
-        //   detect.x == 0 ? 0 : localPos.x,
-        //   detect.y == 0 ? 0 : localPos.y,
-        //   detect.z == 0 ? 0 : localPos.z
-        // );
-        // Vec3 up = new Vec3(
-        //   detect.x == 0 ? 1 : 0,
-        //   detect.y == 0 ? 1 : 0,
-        //   detect.z == 0 ? 1 : 0
-        // );
-
-        // Quat q = Quat.LookAt(Vec3.Zero, dir, up);
-
-        // if (!adjusting) {
-        //   qOffset = (q.Inverse * ori).Normalized;
-        //   adjusting = true;
-        // } else {
-        //   ori = (q * qOffset).Normalized;
-        // }
+      else if (detectCount == 2) { // Tilt (edge -> edge)
+        // local quaternion delta
+        Vec3 dir = (localCursor * detect.Abs()).Normalized;
+        Quat delta = (Quat.LookDir(dir) * Quat.LookDir(dirOrigin).Inverse).Normalized;
+        
+        ori = (ori * delta).Normalized;
 
         interacting = held;
       } 
