@@ -96,6 +96,8 @@ public class Mono {
     if (UI.Button("Scale w/Height")) { oriel.scaleWithHeight = !oriel.scaleWithHeight; }
     UI.HSlider("Scale", ref oriel.scale, 0.1f, 1f, 0.1f);
     UI.HSlider("Multiplier", ref oriel.multiplier, 0.1f, 1f, 0.1f);
+    UI.Label("Player.y");
+    UI.HSlider("Player.y", ref greenyard.height, 0.1f, 1.5f, 0.1f);
 
 
     UI.WindowEnd();

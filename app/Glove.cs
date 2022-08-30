@@ -119,6 +119,11 @@ public class Glove {
     oldOri = con.ori;
 
     virtualGlove.position = con.pos + direction * (stretch + Math.Abs(twist)) * 3;
+    // relative to index finger
+    Hand hand = Input.Hand(chirality ? Handed.Right : Handed.Left);
+    Vec3 index = hand.Get(FingerId.Index, JointId.Tip).position - con.pos;
+    Vec3 thumb = hand.Get(FingerId.Thumb, JointId.Tip).position - con.pos;
+    virtualGlove.position += Vec3.Lerp(index, thumb, 0.5f);
 
     Render(con.Pose(), virtualGlove, wrist, stretch, twist, chirality);
   }
@@ -154,7 +159,7 @@ public class Glove {
     Lines.Add(linePoints);
 
     // mesh.Draw(mat, glove.ToMatrix(new Vec3(0.02f, 0.08f, 0.08f) / 1));
-    mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3));
+    // mesh.Draw(mat, virtualGlove.ToMatrix(new Vec3(0.025f, 0.1f, 0.1f) / 3));
 
 
     // ModelNode top = model.FindNode("Top");

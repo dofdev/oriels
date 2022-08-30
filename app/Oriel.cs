@@ -49,9 +49,10 @@ public class Oriel {
   public bool scaling;
 
   public Vec3 cursor = Vec3.Zero;
+  public Vec3 localCursor = Vec3.Zero;
   public Quat cursorOri = Quat.Identity;
-  public Color cursorColor = Color.White;
-  public float cursorRadius = 0.1f;
+  public Color cursorColor = new Color(0.2f, 0.2f, 0.2f);
+  public float cursorRadius = 0.04f;
   public float cornerRadius;
   
   Vec3 detect = Vec3.Zero;
@@ -64,9 +65,27 @@ public class Oriel {
   Matrix mOffset = Matrix.Identity;
 
   Vec3 cornerDetect = Vec3.Zero;
-  public Vec3 XAnchor { get { return LocalAnchor - detect.JustX() * cornerRadius; } }
-  public Vec3 YAnchor { get { return LocalAnchor - detect.JustY() * cornerRadius; } }
-  public Vec3 ZAnchor { get { return LocalAnchor - detect.JustZ() * cornerRadius; } }
+  public Vec3 XAnchor { get {
+    float x = PullRequest.Clamp(localCursor.x, 
+      LocalAnchor.x - cornerRadius, 
+      LocalAnchor.x + cornerRadius
+    );
+    return new Vec3(x, LocalAnchor.y, LocalAnchor.z);
+  } }
+  public Vec3 YAnchor { get {
+    float y = PullRequest.Clamp(localCursor.y, 
+      LocalAnchor.y - cornerRadius, 
+      LocalAnchor.y + cornerRadius
+    );
+    return new Vec3(LocalAnchor.x, y, LocalAnchor.z);
+  } }
+  public Vec3 ZAnchor { get {
+    float z = PullRequest.Clamp(localCursor.z, 
+      LocalAnchor.z - cornerRadius, 
+      LocalAnchor.z + cornerRadius
+    );
+    return new Vec3(LocalAnchor.x, LocalAnchor.y, z);
+  } }
   Vec3 anchorOffset = Vec3.Zero;
   
   public void Frame() {
@@ -81,6 +100,7 @@ public class Oriel {
     cursor = rGlove.virtualGlove.position;
     cursorOri = rGlove.virtualGlove.orientation;
 
+    // debug
     // bool onpress = Input.Key(Key.Space).IsJustActive();
     // bool held = Input.Key(Key.Space).IsActive();
     // bool onlift = Input.Key(Key.Space).IsJustInactive();
@@ -98,7 +118,7 @@ public class Oriel {
 
 
 
-    Vec3 localCursor = matrixInv.Transform(cursor);
+    localCursor = matrixInv.Transform(cursor);
 
     if (!interacting) {
       // generate all the potential anchors
@@ -180,12 +200,20 @@ public class Oriel {
 
         if (scaling) {
           Vec3 oldAnchor = Anchor;
-          Vec3 delta = ((localCursor - anchorOffset) + LocalAnchor).Abs();
+          Vec3 delta = ((localCursor - anchorOffset) + LocalAnchor);
+          delta = delta * LocalAnchor.Sign(); // instead of delta.Abs();
           bounds.dimensions = bounds.dimensions.Splice(delta, cornerDetect, true);
+          bounds.dimensions = new Vec3(
+            MathF.Max(bounds.dimensions.x, 0.02f),
+            MathF.Max(bounds.dimensions.y, 0.02f),
+            MathF.Max(bounds.dimensions.z, 0.02f)
+          );
           bounds.center += Anchor - oldAnchor;
 
-          scaling = !held;
-          interacting = !held;
+          scaling = interacting = !held;
+          if (cornerDetect.MagnitudeSq == 0) {
+            scaling = interacting = false;
+          }
         }
       }
     }
@@ -225,45 +253,40 @@ public class Oriel {
 
     // cursor
     Color col = new Color(0.15f, 0.15f, 0.15f);
-    float thk = 0.005f;
+    float thk = 0.002f;
+    float prx = PullRequest.Clamp(
+      cursorRadius - (localCursor - LocalAnchor).Magnitude / 3, 0, cursorRadius
+    ) / cursorRadius;
     if (detectCount == 1 || detectCount == 2) {
       Vec3 edge = Vec3.One - detect.Abs();
       meshCube.Draw(matClear,
         Matrix.TS(
           LocalAnchor,
-          (Vec3.One * thk) + (edge * bounds.dimensions / 3f)
+          (Vec3.One * thk) + (edge * bounds.dimensions / 3f * prx)
         ) * matrix, col
       );
     }
     if (detectCount == 3) {
-      // Lines.Add(Anchor, Anchor - ori * detect.JustX() * cornerRadius, col, thk);
-      // Lines.Add(Anchor, Anchor - ori * detect.JustY() * cornerRadius, col, thk);
-      // Lines.Add(Anchor, Anchor - ori * detect.JustZ() * cornerRadius, col, thk);
-      Vec3 x = detect.JustX() * cornerRadius;
       meshCube.Draw(matClear,
         Matrix.TS(
-          LocalAnchor - (x / 2f),
-          (Vec3.One * thk) + x
+          Vec3.Lerp(XAnchor, LocalAnchor, 0.5f),
+          new Vec3(MathF.Abs(XAnchor.x - LocalAnchor.x), thk, thk)
         ) * matrix, col
       );
-      Vec3 y = detect.JustY() * cornerRadius;
       meshCube.Draw(matClear,
         Matrix.TS(
-          LocalAnchor - (y / 2f),
-          (Vec3.One * thk) + y
+          Vec3.Lerp(YAnchor, LocalAnchor, 0.5f),
+          new Vec3(thk, MathF.Abs(YAnchor.y - LocalAnchor.y), thk)
         ) * matrix, col
       );
-      Vec3 z = detect.JustZ() * cornerRadius;
       meshCube.Draw(matClear,
         Matrix.TS(
-          LocalAnchor - (z / 2f),
-          (Vec3.One * thk) + z
+          Vec3.Lerp(ZAnchor, LocalAnchor, 0.5f),
+          new Vec3(thk, thk, MathF.Abs(ZAnchor.z - LocalAnchor.z))
         ) * matrix, col
       );
 
       // draw cube(s) on intersecting corner ends
-
-
       if (cornerDetect.x > 0) {
         meshCube.Draw(matClear, 
           Matrix.TS(XAnchor, Vec3.One * thk * 2) * matrix,
@@ -282,15 +305,10 @@ public class Oriel {
           new Color(0, 0, 1)
         );
       }
-
-      // Lines.Add(
-      //   zAnchor, zAnchor + ori * detect.JustZ() * stab * 1.5f,
-      //   new Color(0, 0, 1), 0.01f
-      // );
     }
 
-    meshCube.Draw(Material.Default,
-      Matrix.TRS(cursor, cursorOri, new Vec3(0.04f, 0.01f, 0.04f)),
+    meshCube.Draw(matClear,
+      Matrix.TRS(cursor, cursorOri, new Vec3(0.02f, 0.005f, 0.02f)),
       cursorColor
     );
 
@@ -303,33 +321,20 @@ public class Oriel {
   // faces, edges, corners
   Vec3[] anchors = new Vec3[] {
     // faces
-    new Vec3(1, 0, 0),
-    new Vec3(-1, 0, 0),
-    new Vec3(0, 1, 0),
-    new Vec3(0, -1, 0),
-    new Vec3(0, 0, 1),
-    new Vec3(0, 0, -1),
+    new Vec3(1,  0,  0), new Vec3(-1,  0,  0),
+    new Vec3(0,  1,  0), new Vec3( 0, -1,  0),
+    new Vec3(0,  0,  1), new Vec3( 0,  0, -1),
     // edges
-    new Vec3(1, 1, 0),
-    new Vec3(-1, 1, 0),
-    new Vec3(1, -1, 0),
-    new Vec3(-1, -1, 0),
-    new Vec3(1, 0, 1),
-    new Vec3(-1, 0, 1),
-    new Vec3(1, 0, -1),
-    new Vec3(-1, 0, -1),
-    new Vec3(0, 1, 1),
-    new Vec3(0, -1, 1),
-    new Vec3(0, 1, -1),
-    new Vec3(0, -1, -1),
+    new Vec3(1,  1,  0), new Vec3(-1,  1,  0),
+    new Vec3(1, -1,  0), new Vec3(-1, -1,  0),
+    new Vec3(1,  0,  1), new Vec3(-1,  0,  1),
+    new Vec3(1,  0, -1), new Vec3(-1,  0, -1),
+    new Vec3(0,  1,  1), new Vec3( 0, -1,  1),
+    new Vec3(0,  1, -1), new Vec3( 0, -1, -1),
     // corners
-    new Vec3(1, 1, 1),
-    new Vec3(-1, 1, 1),
-    new Vec3(1, -1, 1),
-    new Vec3(-1, -1, 1),
-    new Vec3(1, 1, -1),
-    new Vec3(-1, 1, -1),
-    new Vec3(1, -1, -1),
-    new Vec3(-1, -1, -1)
+    new Vec3(1,  1,  1), new Vec3(-1,  1,  1),
+    new Vec3(1, -1,  1), new Vec3(-1, -1,  1),
+    new Vec3(1,  1, -1), new Vec3(-1,  1, -1),
+    new Vec3(1, -1, -1), new Vec3(-1, -1, -1)
   };
 }

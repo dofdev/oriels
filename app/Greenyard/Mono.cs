@@ -6,7 +6,8 @@ public class Mono {
   // Mesh[] greenyard;
   // Material greenyardMat = new Material(Shader.FromFile("/shaders/oriel.hlsl"));
 
-  Vec3 offset = new Vec3(2, 0, -2);
+  Vec3 offset = new Vec3(2, 1, -2);
+  public float height = 1f;
   Vec3 angle = new Vec3(0, 0, 0);
 
   Thing[] thing;
@@ -57,7 +58,8 @@ public class Mono {
     Oriels.Rig rig = Oriels.Mono.inst.rig;
     Oriels.Oriel oriel = Oriels.Mono.inst.oriel;
 
-    // angle.x += rig.rCon.device.stick.y * Time.Elapsedf;
+    angle.x += rig.rCon.device.stick.y * -60f * Time.Elapsedf;
+    angle.x = PullRequest.Clamp(angle.x, -89, 89);
     angle.y += rig.rCon.device.stick.x * -60f * Time.Elapsedf;
 
     Vec3 input = new Vec3(
@@ -66,10 +68,18 @@ public class Mono {
       rig.lCon.device.stick.y
     );
     if (input.MagnitudeSq > 0.01f) {
-      offset += (Quat.FromAngles(0, angle.y, 0).Inverse * rig.lCon.ori).Normalized * input * Time.Elapsedf;
+      input = (
+        Quat.FromAngles(angle.x, 0, 0).Inverse *
+        Quat.FromAngles(0, angle.y, 0).Inverse *
+        rig.lCon.ori *
+        oriel.ori.Inverse
+      ).Normalized * input;
+      
+      input.y = 0;
+      offset += input * Time.Elapsedf;
     }
+    offset.y = -height;
 
-    
 
 
     // Oriel
@@ -80,6 +90,7 @@ public class Mono {
 
     Matrix simMatrix = Matrix.TRS(
       Vec3.Zero, // -oriel.bounds.dimensions.y / 2.01f
+      Quat.FromAngles(angle.x, 0, 0) *
       Quat.FromAngles(0, angle.y, 0),
       Vec3.One * scale
     );
