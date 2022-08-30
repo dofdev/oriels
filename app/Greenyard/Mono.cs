@@ -58,9 +58,9 @@ public class Mono {
     Oriels.Rig rig = Oriels.Mono.inst.rig;
     Oriels.Oriel oriel = Oriels.Mono.inst.oriel;
 
-    angle.x += rig.rCon.device.stick.y * -60f * Time.Elapsedf;
-    angle.x = PullRequest.Clamp(angle.x, -89, 89);
-    angle.y += rig.rCon.device.stick.x * -60f * Time.Elapsedf;
+    // angle.x -= rig.rCon.device.stick.y * 90f * Time.Elapsedf;
+    // angle.x = PullRequest.Clamp(angle.x, -89, 89);
+    angle.y -= rig.rCon.device.stick.x * 90f * Time.Elapsedf;
 
     Vec3 input = new Vec3(
       rig.lCon.device.stick.x,
@@ -69,7 +69,7 @@ public class Mono {
     );
     if (input.MagnitudeSq > 0.01f) {
       input = (
-        Quat.FromAngles(angle.x, 0, 0).Inverse *
+        // Quat.FromAngles(angle.x, 0, 0).Inverse *
         Quat.FromAngles(0, angle.y, 0).Inverse *
         rig.lCon.ori *
         oriel.ori.Inverse

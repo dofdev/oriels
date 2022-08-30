@@ -154,7 +154,8 @@ public class Oriel {
 
     if (interacting) {
       if (detectCount == 1) { // Grab (face -> crown *face)
-        ori = (cursorOri * qOffset.Inverse).Normalized;
+        Quat newOri = (cursorOri * qOffset.Inverse).Normalized;
+        ori = Quat.Slerp(ori, newOri, Time.Elapsedf * 9f);
         // gravity snapping (within 6 degrees) *horizontal
         // always? *here **tilt = nosnap
         if (Vec3.Dot(-Vec3.Up, ori * -Vec3.Up) > 0.9998f) {
