@@ -10,6 +10,11 @@ public class Mono {
   public Scene scene = new Scene();
 
   // -------------------------------------------------
+
+  dof[] dofs;
+  int dofIndex = 0;
+  dof dof => dofs[dofIndex];
+
   public Oriel oriel = new Oriel(); // -> array ?
 
   public ColorCube colorCube = new ColorCube();
@@ -27,6 +32,7 @@ public class Mono {
   public Cubic[] cubics = new Cubic[] {
     new Cubic(), new Cubic(), new Cubic(), new Cubic(), new Cubic(), new Cubic()
   };
+
   // -------------------------------------------------
 
   public MonoNet net = new MonoNet();
@@ -34,13 +40,25 @@ public class Mono {
   public Mono() {
     Renderer.SetClip(0.02f, 1000f);
 
+    dofs = new dof[] {
+      // new StretchFinger(),
+      // new Trackballer(rGlove.virtualGlove, anchor),
+      new StretchCursor() { handId = 0, deadzone = 0.01f, strength = 3f }, // can override design variables
+      new StretchCursor() { handId = 1, deadzone = 0.01f, strength = 3f }, // can override design variables
+    };
   }
+  Pose anchor = Pose.Identity;
 
   public void Init() {
+
+
+    dofs[0].Init();
+    dofs[1].Init();
+
+
     // spaceMono.Init();
     greenyard.Init();
   }
-
 
   // -------------------------------------------------
 
@@ -53,13 +71,18 @@ public class Mono {
 
   // -------------------------------------------------
 
-  public void Step() {
+  public void Frame() {
 
     rig.Step();
 
     // -------------------------------------------------
 
-    rGlove.Step(); lGlove.Step();
+    // dof.Frame();    
+    dofs[0].Frame();
+    dofs[1].Frame();
+
+
+    // rGlove.Step(); lGlove.Step();
 
     // rBlock.Step(); lBlock.Step();
 
@@ -67,19 +90,19 @@ public class Mono {
 
     // colorCube.Palm(lCon.device);
 
-    oriel.Frame();
+    // oriel.Frame();
 
     scene.Step(); // after! (render scene after oriel)
 
     // -------------------------------------------------
 
     // spaceMono.Frame();
-    greenyard.Frame();
+    // greenyard.Frame();
     // board.Frame();
 
     // -------------------------------------------------
 
-    oriel.Render();
+    // oriel.Render();
 
     net.me.Step();
     net.send = true;
@@ -91,17 +114,38 @@ public class Mono {
   void ShowWindowButton() {
     UI.WindowBegin("Window Button", ref windowPoseButton);
 
-    if (UI.Button("Reset Oriel Quat")) { oriel.ori = Quat.Identity; }
     // if (UI.Button("Draw Oriel Axis")) { oriel.drawAxis = !oriel.drawAxis; }
-    if (UI.Button("Scale w/Height")) { oriel.scaleWithHeight = !oriel.scaleWithHeight; }
-    UI.HSlider("Scale", ref oriel.scale, 0.1f, 1f, 0.1f);
-    UI.HSlider("Multiplier", ref oriel.multiplier, 0.1f, 1f, 0.1f);
-    UI.Label("Player.y");
-    UI.HSlider("Player.y", ref greenyard.height, 0.1f, 1.5f, 0.1f);
+
+    // if (UI.Button("Reset Oriel Quat")) { oriel.ori = Quat.Identity; }
+    // if (UI.Button("Scale w/Height")) { oriel.scaleWithHeight = !oriel.scaleWithHeight; }
+    // UI.HSlider("Scale", ref oriel.scale, 0.1f, 1f, 0.1f);
+    // UI.HSlider("Multiplier", ref oriel.multiplier, 0.1f, 1f, 0.1f);
+    // UI.Label("Player.y");
+    // UI.HSlider("Player.y", ref greenyard.height, 0.1f, 1.5f, 0.1f);
+
+    UI.Label("trail.length");
+    UI.HSlider("trail.length", ref trailLen, 0.1f, 1f, 0.1f);
+
+    UI.Label("trail.scale");
+    UI.HSlider("trail.str", ref trailScl, 0.1f, 2f, 0.1f);
+
+    UI.Label("str");
+    UI.HSlider("str", ref stretchStr, 0.1f, 1f, 0.1f);
+
+
+    // flipIndex
+    // flipGrip
+
 
 
     UI.WindowEnd();
   }
+  public float trailLen = 0.333f;
+  public float trailScl = 1f;
+  public float stretchStr = 0.333f;
+
+
+
 }
 
 

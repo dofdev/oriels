@@ -13,20 +13,32 @@ public static class PullRequest {
     }
   }
 
+  public static Vec3 Slerp(Vec3 a, Vec3 b, float t) {
+    float dot = Vec3.Dot(a, b);
+    dot = Clamp(dot, -1f, 1f);
+
+    float theta = MathF.Acos(dot) * t;
+    Vec3 relativeVec = b - a * dot;
+    relativeVec.Normalize();
+
+    return (a * MathF.Cos(theta)) + (relativeVec * MathF.Sin(theta));
+  }
+
   // amplify quaternions (q * q * lerp(q.i, q, %))
 
   public static Vec3 AngularDisplacement(Quat q) {
     float angle; Vec3 axis;
-    ToAngleAxis(q, out angle, out axis);
+    ToAxisAngle(q, out axis, out angle);
     return axis * angle;
     // * (float)(Math.PI / 180); // radians -> degrees
     // / Time.Elapsedf; // delta -> velocity
   }
 
-  public static void ToAngleAxis(Quat q, out float angle, out Vec3 axis) {
-    q = q.Normalized;
-    angle = 2 * (float)Math.Acos(q.w);
-    float s = (float)Math.Sqrt(1 - q.w * q.w);
+  public static void ToAxisAngle(this Quat q, out Vec3 axis, out float angle) {
+    q = q.Normalized; // q.Normalize(); ?
+    angle = 2 * MathF.Acos(q.w);
+    float s = MathF.Sqrt(1 - q.w * q.w);
+    // float s = 2 * MathF.Asin(angle * 0.5f);
     axis = Vec3.Right;
     // avoid divide by zero
     // + if s is close to zero then direction of axis not important
@@ -35,6 +47,22 @@ public static class PullRequest {
       axis.y = q.y / s;
       axis.z = q.z / s;
     }
+  }
+
+  public static void LookDirection(this ref Quat q, Vec3 dir) {
+    Vec3 up = Vec3.Up;
+    
+    // using AxisAngle
+    Vec3 axis = Vec3.Cross(up, dir);
+    float angle = MathF.Atan2(Vec3.Dot(up, dir), axis.Length);
+    q = FromAxisAngle(axis.Normalized, angle);
+  }
+
+  public static Quat FromAxisAngle(Vec3 axis, float angle) {
+    float halfAngle = angle * 0.5f;
+    float sin = (float)Math.Sin(halfAngle);
+    float cos = (float)Math.Cos(halfAngle);
+    return new Quat(axis.x * sin, axis.y * sin, axis.z * sin, cos).Normalized;
   }
 
   static Random r = new Random();
@@ -127,16 +155,16 @@ public static class PullRequest {
     return a + (b - a) * t;
   }
 
-  public static Vec3 Slerp(Vec3 a, Vec3 b, float t) {
-    // spherical linear interpolation
-    float dot = Vec3.Dot(a, b);
-    if (dot > 0.9995f) {
-      return Vec3.Lerp(a, b, t);
-    }
-    float theta = (float)Math.Acos(dot);
-    float sinTheta = (float)Math.Sin(theta);
-    return Vec3.Lerp(a * (float)Math.Sin(theta - theta * t) / sinTheta, b * (float)Math.Sin(theta * t) / sinTheta, t);
-  }
+  // public static Vec3 Slerp(Vec3 a, Vec3 b, float t) {
+  //   // spherical linear interpolation
+  //   float dot = Vec3.Dot(a, b);
+  //   if (dot > 0.9995f) {
+  //     return Vec3.Lerp(a, b, t);
+  //   }
+  //   float theta = (float)Math.Acos(dot);
+  //   float sinTheta = (float)Math.Sin(theta);
+  //   return Vec3.Lerp(a * (float)Math.Sin(theta - theta * t) / sinTheta, b * (float)Math.Sin(theta * t) / sinTheta, t);
+  // }
 
   [Serializable]
   public class Noise {

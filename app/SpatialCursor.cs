@@ -10,23 +10,23 @@ public abstract class SpatialCursor {
   public abstract void Calibrate();
 }
 
-public class StretchCursor : SpatialCursor {
-  public StretchCursor() {
-    this.min = 1f;
-    this.str = 3f;
-    this.max = 10f;
-  }
-  public override void Step(Pose[] poses, float scalar) {
-    Pose dom = poses[0];
-    Pose sub = poses[1];
-    float stretch = (sub.position - dom.position).Magnitude;
-    stretch = Math.Max(stretch - 0.1f, 0);
-    p0 = dom.position + dom.Forward * stretch * 3;
+// public class StretchCursor : SpatialCursor {
+//   public StretchCursor() {
+//     this.min = 1f;
+//     this.str = 3f;
+//     this.max = 10f;
+//   }
+//   public override void Step(Pose[] poses, float scalar) {
+//     Pose dom = poses[0];
+//     Pose sub = poses[1];
+//     float stretch = (sub.position - dom.position).Magnitude;
+//     stretch = Math.Max(stretch - 0.1f, 0);
+//     p0 = dom.position + dom.Forward * stretch * 3;
 
-    model.Draw(Matrix.TS(p0, 0.06f));
-  }
-  public override void Calibrate() { }
-}
+//     model.Draw(Matrix.TS(p0, 0.06f));
+//   }
+//   public override void Calibrate() { }
+// }
 
 public class ReachCursor : SpatialCursor {
   bool chirality;

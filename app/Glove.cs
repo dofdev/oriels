@@ -10,7 +10,7 @@ public class Glove {
     this.chirality = chirality;
   }
 
-  public Pose virtualGlove;
+  public Pose virtualGlove = Pose.Identity;
   Quat projection = Quat.Identity;
   Vec3 direction {
     get { return projection * new Vec3(0, 0, -1); }
@@ -125,7 +125,7 @@ public class Glove {
     Vec3 thumb = hand.Get(FingerId.Thumb, JointId.Tip).position - con.pos;
     virtualGlove.position += Vec3.Lerp(index, thumb, 0.5f);
 
-    Render(con.Pose(), virtualGlove, wrist, stretch, twist, chirality);
+    Render(con.pose, virtualGlove, wrist, stretch, twist, chirality);
   }
 
   // decouple the rendering

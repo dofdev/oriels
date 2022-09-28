@@ -228,8 +228,8 @@ public class Peer {
     Mono mono = Mono.inst;
     color = mono.colorCube.color;
     headset = Input.Head;
-    rHand = mono.rig.rCon.Pose();
-    lHand = mono.rig.lCon.Pose();
+    rHand = mono.rig.rCon.pose;
+    lHand = mono.rig.lCon.pose;
     rCursor = mono.rGlove.virtualGlove;
     lCursor = mono.lGlove.virtualGlove;
 

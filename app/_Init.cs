@@ -8,6 +8,7 @@ SKSettings settings = new SKSettings {
   depthMode = DepthMode.D32,
   disableUnfocusedSleep = true,
   // displayPreference = DisplayMode.Flatscreen,
+  // disableFlatscreenMRSim = true,
 };
 if (!SK.Initialize(settings))
   Environment.Exit(1);
@@ -18,6 +19,6 @@ Input.HandVisible(Handed.Max, true);
 Oriels.Mono mono = Oriels.Mono.inst;
 mono.Init();
 while (SK.Step(() => {
-  mono.Step();
+  mono.Frame();
 }));
 SK.Shutdown();

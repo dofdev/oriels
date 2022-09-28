@@ -83,21 +83,18 @@ public class Con {
   public Controller device;
   public Vec3 pos;
   public Quat ori;
+  public Pose pose;
   public Vec3 backhandDir;
   public Btn gripBtn;
   public Btn triggerBtn;
 
   public void Step(bool chirality) {
     device = Input.Controller(chirality ? Handed.Right : Handed.Left);
-    pos = device.pose.position;
-    ori = device.aim.orientation;
+    pose.position = pos = device.pose.position;
+    pose.orientation = ori = device.aim.orientation;
     backhandDir = ori * (chirality ? Vec3.Right : -Vec3.Right);
     gripBtn.Step(device.grip > 0.5f);
     triggerBtn.Step(device.trigger > 0.5f);
-  }
-
-  public Pose Pose() {
-    return new Pose(pos, ori);
   }
 }
 
