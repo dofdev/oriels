@@ -46,6 +46,20 @@ class StretchCursor : dof {
 
     Mesh.Cube.Draw(Material.Default, Matrix.TS(cursor.position, 0.01f));
 
+    
+
+    // thumb trackballer
+    float d = Vec3.Distance(
+      hand.Get(FingerId.Index, JointId.KnuckleMid).position,
+      hand.Get(FingerId.Index, JointId.KnuckleMajor).position
+    );
+    Vec3 anchor = hand.Get(FingerId.Index, JointId.KnuckleMajor).position;
+    anchor = anchor + hand.palm.orientation * Vec3.Forward * d;
+    Mesh.Cube.Draw(Material.Default, Matrix.TS(anchor, 0.01f));
+
+
+
+
     if (isTracking) { Demo(); }
   }
 
