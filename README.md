@@ -2,9 +2,7 @@
 
 <img src='zrc/markberg.png' width="100%">
 
-<code>
-
-## oriels
+# oriels
 *a &deg;dof driven dev space*  
 
 
@@ -16,5 +14,3 @@
 
 mapped out by:  
 <a href='https://ethanmerchant.com'>@spatialfree</a> &times; <a href='https://twitter.com/opendegree'>@opendegree</a>
-
-</code>
