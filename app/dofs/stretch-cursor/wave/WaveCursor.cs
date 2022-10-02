@@ -59,7 +59,10 @@ class WaveCursor : dof {
     }
 
     Vec3 localPad = mAnchorInv.Transform(pad);
-    if (Vec3.Distance(pad, anchor) < 0.04f && Time.Totalf > 3f) { // localPad.Length < 0.04f
+    if (Vec3.Distance(pad, anchor) < 0.04f && isTracking) { // localPad.Length < 0.04f
+      // one of the dirs is 0
+      // they are the same
+      // 
       cursor.orientation = PullRequest.Relative(
         hand.palm.orientation,
         PullRequest.Delta(localPad.Normalized, oldLocalPad.Normalized)
