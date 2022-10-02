@@ -49,14 +49,30 @@ public static class PullRequest {
     }
   }
 
-  public static void LookDirection(this ref Quat q, Vec3 dir) {
-    Vec3 up = Vec3.Up;
-    
-    // using AxisAngle
-    Vec3 axis = Vec3.Cross(up, dir);
-    float angle = MathF.Atan2(Vec3.Dot(up, dir), axis.Length);
-    q = FromAxisAngle(axis.Normalized, angle);
+  // construct the quaternion that rotates one vector to another
+  // uses the usual trick to get the half angle
+  public static Quat Delta(Vec3 to, Vec3 from) {
+    Vec3 vec = Vec3.Cross(from, to);
+    return new Quat(
+      vec.x,
+      vec.y,
+      vec.z,
+      1 + Vec3.Dot(to, from )
+    ).Normalized;
   }
+
+  public static Quat Relative(Quat to, Quat delta) {
+    return (to * delta * to.Inverse).Normalized;
+  }
+
+  // public static void LookDirection(this ref Quat q, Vec3 dir) {
+  //   Vec3 up = Vec3.Up;
+    
+  //   // using AxisAngle
+  //   Vec3 axis = Vec3.Cross(up, dir);
+  //   float angle = MathF.Atan2(Vec3.Dot(up, dir), axis.Length);
+  //   q = FromAxisAngle(axis.Normalized, angle);
+  // }
 
   public static Quat FromAxisAngle(Vec3 axis, float angle) {
     float halfAngle = angle * 0.5f;

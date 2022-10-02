@@ -42,9 +42,11 @@ public class Mono {
 
     dofs = new dof[] {
       // new StretchFinger(),
-      // new Trackballer(rGlove.virtualGlove, anchor),
-      new StretchCursor() { handId = 0, deadzone = 0.01f, strength = 3f }, // can override design variables
-      new StretchCursor() { handId = 1, deadzone = 0.01f, strength = 3f }, // can override design variables
+      // new Trackballer(),
+      new WaveCursor() { handId = 0, deadzone = 0.01f, strength = 3f }, 
+      new WaveCursor() { handId = 1, deadzone = 0.01f, strength = 3f },
+      // new StretchCursor() { deadzone = 0.01f, strength = 3f }, 
+      // new StretchCursor() { deadzone = 0.01f, strength = 3f }, 
     };
   }
   Pose anchor = Pose.Identity;
@@ -77,6 +79,11 @@ public class Mono {
 
     // -------------------------------------------------
 
+    // THE BACK BREAKING PROBLEM WITH THE CURRENT DOF SYSTEM
+    // is that I can't pass input to it in a dynamic way
+    // a pointer would solve this problem but c# doesn't have pointers
+    // except for unsafe code, which opens up a whole new can of worms
+    
     // dof.Frame();    
     dofs[0].Frame();
     dofs[1].Frame();
