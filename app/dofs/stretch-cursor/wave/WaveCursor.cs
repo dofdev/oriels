@@ -6,9 +6,11 @@ class WaveCursor : dof {
   }
 
   Vec3 oldLocalPad;
+  Quat delta;
   public Pose cursor = Pose.Identity;
+	Material mat = Material.Default;
   public void Init() {
-
+		mat.SetTexture("diffuse", Tex.DevTex);
   }
 
   bool isTracking = false;
@@ -49,39 +51,42 @@ class WaveCursor : dof {
 
 
     Vec3 pad = Vec3.Lerp(
-      hand.Get(FingerId.Thumb, JointId.Tip).position,
       hand.Get(FingerId.Thumb, JointId.KnuckleMinor).position,
+      hand.Get(FingerId.Thumb, JointId.Tip).position,
       0.5f
     );
+    Vec3 localPad = mAnchorInv.Transform(pad);
+
     Color color = Color.White;
-    if (Vec3.Distance(pad, anchor) < 0.02f) {
+    if (localPad.Length < 0.015f) {
       color = new Color(1, 0, 0);
     }
 
-    Vec3 localPad = mAnchorInv.Transform(pad);
-    if (Vec3.Distance(pad, anchor) < 0.04f && isTracking) { // localPad.Length < 0.04f
-      // one of the dirs is 0
-      // they are the same
-      // 
-      cursor.orientation = PullRequest.Relative(
+    if (localPad.Length < 0.03f && isTracking) {
+			delta = PullRequest.Relative(
         hand.palm.orientation,
         PullRequest.Delta(localPad.Normalized, oldLocalPad.Normalized)
-      ) * cursor.orientation;
+      ).Normalized;
     }
+
+		if (isTracking) {
+			cursor.orientation = delta * cursor.orientation;
+		}
+
     // Lines.Add(
     //   mAnchor.Transform(padIn),
     //   mAnchor.Transform(padOut), 
     //   new Color(1, 1, 1), 0.004f
     // );
 
-    
+
 
     oldLocalPad = localPad;
 
 
 
-    Mesh.Sphere.Draw(Material.Default, Matrix.TS(anchor, 0.02f), color);
-    Mesh.Cube.Draw(Material.Default, Matrix.TRS(anchor, cursor.orientation, 0.02f));
+    Mesh.Sphere.Draw(mat, Matrix.TRS(anchor, cursor.orientation, 0.045f), color);
+    // Mesh.Cube.Draw(Material.Default, Matrix.TRS(anchor, cursor.orientation, 0.02f));
 
 
     if (isTracking) { Demo(); }

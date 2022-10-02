@@ -1,15 +1,13 @@
 namespace Oriels;
 
 class StretchCursor : dof {
-  Pose p0, p1;
-  public StretchCursor() {
-    
-  }
+	// input
+  public Pose p0, p1;
 
+	// data 
   public Pose cursor;
-  public void Init() {
-    
-  }
+
+  public void Init() {}
 
   public void Frame() {
     Vec3   vec      = p0.position - p1.position;
@@ -22,6 +20,7 @@ class StretchCursor : dof {
     Mesh.Cube.Draw(Material.Default, Matrix.TS(cursor.position, 0.01f));
   }
 
+	// design
   public bool  backhand = true;
   public float deadzone = 0.1f;
   public float strength = 3f;
