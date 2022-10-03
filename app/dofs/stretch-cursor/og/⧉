@@ -6,15 +6,19 @@ data
 	cursor = [0, 0, 0]
 
 frame
-	vec 		= to.pos - from.pos
-	len		 	= vec.length
+	vector 	= to.pos - from.pos
+	length	= vec.length
 
-	stretch = max(len - deadzone, 0)
-	dir 		= pointer ? to.ori * v3.fwd : vec / len
+	stretch = max(length - deadzone, 0)
+	dir 		= slerp(
+		vector / length,
+		to.ori * v3.fwd,
+		pointer
+	)
 
 	cursor  = to.pos + dir * stretch * strength
 
 design
-	pointer  = false
+	pointer  = 0
 	deadzone = 0.1
 	strength = 3
