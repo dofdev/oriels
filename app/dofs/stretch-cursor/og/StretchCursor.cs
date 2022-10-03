@@ -2,20 +2,19 @@ namespace Oriels;
 
 class StretchCursor : dof {
 	// input
-  public Pose to, from;
+  public Vec3 vTo, vFrom;
 
-	// data 
+	// data
   public Vec3 cursor;
 
   public void Init() {}
 
   public void Frame() {
-    Vec3  vec = to.position - from.position;
-    float len = vec.Length;
-    Vec3 	dir = vec / len;
+		float mag 		= (vTo - vFrom).Magnitude;
+    float stretch = Math.Max(mag - deadzone, 0f);
 
-    float stretch = Math.Max(len - deadzone, 0f);
-    cursor = to.position + dir * stretch * strength;
+    Vec3 dir = PullRequest.Direction(vTo, vFrom);
+    cursor 	 = vTo + dir * stretch * strength;
 
     Mesh.Cube.Draw(Material.Default, Matrix.TS(cursor, 0.01f));
   }

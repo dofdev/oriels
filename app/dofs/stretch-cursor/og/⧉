@@ -1,17 +1,17 @@
 input
-	tipTo   = [pos, ori]
-	tipFrom = [pos, ori]
+	vTo
+	vFrom
 
 data
-	cursor  = [0, 0, 0]
+	stretch
+	cursor
 
 frame
-	vector 	= tipTo.pos - tipFrom.pos
-	length	= vec.length
-	dir 		= vector / length
+	mag 		= (vTo - vFrom).mag
+	stretch = max(mag - deadzone, 0)
 
-	stretch = max(length - deadzone, 0)
-	cursor  = to.pos + dir * stretch * strength
+	dir 		= dir(vTo, vFrom)
+	cursor  = vTo + dir * stretch * strength
 
 design
 	deadzone = 0.1
