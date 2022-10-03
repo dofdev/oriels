@@ -1,24 +1,18 @@
 input
-	to   = [pos, ori]
-	from = [pos, ori]
+	tipTo   = [pos, ori]
+	tipFrom = [pos, ori]
 
 data
-	cursor = [0, 0, 0]
+	cursor  = [0, 0, 0]
 
 frame
-	vector 	= to.pos - from.pos
+	vector 	= tipTo.pos - tipFrom.pos
 	length	= vec.length
+	dir 		= vector / length
 
 	stretch = max(length - deadzone, 0)
-	dir 		= slerp(
-		vector / length,
-		to.ori * v3.fwd,
-		pointer
-	)
-
 	cursor  = to.pos + dir * stretch * strength
 
 design
-	pointer  = 0
 	deadzone = 0.1
 	strength = 3
