@@ -8,8 +8,9 @@ class WaveCursor : dof {
   Vec3 oldLocalPad;
   Quat delta;
   public Pose cursor = Pose.Identity;
-	Material mat = Material.Default;
+  Material mat;
   public void Init() {
+		mat = Material.Default.Copy();
 		mat.SetTexture("diffuse", Tex.DevTex);
   }
 
@@ -61,6 +62,9 @@ class WaveCursor : dof {
     if (localPad.Length < 0.015f) {
       color = new Color(1, 0, 0);
     }
+    if (localPad.Length > 0.055f) {
+      color = new Color(0, 1, 1);
+    }
 
     if (localPad.Length < 0.03f && isTracking) {
 			delta = PullRequest.Relative(
@@ -70,7 +74,10 @@ class WaveCursor : dof {
     }
 
 		if (isTracking) {
-			cursor.orientation = delta * cursor.orientation;
+			Quat newOri = delta * cursor.orientation;
+			if (new Vec3(newOri.x, newOri.y, newOri.z).LengthSq > 0) {
+				cursor.orientation = newOri;
+			}
 		}
 
     // Lines.Add(

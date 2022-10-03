@@ -2,7 +2,7 @@ namespace Oriels;
 
 class StretchCursor : dof {
 	// input
-  public Pose p0, p1;
+  public Pose to, from;
 
 	// data 
   public Pose cursor;
@@ -10,12 +10,12 @@ class StretchCursor : dof {
   public void Init() {}
 
   public void Frame() {
-    Vec3   vec      = p0.position - p1.position;
+    Vec3   vec      = to.position - from.position;
     float  len      = vec.Length;
     float  stretch  = Math.Max(len - deadzone, 0f);
-    Vec3   dir      = backhand ? vec / len : p0.orientation * Vec3.Forward;
+    Vec3   dir      = backhand ? vec / len : to.orientation * Vec3.Forward;
 
-    cursor.position = p0.position + dir * stretch * strength; // * Mono.inst.stretchStr;
+    cursor.position = to.position + dir * stretch * strength; // * Mono.inst.stretchStr;
 
     Mesh.Cube.Draw(Material.Default, Matrix.TS(cursor.position, 0.01f));
   }

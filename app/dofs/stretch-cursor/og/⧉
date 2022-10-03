@@ -1,0 +1,22 @@
+input
+	to   = [pos, ori]
+	from = [pos, ori]
+
+data
+	cursor
+
+init
+	cursor = to.pos
+
+frame
+	vec = to.pos - from.pos
+	len = vec.len
+	stretch = max(len - deadzone, 0)
+	dir = pointer ? to.ori * v3.fwd : vec / len
+
+	cursor = to.pos + dir * stretch * strength
+
+design
+	pointer  = false
+	deadzone = 0.1
+	strength = 3

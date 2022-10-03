@@ -6,6 +6,8 @@ public class Mono {
 
   public PullRequest.Noise noise = new PullRequest.Noise(939949595);
 
+  public Material matDev;
+
   public Rig rig = new Rig();
   public Scene scene = new Scene();
 
@@ -49,7 +51,6 @@ public class Mono {
       // new StretchCursor() { deadzone = 0.01f, strength = 3f }, 
     };
   }
-  Pose anchor = Pose.Identity;
 
   public void Init() {
 
@@ -60,6 +61,9 @@ public class Mono {
 
     // spaceMono.Init();
     greenyard.Init();
+
+    matDev = Material.Default.Copy();
+    matDev.SetTexture("diffuse", Tex.DevTex);
   }
 
   // -------------------------------------------------
