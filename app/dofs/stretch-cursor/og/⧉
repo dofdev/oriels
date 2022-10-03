@@ -3,18 +3,16 @@ input
 	from = [pos, ori]
 
 data
-	cursor
-
-init
-	# fade in if needed
+	cursor = [0, 0, 0]
 
 frame
 	vec 		= to.pos - from.pos
 	len		 	= vec.length
+
 	stretch = max(len - deadzone, 0)
 	dir 		= pointer ? to.ori * v3.fwd : vec / len
 
-	cursor = to.pos + dir * stretch * strength
+	cursor  = to.pos + dir * stretch * strength
 
 design
 	pointer  = false
