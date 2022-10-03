@@ -6,13 +6,13 @@ data
 	cursor
 
 init
-	cursor = to.pos
+	# fade in if needed
 
 frame
-	vec = to.pos - from.pos
-	len = vec.len
+	vec 		= to.pos - from.pos
+	len		 	= vec.length
 	stretch = max(len - deadzone, 0)
-	dir = pointer ? to.ori * v3.fwd : vec / len
+	dir 		= pointer ? to.ori * v3.fwd : vec / len
 
 	cursor = to.pos + dir * stretch * strength
 

@@ -5,23 +5,25 @@ class StretchCursor : dof {
   public Pose to, from;
 
 	// data 
-  public Pose cursor;
+  public Vec3 cursor;
 
-  public void Init() {}
+  public void Init() {
+		cursor = to.position;
+	}
 
   public void Frame() {
     Vec3   vec      = to.position - from.position;
     float  len      = vec.Length;
     float  stretch  = Math.Max(len - deadzone, 0f);
-    Vec3   dir      = backhand ? vec / len : to.orientation * Vec3.Forward;
+    Vec3   dir      = pointer ? vec / len : to.orientation * Vec3.Forward;
 
-    cursor.position = to.position + dir * stretch * strength; // * Mono.inst.stretchStr;
+    cursor = to.position + dir * stretch * strength;
 
-    Mesh.Cube.Draw(Material.Default, Matrix.TS(cursor.position, 0.01f));
+    Mesh.Cube.Draw(Material.Default, Matrix.TS(cursor, 0.01f));
   }
 
 	// design
-  public bool  backhand = true;
+  public bool  pointer  = false;
   public float deadzone = 0.1f;
   public float strength = 3f;
 }

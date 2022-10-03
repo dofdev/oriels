@@ -86,6 +86,8 @@ class WaveCursor : dof {
     //   new Color(1, 1, 1), 0.004f
     // );
 
+		// show that you are about to boolean in and out
+
 
 
     oldLocalPad = localPad;
