@@ -88,6 +88,7 @@ class WaveCursor : dof {
 
 		// show that you are about to boolean in and out
 
+		// trackballer demo
 
 
     oldLocalPad = localPad;

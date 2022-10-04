@@ -7,10 +7,10 @@ data
 	cursor
 
 frame
-	mag 		= (vTo - vFrom).mag
+	mag     = (vTo - vFrom).mag
 	stretch = max(mag - deadzone, 0)
 
-	dir 		= dir(vTo, vFrom)
+	dir     = v3.dir(vTo, vFrom)
 	cursor  = vTo + dir * stretch * strength
 
 design
