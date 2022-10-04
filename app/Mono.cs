@@ -92,7 +92,6 @@ public class Mono {
     dofs[0].Frame();
     dofs[1].Frame();
 
-
     // rGlove.Step(); lGlove.Step();
 
     // rBlock.Step(); lBlock.Step();
