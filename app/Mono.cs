@@ -7,6 +7,7 @@ public class Mono {
   public PullRequest.Noise noise = new PullRequest.Noise(939949595);
 
   public Material matDev;
+  public Material matHolo;
 
   public Rig rig = new Rig();
   public Scene scene = new Scene();
@@ -65,6 +66,11 @@ public class Mono {
 
     matDev = Material.Default.Copy();
     matDev.SetTexture("diffuse", Tex.DevTex);
+		matHolo = Material.Default.Copy();
+    matHolo.Transparency = Transparency.Add;
+		matHolo.DepthWrite = false;
+		matHolo.DepthTest = DepthTest.Less;
+		matHolo.SetTexture("diffuse", Tex.DevTex);
   }
 
   // -------------------------------------------------
@@ -94,6 +100,33 @@ public class Mono {
     dofs[1].Frame();
     dofs[2].Frame();
     dofs[3].Frame();
+
+    WaveCursor lwc = (WaveCursor)dofs[0];
+    WaveCursor rwc = (WaveCursor)dofs[1];
+		Trackballer ltb = (Trackballer)dofs[2];
+		Trackballer rtb = (Trackballer)dofs[3];
+
+    lwc.Demo(ltb.ori);
+		rwc.Demo(rtb.ori);
+
+    Mesh.Cube.Draw(Mono.inst.matHolo, 
+			Matrix.TRS(
+				lwc.cursor.position, 
+				ltb.ori, 
+				0.04f
+			), 
+			new Color(1, 0, 0)
+		);
+
+    Mesh.Cube.Draw(Mono.inst.matHolo, 
+			Matrix.TRS(
+				rwc.cursor.position, 
+				rtb.ori, 
+				0.04f
+			), 
+			new Color(1, 0, 0)
+		);
+
 
 
     // rGlove.Step(); lGlove.Step();
@@ -137,6 +170,9 @@ public class Mono {
     // UI.Label("Player.y");
     // UI.HSlider("Player.y", ref greenyard.height, 0.1f, 1.5f, 0.1f);
 
+    UI.Label("pos.y");
+		UI.HSlider("pos.y", ref playerY, -1f, 1f, 0.1f);
+
     UI.Label("trail.length");
     UI.HSlider("trail.length", ref trailLen, 0.1f, 1f, 0.1f);
 
@@ -147,6 +183,7 @@ public class Mono {
     UI.HSlider("str", ref stretchStr, 0.1f, 1f, 0.1f);
 
 
+
     // flipIndex
     // flipGrip
 
@@ -154,9 +191,10 @@ public class Mono {
 
     UI.WindowEnd();
   }
-  public float trailLen = 0.333f;
-  public float trailScl = 1f;
+  public float trailLen = 0.5f;
+  public float trailScl = 0.2f;
   public float stretchStr = 0.333f;
+  public float playerY = 0;
 
 
 

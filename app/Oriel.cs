@@ -104,9 +104,9 @@ public class Oriel {
 
 		// hand
     Trackballer tb = (Trackballer)Mono.inst.dofs[3];
-		bool frameDown = tb.btnIn.frameDown;
-		bool held = tb.btnIn.held;
-		bool frameUp = tb.btnIn.frameUp;
+		bool frameDown = tb.btnOut.frameDown;
+		bool held = tb.btnOut.held;
+		bool frameUp = tb.btnOut.frameUp;
 		
 		WaveCursor wc = (WaveCursor)Mono.inst.dofs[1];
 		cursor = wc.cursor.position;
@@ -309,12 +309,12 @@ public class Oriel {
       }
     }
 
-    meshCube.Draw(matClear,
+    meshCube.Draw(Mono.inst.matHolo,
       Matrix.TRS(cursor, cursorOri, new Vec3(0.02f, 0.005f, 0.02f)),
       cursorColor
     );
 
-    meshSphere.Draw(matClear,
+    meshSphere.Draw(Mono.inst.matHolo,
       Matrix.TS(cursor, new Vec3(1f, 1f, 1f) * cursorRadius * 2),
       new Color(0.1f, 0.1f, 0.1f)
     );

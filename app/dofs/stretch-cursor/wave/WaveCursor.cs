@@ -28,7 +28,7 @@ class WaveCursor : dof {
 
     }
 
-    Demo();
+    // Demo();
   }
 
   public float deadzone = 0.1f;
@@ -60,8 +60,8 @@ class WaveCursor : dof {
 	Vec3[] yR = new Vec3[64];
 	Vec3[] zL = new Vec3[64];
 	Vec3[] zR = new Vec3[64];
-  void Demo() {
-		Trail(mm, cursor.position);
+  public void Demo(Quat ori) {
+		Trail(mm, cursor.position + ori * new Vec3(0, 0, 0.04f));
 
 		// Trail(xL, smoothPos + cursor.orientation * new Vec3(-1, 0, 0) * 0.1f);
 		// Trail(xR, smoothPos + cursor.orientation * new Vec3( 1, 0, 0) * 0.1f);
@@ -84,12 +84,12 @@ class WaveCursor : dof {
       }
 
       Vec3 from = i > 0 ? points[i - 1] : nextPos;
-
+      Quat ori = Quat.LookDir(PullRequest.Direction(points[i], from));
       Mesh.Cube.Draw(
-        Material.Default,
+        Mono.inst.matHolo,
         Matrix.TRS(
-					points[i],
-					Quat.LookDir(PullRequest.Direction(points[i], from)),
+					points[i] + ori * new Vec3(0, 0, 0.01f) * Mono.inst.trailScl,
+					ori,
 					new Vec3(0.01f, 0.01f, 0.02f) * Mono.inst.trailScl
 				),
         Color.HSV(i / (float)len, 1, 1)

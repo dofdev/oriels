@@ -24,33 +24,35 @@ class Trackballer : dof {
       Vec3 pad = anchor.SnapToLine(
 				thumbKnuckle, thumbTip, 
 				true,
-				out float t, 0, 0.9f
+				out float t, 0.666f, 1f
 			);
       // t = 1 - t;
+			// scale to 0.666f - 1f
+      t = (t - 0.666f) / 0.334f;
       t = t * t;
 			t = 1 - t;
       pad += hand.Get(FingerId.Thumb, JointId.Tip).orientation * -Vec3.Up * 0.00666f * t;
       Vec3 localPad = mAnchorInv.Transform(pad);
 
-			Lines.Add(thumbTip, thumbKnuckle, Color.White, 0.002f);
-      Mesh.Sphere.Draw(Mono.inst.matDev, Matrix.TRS(pad, hand.palm.orientation, 0.004f), new Color(0, 1, 0));
+			// Lines.Add(thumbTip, thumbKnuckle, Color.White, 0.002f);
+      Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(pad, hand.palm.orientation, 0.004f), new Color(0, 1, 0));
 
-      Color color = Color.White;
-			if (btnIn.held) {
+      
+      if (btnIn.held) {
         btnIn.Step(localPad.Length < layer[1]);
 			} else {
       	btnIn.Step(localPad.Length < layer[0]);
 			}
-			color = btnIn.held ? new Color(1, 0, 0) : color;
+			float inT = btnIn.held ? 1 : 0.333f;
 
       if (btnOut.held) {
         btnOut.Step(localPad.Length > layer[1]);
       } else {
 				btnOut.Step(localPad.Length > layer[2]);
 			}
-			color = btnOut.held ? new Color(0, 1, 0) : color;
+      float outT = btnOut.held ? 1 : 0.333f;
 
-			if (btnIn.held) {
+      if (btnIn.held) {
 				delta = momentum = Quat.Identity;
 			} else {
 				if (localPad.Length < layer[1]) {
@@ -66,7 +68,8 @@ class Trackballer : dof {
     	oldLocalPad = localPad;
 
 			// Draw
-			Mesh.Cube.Draw(Mono.inst.matDev, Matrix.TRS(anchor, ori, 0.04f), color);
+			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(anchor, ori, 0.04f), new Color(inT, 0, 0));
+			Mesh.Cube.Draw(Mono.inst.matHolo, Matrix.TRS(anchor, ori, 0.04f), new Color(0, outT, 0));
     }
 
 

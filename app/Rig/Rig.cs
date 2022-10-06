@@ -44,12 +44,12 @@ public class Rig {
 
 
   public Vec3 LocalPos(Vec3 p) {
-    return ori.Inverse * (p - pos);
+    return ori.Inverse * (p - (pos + Vec3.Up * Mono.inst.playerY));
   }
 
 
   public void Step() {
-    Renderer.CameraRoot = Matrix.TR(pos, ori);
+    Renderer.CameraRoot = Matrix.TR((pos + Vec3.Up * Mono.inst.playerY), ori);
 
     // Controllers
     rCon.Step(true);
