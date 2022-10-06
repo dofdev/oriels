@@ -18,10 +18,10 @@ class Trackballer : dof {
 			Matrix mAnchor = Matrix.TR(anchor, hand.palm.orientation);
 			Matrix mAnchorInv = mAnchor.Inverse;
 
-			Vec3 pad = Vec3.Lerp(
-				hand.Get(FingerId.Thumb, JointId.KnuckleMinor).position,
+			Vec3 pad = anchor.SnapToLine(
 				hand.Get(FingerId.Thumb, JointId.Tip).position,
-				0.5f
+				hand.Get(FingerId.Thumb, JointId.KnuckleMinor).position,
+				true
 			);
 			Vec3 localPad = mAnchorInv.Transform(pad);
 
@@ -31,25 +31,32 @@ class Trackballer : dof {
 			} else {
       	btnIn.Step(localPad.Length < layer[0]);
 			}
-			color = btnIn.held ? new Color(1, 0, 0) : Color.White;
+			color = btnIn.held ? new Color(1, 0, 0) : color;
 
-			
-      btnOut.Step(localPad.Length > layer[2]);
-			if (localPad.Length > layer[2]) {
-				color = new Color(0, 1, 1);
+      if (btnOut.held) {
+        btnOut.Step(localPad.Length > layer[1]);
+      } else {
+				btnOut.Step(localPad.Length > layer[2]);
 			}
+			color = btnOut.held ? new Color(0, 1, 0) : color;
 
-			if (localPad.Length < layer[1]) {
-				delta = PullRequest.Relative(
-					hand.palm.orientation,
-					PullRequest.Delta(localPad.Normalized, oldLocalPad.Normalized)
-				).Normalized;
+			if (btnIn.held) {
+				delta = Quat.Identity;
+			} else {
+				if (localPad.Length < layer[1]) {
+					delta = PullRequest.Relative(
+						hand.palm.orientation,
+						PullRequest.Delta(localPad.Normalized, oldLocalPad.Normalized)
+					).Normalized;
+				}
 			}
 
     	oldLocalPad = localPad;
 
 			// Draw
-			Mesh.Sphere.Draw(Mono.inst.matDev, Matrix.TRS(anchor, ori, 0.045f), color);
+			Mesh.Cube.Draw(Mono.inst.matDev, Matrix.TRS(anchor, ori, 0.04f), color);
+
+			Mesh.Sphere.Draw(Mono.inst.matDev, Matrix.TRS(pad, hand.palm.orientation, 0.015f), new Color(0, 1, 0));
     }
 
 		Quat newOri = delta * ori;
@@ -66,7 +73,7 @@ class Trackballer : dof {
 
 	// design
   public Handed handed = Handed.Left;
-  public float[] layer = new float[] { 0.015f, 0.03f, 0.055f };
+  public float[] layer = new float[] { 0.00333f, 0.02f, 0.0666f };
 
 
 	

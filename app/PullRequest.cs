@@ -92,8 +92,43 @@ public static class PullRequest {
 		return (to - from).Normalized;
 	}
 
-	// swizzle
-	public static Vec3 JustX(this Vec3 v) {
+	public static Vec3 SnapToLine(this Vec3 v, Vec3 a, Vec3 b, bool clamp) {
+    Quat q = Quat.LookDir(Direction(b, a));
+    Vec3 lv = q.Inverse * (v - a);
+    lv.x = lv.y = 0;
+		Vec3 r = q * lv + a;
+		if (clamp) {
+			float d = (b - a).Length;
+			float t = (r - a).Length / d;
+			if (t < 0) t = 0;
+			if (t > 1) t = 1;
+			r = a + (b - a) * t;
+		}
+    return r;
+  }
+
+  /*
+	// turn this into a function
+		Vec3 vA = new Vec3(-1, 0, 0);
+		Vec3 vB = new Vec3(1, 1, 1);
+
+		Vec3 vC = Input.Hand(Handed.Right).palm.position;
+
+		Quat q = Quat.LookDir((vB - vA).Normalized);
+
+		// snap vC to line vA-vB
+		Vec3 local = q.Inverse * (vC - vA);
+		local.x = 0;
+		local.y = 0;
+		vC = q * local + vA;
+
+		Lines.Add(vA, vB, new Color(1, 1, 1), 0.002f);
+		Mesh.Cube.Draw(matDev, Matrix.TRS(vC, q, 0.04f));
+
+	*/
+
+  // swizzle
+  public static Vec3 JustX(this Vec3 v) {
 		return new Vec3(v.x, 0, 0);
 	}
 	public static Vec3 JustY(this Vec3 v) {
