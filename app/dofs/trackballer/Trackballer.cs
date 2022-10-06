@@ -15,7 +15,7 @@ class Trackballer : dof {
     Hand hand = Input.Hand(handed);
     if (hand.tracked.IsActive() && !hand.tracked.IsJustActive()) {
 			Vec3 anchor = hand.Get(FingerId.Index, JointId.KnuckleMajor).position;
-			anchor = anchor + hand.palm.orientation * Vec3.Forward * 0.045f;
+			anchor = anchor + hand.palm.orientation * new Vec3(-0.015f, 0, -0.045f);
 			Matrix mAnchor = Matrix.TR(anchor, hand.palm.orientation);
 			Matrix mAnchorInv = mAnchor.Inverse;
 
@@ -24,17 +24,18 @@ class Trackballer : dof {
       Vec3 pad = anchor.SnapToLine(
 				thumbKnuckle, thumbTip, 
 				true,
-				out float t, 0, 0.666f
+				out float t, 0, 0.9f
 			);
-      t = 1 - t;
+      // t = 1 - t;
       t = t * t;
-			// t = 1 - t;
+			t = 1 - t;
       pad += hand.Get(FingerId.Thumb, JointId.Tip).orientation * -Vec3.Up * 0.00666f * t;
       Vec3 localPad = mAnchorInv.Transform(pad);
 
 			Lines.Add(thumbTip, thumbKnuckle, Color.White, 0.002f);
+      Mesh.Sphere.Draw(Mono.inst.matDev, Matrix.TRS(pad, hand.palm.orientation, 0.004f), new Color(0, 1, 0));
 
-			Color color = Color.White;
+      Color color = Color.White;
 			if (btnIn.held) {
         btnIn.Step(localPad.Length < layer[1]);
 			} else {
@@ -66,8 +67,6 @@ class Trackballer : dof {
 
 			// Draw
 			Mesh.Cube.Draw(Mono.inst.matDev, Matrix.TRS(anchor, ori, 0.04f), color);
-
-			Mesh.Sphere.Draw(Mono.inst.matDev, Matrix.TRS(pad, hand.palm.orientation, 0.015f), new Color(0, 1, 0));
     }
 
 
