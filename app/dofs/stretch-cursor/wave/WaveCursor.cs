@@ -31,7 +31,7 @@ class WaveCursor : dof {
     // Demo();
   }
 
-  public float deadzone = 0.1f;
+  public float deadzone = 0.03f;
   public float strength = 3f;
   public Handed handed  = Handed.Left;
 

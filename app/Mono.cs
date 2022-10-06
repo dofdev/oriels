@@ -45,12 +45,12 @@ public class Mono {
 
     dofs = new dof[] {
       // new StretchFinger(),
-      new WaveCursor() { handed = Handed.Left,  deadzone = 0.01f, strength = 3f }, 
-      new WaveCursor() { handed = Handed.Right, deadzone = 0.01f, strength = 3f },
+      new WaveCursor() { handed = Handed.Left }, 
+      new WaveCursor() { handed = Handed.Right },
       new Trackballer() { handed = Handed.Left },
       new Trackballer() { handed = Handed.Right },
-      // new StretchCursor() { deadzone = 0.01f, strength = 3f }, 
-      // new StretchCursor() { deadzone = 0.01f, strength = 3f }, 
+      // new StretchCursor() { }, 
+      // new StretchCursor() { }, 
     };
   }
 
