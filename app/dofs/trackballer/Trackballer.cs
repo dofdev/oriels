@@ -26,10 +26,14 @@ class Trackballer : dof {
 			Vec3 localPad = mAnchorInv.Transform(pad);
 
 			Color color = Color.White;
-      btnIn.Step(localPad.Length < layer[0]);
-      if (localPad.Length < layer[0]) {
-				color = new Color(1, 0, 0);
+			if (btnIn.held) {
+        btnIn.Step(localPad.Length < layer[1]);
+			} else {
+      	btnIn.Step(localPad.Length < layer[0]);
 			}
+			color = btnIn.held ? new Color(1, 0, 0) : Color.White;
+
+			
       btnOut.Step(localPad.Length > layer[2]);
 			if (localPad.Length > layer[2]) {
 				color = new Color(0, 1, 1);
