@@ -1,21 +1,17 @@
 # 2019.03.14 -> 2022.10.06 ->
 
 # deprecated format
-# // spatial culling shader code
-# 
+# // signed distance field compositing
+# // *spatial culling shader code
 # _matrix   = Matrix.TR(oriel.pos, oriel.rot)
 # _dim      = oriel.dimensions
 # MAX_STEPS = 256&#177;
 # MAX_DIST  = 100&#177;
-# 
 # BoxSD(pos, dim):
 #   q     = abs(pos) - dim
 #   step  = length(max(q, 0.0))
 #   step += min(max(q.x, max(q.y, q.z)), 0.0)
-# 
 #   return step
-# 
-# 
 # Raymarch(origin, dir):
 #   origin = mul(origin, _matrix)
 #   dir    = mul(dir,    _matrix)
@@ -26,25 +22,17 @@
 #     if (step < 0.0001 or dist > MAX_DIST):
 #       then break loop
 #     dist += step
-#   
 #   return dist
-# 
-# 
 # YourPixelShader():
 #   pos = pixel.worldposition
 #   dir = normalize(pos - cam)
-#   
 #   // cull around
 #   dist = Raymarch(cam, dir) 
 #   clip(100 - (dist + 1))
-#   
 #   // cull between
 #   oriel = cam + dist * dir
 #   clip(dist(cam, pos) - dist(cam, oriel))
-#   
 #   ...
-# 
-# 
 
 # new format *TODO
 input
