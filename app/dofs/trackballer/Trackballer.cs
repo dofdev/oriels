@@ -1,54 +1,70 @@
 namespace Oriels;
 
 class Trackballer : dof {
-  Pose anchor = Pose.Identity;
-  Quat ori = Quat.Identity;
-  Quat qDelta = Quat.Identity;
-  Vec2 oldMouse;
 
-  public void Init() {
+  // data
+  public Btn btnIn, btnOut;
+  public Quat ori = Quat.Identity;
+  Vec3 oldLocalPad;
+  Quat delta = Quat.Identity;
 
-  }
+  public void Init() {}
 
   public void Frame() {
-    // apply the qDelta to the current orientation relative to the head orientation
-    // Quat headOri = Input.Head.orientation;
-    // ori = (headOri * qDelta * headOri.Inverse * ori).Normalized;
-    // PullRequest.Relative(headOri, qDelta) * ori;
+    Hand hand = Input.Hand(handed);
+    if (hand.tracked.IsActive() && !hand.tracked.IsJustActive()) {
+			Vec3 anchor = hand.Get(FingerId.Index, JointId.KnuckleMajor).position;
+			anchor = anchor + hand.palm.orientation * Vec3.Forward * 0.045f;
+			Matrix mAnchor = Matrix.TR(anchor, hand.palm.orientation);
+			Matrix mAnchorInv = mAnchor.Inverse;
 
-    Vec2 mouse = Input.Mouse.pos;
-    mouse = new Vec2(
-      (mouse.x / 1280 * 2) - 1f,
-      (mouse.y / 720 * 2) - 1f
-    ) * 4f;
+			Vec3 pad = Vec3.Lerp(
+				hand.Get(FingerId.Thumb, JointId.KnuckleMinor).position,
+				hand.Get(FingerId.Thumb, JointId.Tip).position,
+				0.5f
+			);
+			Vec3 localPad = mAnchorInv.Transform(pad);
 
-    ori = PullRequest.Delta(
-      new Vec3(mouse.x, mouse.y, 1).Normalized,
-      new Vec3(oldMouse.x, oldMouse.y, 1).Normalized
-    ) * ori;
+			Color color = Color.White;
+      btnIn.Step(localPad.Length < layer[0]);
+      if (localPad.Length < layer[0]) {
+				color = new Color(1, 0, 0);
+			}
+      btnOut.Step(localPad.Length > layer[2]);
+			if (localPad.Length > layer[2]) {
+				color = new Color(0, 1, 1);
+			}
 
-    oldMouse = mouse;
+			if (localPad.Length < layer[1]) {
+				delta = PullRequest.Relative(
+					hand.palm.orientation,
+					PullRequest.Delta(localPad.Normalized, oldLocalPad.Normalized)
+				).Normalized;
+			}
 
+    	oldLocalPad = localPad;
 
-    Lines.Add(
-      anchor.position - ori * new Vec3(-1, 0, 0) * 0.1f,
-      anchor.position - ori * new Vec3( 1, 0, 0) * 0.1f,
-      new Color(1, 0, 0), 0.002f
-    );
-    Lines.Add(
-      anchor.position - ori * new Vec3( 0,-1, 0) * 0.1f,
-      anchor.position - ori * new Vec3( 0, 1, 0) * 0.1f,
-      new Color(0, 1, 0), 0.002f
-    );
-    Lines.Add(
-      anchor.position - ori * new Vec3( 0, 0,-1) * 0.1f,
-      anchor.position - ori * new Vec3( 0, 0, 1) * 0.1f,
-      new Color(0, 0, 1), 0.002f
-    );
-    Mesh.Cube.Draw(Material.Default, Matrix.TRS(anchor.position, ori, 0.04f));
+			// Draw
+			Mesh.Sphere.Draw(Mono.inst.matDev, Matrix.TRS(anchor, ori, 0.045f), color);
+    }
+
+		Quat newOri = delta * ori;
+		if (new Vec3(newOri.x, newOri.y, newOri.z).LengthSq > 0) {
+			ori = newOri;
+		}
+    
+    // show that you are about to boolean in and out
+
+    // trackballer demo
+    // fly around a "ship" with the cursor
+    // and turn it with the thumb trackballer
   }
 
-  Vec2 fromMouse = new Vec2(0, 0);
+	// design
+  public Handed handed = Handed.Left;
+  public float[] layer = new float[] { 0.015f, 0.03f, 0.055f };
 
-  public float deadzone = 0.1f;
+
+	
+  public float scale = 1;
 }

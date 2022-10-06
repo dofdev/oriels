@@ -2,24 +2,29 @@ namespace Oriels;
 
 class StretchCursor : dof {
 	// input
-  public Vec3 vTo, vFrom;
+	Vec3 vTo;
+	Vec3 vFrom;
 
 	// data
-  public Vec3 cursor;
+	float stretch;
+	Vec3 cursor;
 
   public void Init() {}
 
-  public void Frame() {
-		float mag 		= (vTo - vFrom).Magnitude;
-    float stretch = Math.Max(mag - deadzone, 0f);
+	public void Frame() {
+		float mag = (vTo - vFrom).Magnitude;
+		stretch = MathF.Max(mag - deadzone, 0);
 
-    Vec3 dir = PullRequest.Direction(vTo, vFrom);
-    cursor 	 = vTo + dir * stretch * strength;
+		Vec3 dir = PullRequest.Direction(vTo, vFrom);
+		cursor = vTo + dir * stretch * strength;
 
-    Mesh.Cube.Draw(Material.Default, Matrix.TS(cursor, 0.01f));
-  }
+		// draw
+		Lines.Add(vFrom, vTo, new Color(1, 1, 1), 0.002f);
+		Lines.Add(vTo, cursor, new Color(1, 0, 0), 0.002f);
+		Mesh.Cube.Draw(Material.Default, Matrix.TRS(cursor, Quat.Identity, 0.04f));
+	}
 
 	// design
-  public float deadzone = 0.1f;
-  public float strength = 3f;
+	float deadzone = 0.1f;
+	float strength = 3f;
 }

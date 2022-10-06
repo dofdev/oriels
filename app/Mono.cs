@@ -13,7 +13,7 @@ public class Mono {
 
   // -------------------------------------------------
 
-  dof[] dofs;
+  public dof[] dofs;
   int dofIndex = 0;
   dof dof => dofs[dofIndex];
 
@@ -44,9 +44,10 @@ public class Mono {
 
     dofs = new dof[] {
       // new StretchFinger(),
-      // new Trackballer(),
-      new WaveCursor() { handId = 0, deadzone = 0.01f, strength = 3f }, 
-      new WaveCursor() { handId = 1, deadzone = 0.01f, strength = 3f },
+      new WaveCursor() { handed = Handed.Left,  deadzone = 0.01f, strength = 3f }, 
+      new WaveCursor() { handed = Handed.Right, deadzone = 0.01f, strength = 3f },
+      new Trackballer() { handed = Handed.Left },
+      new Trackballer() { handed = Handed.Right },
       // new StretchCursor() { deadzone = 0.01f, strength = 3f }, 
       // new StretchCursor() { deadzone = 0.01f, strength = 3f }, 
     };
@@ -55,8 +56,8 @@ public class Mono {
   public void Init() {
 
 
-    dofs[0].Init();
-    dofs[1].Init();
+    // dofs[0].Init();
+    // dofs[1].Init();
 
 
     // spaceMono.Init();
@@ -91,6 +92,9 @@ public class Mono {
     // dof.Frame();    
     dofs[0].Frame();
     dofs[1].Frame();
+    dofs[2].Frame();
+    dofs[3].Frame();
+
 
     // rGlove.Step(); lGlove.Step();
 
@@ -100,19 +104,19 @@ public class Mono {
 
     // colorCube.Palm(lCon.device);
 
-    // oriel.Frame();
+    oriel.Frame();
 
     scene.Step(); // after! (render scene after oriel)
 
     // -------------------------------------------------
 
     // spaceMono.Frame();
-    // greenyard.Frame();
+    greenyard.Frame();
     // board.Frame();
 
     // -------------------------------------------------
 
-    // oriel.Render();
+    oriel.Render();
 
     net.me.Step();
     net.send = true;

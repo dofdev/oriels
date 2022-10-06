@@ -95,16 +95,28 @@ public class Oriel {
     Glove rGlove = Mono.inst.rGlove;
     // Vec3 lGlovePos = rig.lGlove.virtualGlove.position;
 
-    bool onpress = rig.rCon.triggerBtn.frameDown;
-    bool held = rig.rCon.triggerBtn.held;
-    bool onlift = rig.rCon.triggerBtn.frameUp;
-    cursor = rGlove.virtualGlove.position;
-    cursorOri = rGlove.virtualGlove.orientation;
+		// glove
+    // bool frameDown = rig.rCon.triggerBtn.frameDown;
+    // bool held = rig.rCon.triggerBtn.held;
+    // bool frameUp = rig.rCon.triggerBtn.frameUp;
+    // cursor = rGlove.virtualGlove.position;
+    // cursorOri = rGlove.virtualGlove.orientation;
+
+		// hand
+    Trackballer tb = (Trackballer)Mono.inst.dofs[3];
+		bool frameDown = tb.btnIn.frameDown;
+		bool held = tb.btnIn.held;
+		bool frameUp = tb.btnIn.frameUp;
+		
+		WaveCursor wc = (WaveCursor)Mono.inst.dofs[1];
+		cursor = wc.cursor.position;
+		cursorOri = wc.cursor.orientation;
+
 
     // debug
-    // bool onpress = Input.Key(Key.Space).IsJustActive();
+    // bool frameDown = Input.Key(Key.Space).IsJustActive();
     // bool held = Input.Key(Key.Space).IsActive();
-    // bool onlift = Input.Key(Key.Space).IsJustInactive();
+    // bool frameUp = Input.Key(Key.Space).IsJustInactive();
     // if (!Input.Key(Key.Shift).IsActive()) {
     //   Vec3 input = new Vec3(
     //     (Input.Key(Key.S).IsActive() ? 1 : 0) - (Input.Key(Key.A).IsActive() ? 1 : 0),
@@ -147,7 +159,7 @@ public class Oriel {
       qOffset = (ori.Inverse * cursorOri).Normalized;
       mOffset = matrix;
 
-      interacting = onpress;
+      interacting = frameDown;
       scaling = false;
       cornerDetect = Vec3.Zero;
     } 
@@ -185,7 +197,7 @@ public class Oriel {
 
           anchorOffset = localCursor - LocalAnchor;
 
-          scaling = onlift;
+          scaling = frameUp;
         }
 
         if (scaling) {
