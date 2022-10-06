@@ -96,26 +96,6 @@ public class Mono {
     dofs[3].Frame();
 
 
-    // turn this into a function
-    Vec3 vA = new Vec3(-1, 0, 0);
-    Vec3 vB = new Vec3(1, 1, 1);
-
-    Vec3 vC = Input.Hand(Handed.Right).palm.position;
-
-    Quat q = Quat.LookDir((vB - vA).Normalized);
-
-    // // snap vC to line vA-vB
-    // Vec3 local = q.Inverse * (vC - vA);
-    // local.x = 0;
-    // local.y = 0;
-    // vC = q * local + vA;
-
-		vC = vC.SnapToLine(vA, vB, true);
-
-    Lines.Add(vA, vB, new Color(1, 1, 1), 0.002f);
-    Mesh.Cube.Draw(matDev, Matrix.TRS(vC, q, 0.04f));
-
-
     // rGlove.Step(); lGlove.Step();
 
     // rBlock.Step(); lBlock.Step();

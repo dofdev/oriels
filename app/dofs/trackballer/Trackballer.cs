@@ -5,8 +5,9 @@ class Trackballer : dof {
   // data
   public Btn btnIn, btnOut;
   public Quat ori = Quat.Identity;
-  Vec3 oldLocalPad;
+  Quat momentum = Quat.Identity;
   Quat delta = Quat.Identity;
+  Vec3 oldLocalPad;
 
   public void Init() {}
 
@@ -18,12 +19,20 @@ class Trackballer : dof {
 			Matrix mAnchor = Matrix.TR(anchor, hand.palm.orientation);
 			Matrix mAnchorInv = mAnchor.Inverse;
 
-			Vec3 pad = anchor.SnapToLine(
-				hand.Get(FingerId.Thumb, JointId.Tip).position,
-				hand.Get(FingerId.Thumb, JointId.KnuckleMinor).position,
-				true
+      Vec3 thumbTip = hand.Get(FingerId.Thumb, JointId.Tip).position;
+			Vec3 thumbKnuckle = hand.Get(FingerId.Thumb, JointId.KnuckleMinor).position;
+      Vec3 pad = anchor.SnapToLine(
+				thumbKnuckle, thumbTip, 
+				true,
+				out float t, 0, 0.666f
 			);
-			Vec3 localPad = mAnchorInv.Transform(pad);
+      t = 1 - t;
+      t = t * t;
+			// t = 1 - t;
+      pad += hand.Get(FingerId.Thumb, JointId.Tip).orientation * -Vec3.Up * 0.00666f * t;
+      Vec3 localPad = mAnchorInv.Transform(pad);
+
+			Lines.Add(thumbTip, thumbKnuckle, Color.White, 0.002f);
 
 			Color color = Color.White;
 			if (btnIn.held) {
@@ -41,13 +50,15 @@ class Trackballer : dof {
 			color = btnOut.held ? new Color(0, 1, 0) : color;
 
 			if (btnIn.held) {
-				delta = Quat.Identity;
+				delta = momentum = Quat.Identity;
 			} else {
 				if (localPad.Length < layer[1]) {
 					delta = PullRequest.Relative(
 						hand.palm.orientation,
 						PullRequest.Delta(localPad.Normalized, oldLocalPad.Normalized)
 					).Normalized;
+
+					momentum = Quat.Slerp(momentum, delta, Time.Elapsedf * 10f);
 				}
 			}
 
@@ -59,7 +70,16 @@ class Trackballer : dof {
 			Mesh.Sphere.Draw(Mono.inst.matDev, Matrix.TRS(pad, hand.palm.orientation, 0.015f), new Color(0, 1, 0));
     }
 
-		Quat newOri = delta * ori;
+
+
+		// pad momentum! 
+		// like we did w/ vader life alyx immortal
+		// all the difference in the world!
+		// and makes for the third iteration of the trackballer
+
+
+
+		Quat newOri = momentum * ori;
 		if (new Vec3(newOri.x, newOri.y, newOri.z).LengthSq > 0) {
 			ori = newOri;
 		}

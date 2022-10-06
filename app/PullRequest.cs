@@ -92,16 +92,16 @@ public static class PullRequest {
 		return (to - from).Normalized;
 	}
 
-	public static Vec3 SnapToLine(this Vec3 v, Vec3 a, Vec3 b, bool clamp) {
+	public static Vec3 SnapToLine(this Vec3 v, Vec3 a, Vec3 b, bool clamp, out float t, float tMin = 0, float tMax = 1) {
     Quat q = Quat.LookDir(Direction(b, a));
     Vec3 lv = q.Inverse * (v - a);
     lv.x = lv.y = 0;
 		Vec3 r = q * lv + a;
+
+		float d = (b - a).Length;
+		t = (r - a).Length / d;
 		if (clamp) {
-			float d = (b - a).Length;
-			float t = (r - a).Length / d;
-			if (t < 0) t = 0;
-			if (t > 1) t = 1;
+			t = t < tMin ? tMin : (t > tMax ? tMax : t);
 			r = a + (b - a) * t;
 		}
     return r;
