@@ -110,7 +110,7 @@ public class Oriel {
 		
 		WaveCursor wc = (WaveCursor)Mono.inst.dofs[1];
 		cursor = wc.cursor.position;
-		cursorOri = wc.cursor.orientation;
+		cursorOri = Quat.Identity; // wc.cursor.orientation;
 
 
     // debug
