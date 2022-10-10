@@ -340,3 +340,14 @@ public class Oriel {
     new Vec3(1, -1, -1), new Vec3(-1, -1, -1)
   };
 }
+
+
+/* 
+	COMMENTS
+
+	try rendering as additive for an AR effect!
+
+	compositor
+		multi-oriel requires a compositor approach
+		even if you just start with input management
+*/

@@ -72,32 +72,31 @@ class Trackballer : dof {
 			Mesh.Cube.Draw(Mono.inst.matHolo, Matrix.TRS(anchor, ori, 0.04f), new Color(0, outT, 0));
     }
 
-
-
-		// pad momentum! 
-		// like we did w/ vader life alyx immortal
-		// all the difference in the world!
-		// and makes for the third iteration of the trackballer
-
-
-
 		Quat newOri = momentum * ori;
 		if (new Vec3(newOri.x, newOri.y, newOri.z).LengthSq > 0) {
 			ori = newOri;
 		}
-    
-    // show that you are about to boolean in and out
-
-    // trackballer demo
-    // fly around a "ship" with the cursor
-    // and turn it with the thumb trackballer
   }
 
 	// design
   public Handed handed = Handed.Left;
   public float[] layer = new float[] { 0.00333f, 0.02f, 0.0666f };
-
-
 	
-  public float scale = 1;
 }
+
+
+/*
+	COMMENTS
+
+	distinct interactions to account for (relative to palm orientation)
+		w/rating assuming perfect tracking
+		y swipe (10/10) 
+		z swipe (05/10)
+		x spin  (02/10)
+
+	how reliable is the provided palm orientation?
+	
+	show when you are about to boolean
+	
+	2d pad?
+*/

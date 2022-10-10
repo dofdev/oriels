@@ -27,8 +27,6 @@ class WaveCursor : dof {
 			cursor.orientation = hand.palm.orientation;
 
     }
-
-    // Demo();
   }
 
   public float deadzone = 0.03f;
@@ -97,3 +95,9 @@ class WaveCursor : dof {
     }
 	}
 }
+
+
+/* 
+	COMMENTS
+
+*/
