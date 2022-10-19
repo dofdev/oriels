@@ -122,5 +122,5 @@ float4 ps(psIn input) : SV_TARGET {
 
   // float value = (col.r + col.r + col.g + col.g + col.g + col.b) / 6;
 	// return float4(value, value, value, 1);
-  return col * 0.333;
+  return col;
 }
