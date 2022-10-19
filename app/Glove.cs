@@ -125,6 +125,14 @@ public class Glove {
     Vec3 thumb = hand.Get(FingerId.Thumb, JointId.Tip).position - con.pos;
     virtualGlove.position += Vec3.Lerp(index, thumb, 0.5f);
 
+		Vec3 delta = virtualGlove.position - con.pos;
+    HandJoint[] joints = hand.fingers;
+    for (int i = 0; i < joints.Length; i++) {
+      joints[i].position += delta - Vec3.Lerp(index, thumb, 0.5f);
+    }
+    Input.HandOverride(chirality ? Handed.Right : Handed.Left, joints);
+
+
     Render(con.pose, virtualGlove, wrist, stretch, twist, chirality);
   }
 
@@ -168,3 +176,11 @@ public class Glove {
     // model.Draw(glove.ToMatrix(Vec3.One / 10));
   }
 }
+
+
+/* 
+	COMMENTS
+	
+	con -> hand
+
+*/

@@ -51,7 +51,11 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
 }
 
 float3 cross(float3 a, float3 b) {
-  return float3(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+  return float3(
+		a.y * b.z - a.z * b.y, 
+		a.z * b.x - a.x * b.z, 
+		a.x * b.y - a.y * b.x
+	);
 }
 
 float dot(float3 a, float3 b) {
@@ -74,7 +78,21 @@ float raymarch(float3 origin, float3 direction) {
   for (int i = 0; i < 256; i++) {
     float3 pos = origin + dist * direction;
     float step = sdBox(pos, _dimensions / 2.0);
-    if (step < 0.0001 || dist > 100) break;                       // 100 == distmax
+    if (step < 0.0001 || dist > 100) break;                // 100 == distmax
+    dist += step;
+  }
+  
+  return dist;
+}
+
+float raymarchy(float3 origin, float3 direction) {
+  origin = mul(float4(origin, 1), _matrix).xyz;
+  direction = mul(float4(direction, 0), _matrix).xyz;
+	float dist = 0.0;
+  for (int i = 0; i < 256; i++) {
+    float3 pos = origin + dist * direction;
+    float step = sdBox(pos, _dimensions / 4.0);
+    if (step < 0.0001 || dist > 100) break;                // 100 == distmax
     dist += step;
   }
   
@@ -92,6 +110,18 @@ psOut ps(psIn input) {
   clip(100 - (ol + 1));
 
   origin += ol * direction;
+
+	float oll = raymarchy(origin, direction);
+	if (oll < 99) {
+		o.color = float4(1, 1, 1, 1);
+
+		float3 origin2 = origin + oll * direction;
+		float4 og = mul(float4(origin2, 1), sk_viewproj[input.view_id]);
+		// o.depth = og.z;
+		o.depth = (og * rcp(og.w)).z;
+		return o;
+	}
+
 
   clip(distance(input.campos, input.world) - distance(input.campos, origin));
 

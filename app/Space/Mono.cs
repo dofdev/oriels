@@ -11,6 +11,11 @@ using Oriels;
 
 namespace Space;
 public class Mono {
+  public Oriel oriel = new Oriel(
+		new Vec3(1.0f, -0.5f, 0.5f),
+		Quat.Identity,
+		new Vec3(0.8f, 0.5f, 0.5f)
+	);
   Node[] nodes = new Node[18];
   Vec3 playerPos;
   List<Vec3> enemies = new List<Vec3>();
@@ -53,7 +58,6 @@ public class Mono {
 
   public void Frame() {
     Oriels.Rig rig = Oriels.Mono.inst.rig;
-    Oriels.Oriel oriel = Oriels.Mono.inst.oriel;
     
     Matrix simMatrix = Matrix.TRS(
       -playerPos * 0.5f * oriel.bounds.dimensions.y, //-oriel.bounds.dimensions.y / 2.01f, -playerWorldPos.z), 

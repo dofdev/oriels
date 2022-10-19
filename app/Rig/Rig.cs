@@ -82,7 +82,7 @@ public class Rig {
 public class Con {
   public Controller device;
   public Vec3 pos;
-  public Quat ori;
+  public Quat ori = Quat.Identity;
   public Pose pose;
   public Vec3 backhandDir;
   public Btn gripBtn;
@@ -91,7 +91,7 @@ public class Con {
   public void Step(bool chirality) {
     device = Input.Controller(chirality ? Handed.Right : Handed.Left);
     pose.position = pos = device.pose.position;
-    pose.orientation = ori = device.aim.orientation;
+    pose.orientation = ori = Quat.Identity; // device.pose.orientation;
     backhandDir = ori * (chirality ? Vec3.Right : -Vec3.Right);
     gripBtn.Step(device.grip > 0.5f);
     triggerBtn.Step(device.trigger > 0.5f);

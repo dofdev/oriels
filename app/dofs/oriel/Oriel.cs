@@ -1,9 +1,6 @@
 namespace Oriels;
 
 public class Oriel {
-  Model model = Model.FromFile("oriel.glb");
-  Mesh meshCube, meshSphere;
-
   Material matClear = new Material(Shader.Default);
   
   public Material matOriel = new Material(Shader.FromFile("shaders/oriel.hlsl"));
@@ -13,31 +10,26 @@ public class Oriel {
   public Matrix matrix, matrixInv;
   public Bounds bounds;
   public Quat ori = Quat.Identity;
+	public Color color = new Color(0.5f, 0.5f, 0.5f);
 
-  // inner matrix
-  public bool scaleWithHeight = false;
-  public float scale = 0.5f;
-  public float multiplier = 1f;
-
-  public Oriel() {
-    // meshCube = model.GetMesh("oriel");
-    meshCube = Mesh.Cube;
-    meshSphere = Mesh.Sphere;
+  public Oriel(Vec3 pos, Quat ori, Vec3 dimensions) {
     matClear.Transparency = Transparency.Add;
 
     matFrame.SetMat(102, Cull.Back, true);
-    matFrame.Transparency = Transparency.Blend;
+    // matFrame.Transparency = Transparency.Add;
     matFrame.SetTexture("dither", Tex.FromFile("dither.png"));
-    matPanes.SetMat(100, Cull.Front, false);
-    matOriel.SetMat(101, Cull.None, true);
+    
+		matPanes.SetMat(100, Cull.Front, false); // true?
+    // matPanes.Transparency = Transparency.Add;
+    // matPanes.DepthTest = DepthTest.Always;
 
-    bounds = new Bounds(
-      new Vec3(-1.0f, -0.5f, 0.5f),
-      // Vec3.Zero,
-      new Vec3(0.8f, 0.5f, 0.5f)
-    );
-    ori = Quat.FromAngles(0, 90, 0);
-    matrix = Matrix.TR(bounds.center, ori);
+    matOriel.SetMat(101, Cull.None, true);
+    // matOriel.Transparency = Transparency.Add;
+    // matOriel.DepthTest = DepthTest.Always;
+
+    bounds = new Bounds(pos, dimensions);
+    this.ori = ori;
+    matrix = Matrix.TR(bounds.center, this.ori);
     matrixInv = matrix.Inverse;
 
 
@@ -95,22 +87,26 @@ public class Oriel {
     Glove rGlove = Mono.inst.rGlove;
     // Vec3 lGlovePos = rig.lGlove.virtualGlove.position;
 
+
 		// glove
-    // bool frameDown = rig.rCon.triggerBtn.frameDown;
-    // bool held = rig.rCon.triggerBtn.held;
-    // bool frameUp = rig.rCon.triggerBtn.frameUp;
-    // cursor = rGlove.virtualGlove.position;
-    // cursorOri = rGlove.virtualGlove.orientation;
+		Hand rHand = Input.Hand(Handed.Right);
+    // why do I have to do this?
+    // rHand.IsJustPinched ||
+    bool frameDown = Input.Key(Key.MouseLeft).IsJustActive()   || rig.rCon.triggerBtn.frameDown;
+    bool held      = Input.Key(Key.MouseLeft).IsActive()       || rig.rCon.triggerBtn.held;
+    bool frameUp   = Input.Key(Key.MouseLeft).IsJustInactive() || rig.rCon.triggerBtn.frameUp;
+    cursor    = rGlove.virtualGlove.position;
+    cursorOri = rGlove.virtualGlove.orientation;
 
 		// hand
-    Trackballer tb = (Trackballer)Mono.inst.dofs[3];
-		bool frameDown = tb.btnOut.frameDown;
-		bool held = tb.btnOut.held;
-		bool frameUp = tb.btnOut.frameUp;
+    // Trackballer tb = (Trackballer)Mono.inst.dofs[3];
+		// bool frameDown = tb.btnOut.frameDown;
+		// bool held = tb.btnOut.held;
+		// bool frameUp = tb.btnOut.frameUp;
 		
-		WaveCursor wc = (WaveCursor)Mono.inst.dofs[1];
-		cursor = wc.cursor.position;
-		cursorOri = Quat.Identity; // wc.cursor.orientation;
+		// WaveCursor wc = (WaveCursor)Mono.inst.dofs[1];
+		// cursor = wc.cursor.position;
+		// cursorOri = Quat.Identity; // wc.cursor.orientation;
 
 
     // debug
@@ -159,7 +155,7 @@ public class Oriel {
       qOffset = (ori.Inverse * cursorOri).Normalized;
       mOffset = matrix;
 
-      interacting = frameDown;
+      interacting = frameDown && minDist < cursorRadius;
       scaling = false;
       cornerDetect = Vec3.Zero;
     } 
@@ -232,17 +228,16 @@ public class Oriel {
     // matFrame.DepthTest = DepthTest.Always;
     // matFrame.SetVector("_cursor", cursor);
     // matFrame.SetFloat("_time", Time.Totalf);
-    // meshCube.Draw(matFrame,
+    // Mesh.Cube.Draw(matFrame,
     //   Matrix.TRS(bounds.center, ori, bounds.dimensions),
     //   new Color(0.1f, 0.1f, 0.1f)
     // );
 
     // matPanes.DepthTest = DepthTest.Greater;
     matPanes["_matrix"] = (Matrix)System.Numerics.Matrix4x4.Transpose(matrixInv);
-    meshCube.Draw(matPanes,
+    Mesh.Cube.Draw(matPanes,
       Matrix.TRS(bounds.center, ori, bounds.dimensions),
-      new Color(0f, 0f, 0f)
-      // new Color(78 / 256f, 142 / 256f, 191 / 256f)
+      color
     );
 
     matOriel.SetVector("_center", bounds.center);
@@ -261,7 +256,7 @@ public class Oriel {
     ) / cursorRadius;
     if (detectCount == 1 || detectCount == 2) {
       Vec3 edge = Vec3.One - detect.Abs();
-      meshCube.Draw(matClear,
+      Mesh.Cube.Draw(matClear,
         Matrix.TS(
           LocalAnchor,
           (Vec3.One * thk) + (edge * bounds.dimensions / 3f * prx)
@@ -269,19 +264,19 @@ public class Oriel {
       );
     }
     if (detectCount == 3) {
-      meshCube.Draw(matClear,
+      Mesh.Cube.Draw(matClear,
         Matrix.TS(
           Vec3.Lerp(XAnchor, LocalAnchor, 0.5f),
           new Vec3(MathF.Abs(XAnchor.x - LocalAnchor.x), thk, thk)
         ) * matrix, col
       );
-      meshCube.Draw(matClear,
+      Mesh.Cube.Draw(matClear,
         Matrix.TS(
           Vec3.Lerp(YAnchor, LocalAnchor, 0.5f),
           new Vec3(thk, MathF.Abs(YAnchor.y - LocalAnchor.y), thk)
         ) * matrix, col
       );
-      meshCube.Draw(matClear,
+      Mesh.Cube.Draw(matClear,
         Matrix.TS(
           Vec3.Lerp(ZAnchor, LocalAnchor, 0.5f),
           new Vec3(thk, thk, MathF.Abs(ZAnchor.z - LocalAnchor.z))
@@ -290,31 +285,31 @@ public class Oriel {
 
       // draw cube(s) on intersecting corner ends
       if (cornerDetect.x > 0) {
-        meshCube.Draw(matClear, 
+        Mesh.Cube.Draw(matClear, 
           Matrix.TS(XAnchor, Vec3.One * thk * 2) * matrix,
           new Color(1, 0, 0)
         );
       }
       if (cornerDetect.y > 0) {
-        meshCube.Draw(matClear, 
+        Mesh.Cube.Draw(matClear, 
           Matrix.TS(YAnchor, Vec3.One * thk * 2) * matrix,
           new Color(0, 1, 0)
         );
       }
       if (cornerDetect.z > 0) {
-        meshCube.Draw(matClear, 
+        Mesh.Cube.Draw(matClear, 
           Matrix.TS(ZAnchor, Vec3.One * thk * 2) * matrix,
           new Color(0, 0, 1)
         );
       }
     }
 
-    meshCube.Draw(Mono.inst.matHolo,
-      Matrix.TRS(cursor, cursorOri, new Vec3(0.02f, 0.005f, 0.02f)),
+    Mesh.Sphere.Draw(Mono.inst.matHolo,
+      Matrix.TRS(cursor, cursorOri, new Vec3(0.02f, 0.02f, 0.02f)),
       cursorColor
     );
 
-    meshSphere.Draw(Mono.inst.matHolo,
+    Mesh.Sphere.Draw(Mono.inst.matHolo,
       Matrix.TS(cursor, new Vec3(1f, 1f, 1f) * cursorRadius * 2),
       new Color(0.1f, 0.1f, 0.1f)
     );
@@ -350,4 +345,5 @@ public class Oriel {
 	compositor
 		multi-oriel requires a compositor approach
 		even if you just start with input management
+
 */

@@ -8,7 +8,7 @@ struct BufferData {
   public float time;
 }
 
-public class Scene {
+public class Space {
   MaterialBuffer<BufferData> buffer;
   BufferData data = new BufferData();
 
@@ -18,7 +18,7 @@ public class Scene {
 
 
   Solid floor;
-  public Scene() {
+  public Space() {
     buffer = new MaterialBuffer<BufferData>(3); // index
 
 
@@ -41,22 +41,18 @@ public class Scene {
   public Vec3 floorScale;
 
 
-  public void Step() {
-    Oriel oriel = Mono.inst.oriel;
-    data.matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrixInv);
-    data.dimensions = oriel.bounds.dimensions;
+  public void Frame() {
+    // Oriel oriel = Mono.inst.oriel;
+    // data.matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrixInv);
+    // data.dimensions = oriel.bounds.dimensions;
 
-
-
-
-
-    // data.dimensions = Vec3.Zero;
-
-
-
-
-
+		data.matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(Matrix.T(Vec3.Up));
+		data.dimensions = new Vec3(0.1f, 0.1f, 0.1f);
     buffer.Set(data);
+
+
+
+
 
     // PullRequest.BlockOut(floor.GetPose().ToMatrix(floorScale), Color.White * 0.333f, matFloor);
     // foreach (ModelNode node in shed.Visuals) {

@@ -61,9 +61,9 @@ float sdSphere(float3 p, float r) {
   return length(p) - r;
 }
 
-float raymarch(float3 ro, float3 rd) {
-  ro = mul(float4(ro, 1), oriel_matrix).xyz;
-  rd = mul(float4(rd, 0), oriel_matrix).xyz;
+float raymarch(float4x4 m, float3 ro, float3 rd) {
+  ro = mul(float4(ro, 1), m).xyz;
+  rd = mul(float4(rd, 0), m).xyz;
 	float dist = 0.0;
   for (int i = 0; i < 256; i++) {
     float3 pos = ro + dist * rd;
@@ -101,7 +101,7 @@ float4 ps(psIn input) : SV_TARGET {
 
   float3 ro = input.campos;
   float3 rd = normalize(input.world - ro);
-  float ol = raymarch(ro, rd);
+  float  ol = raymarch(oriel_matrix, ro, rd);
 
   clip(-(100 - (ol + 1)));
   // if ((100 - (ol + 1)) > 0) {
@@ -122,5 +122,5 @@ float4 ps(psIn input) : SV_TARGET {
 
   // float value = (col.r + col.r + col.g + col.g + col.g + col.b) / 6;
 	// return float4(value, value, value, 1);
-  return col;
+  return col * 0.333;
 }
