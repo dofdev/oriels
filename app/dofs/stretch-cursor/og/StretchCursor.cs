@@ -15,7 +15,7 @@ class StretchCursor : dof {
 		float mag = (vTo - vFrom).Magnitude;
 		stretch = MathF.Max(mag - deadzone, 0);
 
-		Vec3 dir = PullRequest.Direction(vTo, vFrom);
+		Vec3 dir = Vec3.Direction(vTo, vFrom);
 		cursor = vTo + dir * stretch * strength;
 
 		// draw
