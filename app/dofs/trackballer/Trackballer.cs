@@ -7,7 +7,7 @@ class Trackballer : dof {
   public Quat ori = Quat.Identity;
   Quat momentum = Quat.Identity;
   Quat delta = Quat.Identity;
-	Vec3 oldTip;
+	Matrix oldMeshMatrix = Matrix.Identity;
 
 	PullRequest.OneEuroFilter xF = new PullRequest.OneEuroFilter(0.0001f, 0.1f);
 	PullRequest.OneEuroFilter yF = new PullRequest.OneEuroFilter(0.0001f, 0.1f);
@@ -29,8 +29,8 @@ class Trackballer : dof {
 			Matrix mAnchorInv = mAnchor.Inverse;
 
       Vec3 thumbTip = hand.Get(FingerId.Thumb, JointId.Tip).position;
-			Vec3 tipDelta = mAnchorInv.Transform(thumbTip) - mAnchorInv.Transform(oldTip);
-			oldTip = thumbTip;
+			// Vec3 tipDelta = mAnchorInv.Transform(thumbTip) - mAnchorInv.Transform(oldTip);
+			// oldTip = thumbTip;
 			Vec3 thumbKnuckle = hand.Get(FingerId.Thumb, JointId.KnuckleMinor).position;
 
 			Quat thumbRot = hand.Get(FingerId.Thumb, JointId.Tip).orientation;
@@ -39,41 +39,47 @@ class Trackballer : dof {
 				thumbRot,
 				new Vec3(handed == Handed.Left ? -1f : 1f, 1f, 1f) * 0.1666f
 			);
-			// mesh.Draw(Mono.inst.matHolo, mMesh, new Color(0, 0, 1));
+			mesh.Draw(Mono.inst.matHolo, mMesh, new Color(0, 0, 1));
 
 			// closest to anchor
-			float closest = 1000f;
+			float closest = 100000f;
 			int closestIndex = -1;
 			Vertex[] verts = mesh.GetVerts();
 			for (int i = 0; i < verts.Length; i++) {
-				Vec3 v = mMesh * verts[i].pos;
-				float d = (v - anchor).Length;
+				Vec3 v = mMesh.Transform(verts[i].pos);
+				float d = (v - anchor).LengthSq;
 				if (d < closest) {
 					closest = d;
 					closestIndex = i;
 				}
 			}
-			// Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(mMesh * verts[closestIndex].pos, Quat.Identity, 0.01f), new Color(1, 0, 0));
+
+      Vec3 localPad = mAnchorInv.Transform(mMesh.Transform(verts[closestIndex].pos));
+			Vec3 oldPad   = mAnchorInv.Transform(oldMeshMatrix.Transform(verts[closestIndex].pos));
+
+			oldMeshMatrix = mMesh;
 
 			// 
-			Vec3 pad = anchor.SnapToLine(
-				thumbKnuckle, thumbTip,
-				true,
-				out float t, 0f, 1f
-			);
+			// Vec3 pad = anchor.SnapToLine(
+			// 	thumbKnuckle, thumbTip,
+			// 	true,
+			// 	out float t, 0f, 1f
+			// );
+			// // t = 1 - t;
+			// // scale to 0.666f - 1f
+			// // t = (t - 0.666f) / 0.334f;
+			// t = t * t;
 			// t = 1 - t;
-			// scale to 0.666f - 1f
-			// t = (t - 0.666f) / 0.334f;
-			t = t * t;
-			t = 1 - t;
-      pad += hand.Get(FingerId.Thumb, JointId.Tip).orientation * -Vec3.Up * 0.00666f * t;
+      // pad += hand.Get(FingerId.Thumb, JointId.Tip).orientation * -Vec3.Up * 0.00666f * t;
 
 
       // Vec3 localPad = mAnchorInv.Transform(pad);
-      Vec3 localPad = mAnchorInv.Transform(thumbTip);
-			localPad.x = (float)xF.Filter(localPad.x, (double)Time.Elapsedf);
-			localPad.y = (float)yF.Filter(localPad.y, (double)Time.Elapsedf);
-			localPad.z = (float)zF.Filter(localPad.z, (double)Time.Elapsedf);
+      // Vec3 localPad = mAnchorInv.Transform(thumbTip);
+
+			// ?
+			// localPad.x = (float)xF.Filter(localPad.x, (double)Time.Elapsedf);
+			// localPad.y = (float)yF.Filter(localPad.y, (double)Time.Elapsedf);
+			// localPad.z = (float)zF.Filter(localPad.z, (double)Time.Elapsedf);
 
 			
 
@@ -81,11 +87,11 @@ class Trackballer : dof {
       Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(mAnchor.Transform(localPad), hand.palm.orientation, 0.004f), new Color(0, 1, 0));
 
       
-      if (btnIn.held) {
-        btnIn.Step(localPad.Length < layer[1]);
-			} else {
-      	btnIn.Step(localPad.Length < layer[0]);
-			}
+      // if (btnIn.held) {
+      //   btnIn.Step(localPad.Length < layer[1]);
+			// } else {
+      // 	btnIn.Step(localPad.Length < layer[0]);
+			// }
 			float inT = btnIn.held ? 1 : 0.333f;
 
       if (btnOut.held) {
@@ -102,8 +108,8 @@ class Trackballer : dof {
 					delta = PullRequest.Relative(
 						hand.palm.orientation,
 						Quat.Delta(
-							localPad.Normalized,
-							(localPad + tipDelta).Normalized
+							oldPad.Normalized,
+							localPad.Normalized
 						)
 					).Normalized;
 

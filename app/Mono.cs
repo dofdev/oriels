@@ -68,6 +68,7 @@ public class Mono {
 		matHolo.Transparency = Transparency.Add;
 		matHolo.DepthWrite = false;
 		matHolo.DepthTest = DepthTest.Always;
+		matHolo.FaceCull = Cull.None;
 		matHolo.SetTexture("diffuse", Tex.DevTex);
 	}
 
