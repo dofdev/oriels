@@ -4,8 +4,11 @@ class WaveCursor : dof {
 
 	// data
   public Pose cursor = Pose.Identity;
-  
-  public void Init() {}
+	PullRequest.OneEuroFilter xF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
+	PullRequest.OneEuroFilter yF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
+	PullRequest.OneEuroFilter zF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
+
+	public void Init() {}
 
   public void Frame() {
     Hand hand = Input.Hand(handed);
@@ -23,13 +26,18 @@ class WaveCursor : dof {
 			);
 
 			Vec3 rawPos = hand.Get(FingerId.Index, JointId.Tip).position + dir * stretch * strength * Mono.inst.stretchStr;
-			cursor.position = Vec3.Lerp(cursor.position, rawPos, Time.Elapsedf * 6f);
-			cursor.orientation = hand.palm.orientation;
+			Mesh.Cube.Draw(Mono.inst.matHolo, Matrix.TRS(rawPos, Quat.Identity, 0.01f), new Color(1, 0, 0));
 
+			rawPos.x = (float)xF.Filter(rawPos.x, (double)Time.Elapsedf);
+			rawPos.y = (float)yF.Filter(rawPos.y, (double)Time.Elapsedf);
+			rawPos.z = (float)zF.Filter(rawPos.z, (double)Time.Elapsedf);
+			cursor.position = rawPos; // Vec3.Lerp(cursor.position, rawPos, Time.Elapsedf * 6f);
+
+			cursor.orientation = hand.palm.orientation;
     }
   }
 
-  public float deadzone = 0.03f;
+  public float deadzone = 0.3f;
   public float strength = 3f;
   public Handed handed  = Handed.Left;
 
@@ -59,7 +67,7 @@ class WaveCursor : dof {
 	Vec3[] zL = new Vec3[64];
 	Vec3[] zR = new Vec3[64];
   public void Demo(Quat ori) {
-		Trail(mm, cursor.position + ori * new Vec3(0, 0, 0.04f));
+		Trail(mm, cursor.position); // + ori * new Vec3(0, 0, 0.04f));
 
 		// Trail(xL, smoothPos + cursor.orientation * new Vec3(-1, 0, 0) * 0.1f);
 		// Trail(xR, smoothPos + cursor.orientation * new Vec3( 1, 0, 0) * 0.1f);
@@ -67,7 +75,7 @@ class WaveCursor : dof {
 		// Trail(yR, smoothPos + cursor.orientation * new Vec3(0,  1, 0) * 0.1f);
 		// Trail(zL, smoothPos + cursor.orientation * new Vec3(0, 0, -1) * 0.1f);
 		// Trail(zR, smoothPos + cursor.orientation * new Vec3(0, 0,  1) * 0.1f);
-  }
+	}
 
 	void Trail(Vec3[] points, Vec3 nextPos) {
 		points[0] = nextPos;
