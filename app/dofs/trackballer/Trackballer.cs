@@ -39,7 +39,7 @@ class Trackballer : dof {
 				thumbRot,
 				new Vec3(handed == Handed.Left ? -1f : 1f, 1f, 1f) * 0.1666f
 			);
-			mesh.Draw(Mono.inst.matHolo, mMesh, new Color(0, 0, 1));
+			mesh.Draw(Mono.inst.matHolo, mMesh, new Color(0, 1, 1));
 
 			// closest to anchor
 			float closest = 100000f;
@@ -84,7 +84,7 @@ class Trackballer : dof {
 			
 
 			// Lines.Add(thumbTip, thumbKnuckle, Color.White, 0.002f);
-      Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(mAnchor.Transform(localPad), hand.palm.orientation, 0.004f), new Color(0, 1, 0));
+      Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(mAnchor.Transform(localPad), hand.palm.orientation, 0.002f), new Color(0, 1, 1));
 
       
       // if (btnIn.held) {
@@ -118,8 +118,8 @@ class Trackballer : dof {
 			}
 
 			// Draw
-			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(anchor, ori, 0.04f), new Color(inT, 0, 0));
-			Mesh.Cube.Draw(Mono.inst.matHolo, Matrix.TRS(anchor, ori, 0.04f), new Color(0, outT * 0.2f, 0));
+			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(anchor, ori, layer[1] * 2), new Color(inT, 0, 0));
+			// Mesh.Cube.Draw(Mono.inst.matHolo, Matrix.TRS(anchor, ori, 0.04f), new Color(0, outT * 0.2f, 0));
     }
 
 		Quat newOri = momentum * ori;
@@ -139,14 +139,12 @@ class Trackballer : dof {
 	COMMENTS
 
 	distinct interactions to account for (relative to palm orientation)
-		w/rating assuming perfect tracking
-		y swipe (10/10) 
-		z swipe (05/10)
-		x spin  (02/10)
+		y swipe
+		z swipe
+		x spin
 
 	how reliable is the provided palm orientation?
 	
-	show when you are about to boolean
+	more boolean visual and audio feeback
 	
-	2d pad?
 */

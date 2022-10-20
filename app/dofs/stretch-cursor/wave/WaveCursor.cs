@@ -2,8 +2,15 @@ namespace Oriels;
 
 class WaveCursor : dof {
 
+	public class Cursor
+	{
+		public Vec3 raw;
+		public Vec3 pos;
+		public Vec3 smooth;
+	}
+
 	// data
-  public Pose cursor = Pose.Identity;
+  public Cursor cursor = new Cursor();
 	PullRequest.OneEuroFilter xF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
 	PullRequest.OneEuroFilter yF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
 	PullRequest.OneEuroFilter zF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
@@ -24,16 +31,16 @@ class WaveCursor : dof {
 				hand.Get(FingerId.Index, JointId.Tip).position,
 				hand.Get(FingerId.Index, JointId.KnuckleMajor).position
 			);
+ 
+			cursor.raw = hand.Get(FingerId.Index, JointId.Tip).position + dir * stretch * strength * Mono.inst.stretchStr;
+			cursor.pos.x = (float)xF.Filter(cursor.raw.x, (double)Time.Elapsedf);
+			cursor.pos.y = (float)yF.Filter(cursor.raw.y, (double)Time.Elapsedf);
+			cursor.pos.z = (float)zF.Filter(cursor.raw.z, (double)Time.Elapsedf);
+			cursor.smooth = Vec3.Lerp(cursor.smooth, cursor.pos, Time.Elapsedf * 6f);
 
-			Vec3 rawPos = hand.Get(FingerId.Index, JointId.Tip).position + dir * stretch * strength * Mono.inst.stretchStr;
-			Mesh.Cube.Draw(Mono.inst.matHolo, Matrix.TRS(rawPos, Quat.Identity, 0.01f), new Color(1, 0, 0));
-
-			rawPos.x = (float)xF.Filter(rawPos.x, (double)Time.Elapsedf);
-			rawPos.y = (float)yF.Filter(rawPos.y, (double)Time.Elapsedf);
-			rawPos.z = (float)zF.Filter(rawPos.z, (double)Time.Elapsedf);
-			cursor.position = rawPos; // Vec3.Lerp(cursor.position, rawPos, Time.Elapsedf * 6f);
-
-			cursor.orientation = hand.palm.orientation;
+			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(cursor.raw, Quat.Identity, 0.01f), new Color(1, 0, 0));
+			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(cursor.pos, Quat.Identity, 0.01f), new Color(0, 1, 0));
+			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(cursor.smooth, Quat.Identity, 0.01f), new Color(0, 0, 1));
     }
   }
 
@@ -58,16 +65,16 @@ class WaveCursor : dof {
   }
 
 
-  Vec3[] mm = new Vec3[64];
+  Vec3[] mm = new Vec3[81];
 	
-  Vec3[] xL = new Vec3[64];
-  Vec3[] xR = new Vec3[64];
-	Vec3[] yL = new Vec3[64];
-	Vec3[] yR = new Vec3[64];
-	Vec3[] zL = new Vec3[64];
-	Vec3[] zR = new Vec3[64];
+  Vec3[] xL = new Vec3[81];
+  Vec3[] xR = new Vec3[81];
+	Vec3[] yL = new Vec3[81];
+	Vec3[] yR = new Vec3[81];
+	Vec3[] zL = new Vec3[81];
+	Vec3[] zR = new Vec3[81];
   public void Demo(Quat ori) {
-		Trail(mm, cursor.position); // + ori * new Vec3(0, 0, 0.04f));
+		Trail(mm, cursor.smooth + ori * new Vec3(0, 0, 0.08f));
 
 		// Trail(xL, smoothPos + cursor.orientation * new Vec3(-1, 0, 0) * 0.1f);
 		// Trail(xR, smoothPos + cursor.orientation * new Vec3( 1, 0, 0) * 0.1f);
@@ -78,19 +85,27 @@ class WaveCursor : dof {
 	}
 
 	void Trail(Vec3[] points, Vec3 nextPos) {
-		points[0] = nextPos;
+		while (Vec3.Distance(points[0], nextPos) > 0.03f * Mono.inst.trailScl) {
+			for (int i = points.Length - 1; i > 0; i--) {
+				points[i] = points[i - 1];
+			}
+			points[0] += Vec3.Direction(nextPos, points[0]) * 0.02f * Mono.inst.trailScl;
+		}
+
+
+		// points[0] = nextPos;
     int len = (int)(points.Length * Mono.inst.trailLen);
     for (int i = 0; i < len; i++) {
-      if (i > 0) {
-        Vec3 dir = Vec3.Forward;
-        if (points[i].v != points[i - 1].v) {
-          dir = PullRequest.Direction(points[i], points[i - 1]);
-        }
-        points[i] = points[i - 1] + dir * 0.02f * Mono.inst.trailScl;
-      }
+      // if (i > 0) {
+      //   Vec3 dir = Vec3.Forward;
+      //   if (points[i].v != points[i - 1].v) {
+      //     dir = PullRequest.Direction(points[i], points[i - 1]);
+      //   }
+      //   // points[i] = points[i - 1] + dir * 0.02f * Mono.inst.trailScl;
+      // }
 
       Vec3 from = i > 0 ? points[i - 1] : nextPos;
-      Quat ori = Quat.LookDir(PullRequest.Direction(points[i], from));
+      Quat ori = Quat.LookDir(Vec3.Direction(points[i], from));
       Mesh.Cube.Draw(
         Mono.inst.matHolo,
         Matrix.TRS(

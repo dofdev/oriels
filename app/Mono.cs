@@ -69,13 +69,14 @@ public class Mono {
 		matHolo.DepthWrite = false;
 		matHolo.DepthTest = DepthTest.Always;
 		matHolo.FaceCull = Cull.None;
-		matHolo.SetTexture("diffuse", Tex.DevTex);
+		// matHolo.SetTexture("diffuse", Tex.DevTex);
+		matHolo.Wireframe = true;
 	}
 
 	public void Frame() {
 
 		// Input.HandClearOverride(Handed.Left);
-		Input.HandClearOverride(Handed.Right);
+		// Input.HandClearOverride(Handed.Right);
 		// store hand pre override in rig
 		rig.Step();
 
@@ -107,24 +108,6 @@ public class Mono {
 
 		lwc.Demo(ltb.ori);
 		rwc.Demo(rtb.ori);
-
-		Mesh.Cube.Draw(Mono.inst.matHolo, 
-			Matrix.TRS(
-				lwc.cursor.position, 
-				Quat.Identity, // ltb.ori, 
-				0.015f
-			), 
-			new Color(0, 1, 1)
-		);
-
-		Mesh.Cube.Draw(Mono.inst.matHolo, 
-			Matrix.TRS(
-				rwc.cursor.position,
-				Quat.Identity, // rtb.ori, 
-				0.015f
-			), 
-			new Color(0, 1, 1)
-		);
 
 		// rBlock.Step(); lBlock.Step();
 
@@ -175,7 +158,7 @@ public class Mono {
 		UI.WindowEnd();
 	}
 	public float trailLen = 0.666f;
-	public float trailScl = 0.2f;
+	public float trailScl = 0.333f;
 	public float stretchStr = 0.5f;
 	public float playerY = 0;
 
