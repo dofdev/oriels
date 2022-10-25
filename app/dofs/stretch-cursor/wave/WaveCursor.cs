@@ -31,8 +31,8 @@ class WaveCursor : dof {
 				hand.Get(FingerId.Index, JointId.Tip).position,
 				hand.Get(FingerId.Index, JointId.KnuckleMajor).position
 			);
- 
-			cursor.raw = hand.Get(FingerId.Index, JointId.Tip).position + dir * stretch * strength * Mono.inst.stretchStr;
+
+			cursor.raw = hand.Get(FingerId.Index, JointId.Tip).position + dir * stretch * strength;
 			cursor.pos.x = (float)xF.Filter(cursor.raw.x, (double)Time.Elapsedf);
 			cursor.pos.y = (float)yF.Filter(cursor.raw.y, (double)Time.Elapsedf);
 			cursor.pos.z = (float)zF.Filter(cursor.raw.z, (double)Time.Elapsedf);
@@ -45,7 +45,9 @@ class WaveCursor : dof {
   }
 
   public float deadzone = 0.3f;
-  public float strength = 3f;
+  public float strength { 
+		get { return PullRequest.ToFloat(ref Mono.inst.wcReach, 0); } // 3f
+	}
   public Handed handed  = Handed.Left;
 
 
@@ -85,23 +87,24 @@ class WaveCursor : dof {
 	}
 
 	void Trail(Vec3[] points, Vec3 nextPos) {
-		while (Vec3.Distance(points[0], nextPos) > 0.03f * Mono.inst.trailScl) {
+		float scale = PullRequest.ToFloat(ref Mono.inst.wcScale, 0.001f);
+		while (Vec3.Distance(points[0], nextPos) > 0.03f * scale) {
 			for (int i = points.Length - 1; i > 0; i--) {
 				points[i] = points[i - 1];
 			}
-			points[0] += Vec3.Direction(nextPos, points[0]) * 0.02f * Mono.inst.trailScl;
+			points[0] += Vec3.Direction(nextPos, points[0]) * 0.02f * scale;
 		}
 
 
 		// points[0] = nextPos;
-    int len = (int)(points.Length * Mono.inst.trailLen);
+    int len = (int)(points.Length * PullRequest.ToFloat(ref Mono.inst.wcLength, 0f, 1f));
     for (int i = 0; i < len; i++) {
       // if (i > 0) {
       //   Vec3 dir = Vec3.Forward;
       //   if (points[i].v != points[i - 1].v) {
       //     dir = PullRequest.Direction(points[i], points[i - 1]);
       //   }
-      //   // points[i] = points[i - 1] + dir * 0.02f * Mono.inst.trailScl;
+      //   // points[i] = points[i - 1] + dir * 0.02f * scale;
       // }
 
       Vec3 from = i > 0 ? points[i - 1] : nextPos;
@@ -109,9 +112,9 @@ class WaveCursor : dof {
       Mesh.Cube.Draw(
         Mono.inst.matHolo,
         Matrix.TRS(
-					points[i] + ori * new Vec3(0, 0, 0.01f) * Mono.inst.trailScl,
+					points[i] + ori * new Vec3(0, 0, 0.01f) * scale,
 					ori,
-					new Vec3(0.01f, 0.01f, 0.02f) * Mono.inst.trailScl
+					new Vec3(0.01f, 0.01f, 0.02f) * scale
 				),
         Color.HSV(i / (float)len, 1, 1)
       );

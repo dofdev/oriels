@@ -5,13 +5,7 @@ public class Rig {
   public Vec3 pos = new Vec3(0, 0, 0);
   public Quat ori = Quat.Identity;
 
-  public Rig() {
-    if (World.HasBounds) {
-      // pos.XZ = World.BoundsPose.position.XZ;
-      // pos.y = World.BoundsPose.position.y;
-      // ori = World.BoundsPose.orientation;
-    }
-  }
+  public Rig() {}
 
   // public Vec3 center;
   // public void Recenter() {
@@ -44,12 +38,19 @@ public class Rig {
 
 
   public Vec3 LocalPos(Vec3 p) {
-    return ori.Inverse * (p - (pos + Vec3.Up * Mono.inst.playerY));
+    return ori.Inverse * (p - (pos));
   }
 
+	bool gotBounds = false;
+	public void Step() {
+		Matrix bounds = Matrix.T(0, 1.3f, 0);
+		if (!gotBounds && World.HasBounds) {
+			gotBounds = true;
+			bounds = World.BoundsPose.ToMatrix();
+			// Renderer.CameraRoot = World.BoundsPose.ToMatrix();
+		}
 
-  public void Step() {
-    Renderer.CameraRoot = Matrix.TR((pos + Vec3.Up * Mono.inst.playerY), ori);
+    Renderer.CameraRoot = Matrix.TR(pos, ori) * bounds;
 
     // Controllers
     rCon.Step(true);

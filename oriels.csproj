@@ -13,7 +13,6 @@
 	<ItemGroup>
 		<None Include="add/**">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-			<!-- <Link>add/%(RecursiveDir)%(Filename)%(Extension)</Link> -->
 		</None>
 	</ItemGroup>
 

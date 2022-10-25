@@ -67,7 +67,7 @@ public class Mono {
 		matHolo = Material.Default.Copy();
 		matHolo.Transparency = Transparency.Add;
 		matHolo.DepthWrite = false;
-		matHolo.DepthTest = DepthTest.Always;
+		// matHolo.DepthTest = DepthTest.Always;
 		matHolo.FaceCull = Cull.None;
 		// matHolo.SetTexture("diffuse", Tex.DevTex);
 		matHolo.Wireframe = true;
@@ -93,6 +93,8 @@ public class Mono {
 
     compositor.Frame();
 
+		// Input.Subscribe(InputSource.Hand, BtnState.Any, Action<Hand, BtnState.Any, Pointer>);
+
 		// -------------------------------------------------
 
 		// // dof.Frame();    
@@ -109,6 +111,8 @@ public class Mono {
 		lwc.Demo(ltb.ori);
 		rwc.Demo(rtb.ori);
 
+		rtb.Demo();
+
 		// rBlock.Step(); lBlock.Step();
 
 		// cubicCon.Step();
@@ -123,9 +127,15 @@ public class Mono {
 		ShowWindowButton();
 	}
 
-	Pose windowPoseButton = new Pose(0, 0, 0.75f, Quat.Identity);
+	Pose windowPoseButton = new Pose(-0.5f, 1.3f, 0, Quat.FromAngles(0, -90f, 0));
+	TextStyle style = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, Color.White);
+	Vec2 fieldSize = new Vec2(6f * U.cm, 3f * U.cm);
 	void ShowWindowButton() {
-		UI.WindowBegin("Window Button", ref windowPoseButton);
+		UI.WindowBegin("design vars", ref windowPoseButton);
+		UI.SetThemeColor(UIColor.Background, new Color(0f, 0f, 0f));
+		UI.SetThemeColor(UIColor.Primary, new Color(0.5f, 0.5f, 0.5f));
+		UI.PushTextStyle(style);
+
 
 		// if (UI.Button("Draw Oriel Axis")) { oriel.drawAxis = !oriel.drawAxis; }
 
@@ -139,29 +149,49 @@ public class Mono {
 		// UI.Label("pos.y");
 		// UI.HSlider("pos.y", ref playerY, -1f, 1f, 0.1f);
 
-		// UI.Label("trail.length");
-		// UI.HSlider("trail.length", ref trailLen, 0.1f, 1f, 0.1f);
+		UI.Label("wavecursor.");
+		UI.Input("wavecursor.reach", ref wcReach, fieldSize, TextContext.Number);
+		UI.SameLine(); UI.Label("reach"); 
+		UI.Input("wavecursor.length", ref wcLength, fieldSize, TextContext.Number);
+		UI.SameLine(); UI.Label("length"); 
+		UI.Input("wavecursor.scale", ref wcScale, fieldSize, TextContext.Number);
+		UI.SameLine(); UI.Label("scale");
 
-		// UI.Label("trail.scale");
-		// UI.HSlider("trail.str", ref trailScl, 0.1f, 2f, 0.1f);
-
-		// UI.Label("str");
-		// UI.HSlider("str", ref stretchStr, 0.1f, 1f, 0.1f);
-
-
+		UI.Label("trackballer.");
+		UI.Input("trackballer.compliance", ref tbCompliance, fieldSize, TextContext.Number);
+		UI.SameLine(); UI.Label("compliance");
+		UI.Input("trackballer.x", ref tbX, fieldSize, TextContext.Number);
+		UI.SameLine(); UI.Label("x");
+		UI.Input("trackballer.y", ref tbY, fieldSize, TextContext.Number);
+		UI.SameLine(); UI.Label("y");
+		UI.Input("trackballer.z", ref tbZ, fieldSize, TextContext.Number);
+		UI.SameLine(); UI.Label("z");
 
 		// flipIndex
 		// flipGrip
 
-
-
 		UI.WindowEnd();
 	}
-	public float trailLen = 0.666f;
-	public float trailScl = 0.333f;
-	public float stretchStr = 0.5f;
-	public float playerY = 0;
 
+	public string wcReach  = "1.0";
+	public string wcLength = "0.666";
+	public string wcScale  = "0.333";
+
+	public string tbCompliance = "0.0";
+	public string tbX = "1.0";
+	public string tbY = "2.0";
+	public string tbZ = "-4.0";
+
+
+	// public float playerY = 0;
+
+}
+
+// convert into a class
+class Design {
+	public string txt;
+	public int integer;
+	public float floating;
 }
 
 

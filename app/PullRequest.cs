@@ -67,6 +67,11 @@ public static class PullRequest {
 		return (to * delta * to.Inverse).Normalized;
 	}
 
+	// ?
+	public static Vec3 Relative(Quat to, Vec3 delta) {
+		return to * delta * to.Inverse;
+	}
+
 	// public static void LookDirection(this ref Quat q, Vec3 dir) {
 	//   Vec3 up = Vec3.Up;
 		
@@ -284,10 +289,27 @@ public static class PullRequest {
 		return MathF.Max(min, MathF.Min(max, v));
 	}
 
+	public static float ToFloat(
+			ref string s, 
+			float min = float.NegativeInfinity, 
+			float max = float.PositiveInfinity
+		) {
+		try {
+			float value = Clamp(float.Parse(s), min, max);
+			// if clamped, update string
+			if (value != float.Parse(s)) {
+				s = value.ToString();
+			}
+			return value;
+		} catch {
+			return 0;
+		}
+	}
+
 	public class PID {
 		public float p, i;
-		float integral = 0f;
-		float value = 0f;
+		public float value;
+		float integral;
 		// float scalar = 1f;
 
 		public PID(float p = 1, float i = 0.1f) {
@@ -299,6 +321,18 @@ public static class PullRequest {
 			float error = value - target;
 			integral += error;
 			float delta = ((p * error) + (i * integral));
+			return value -= delta * Time.Elapsedf;
+		}
+	}
+
+	public class Vec3PID {
+		public Vec3 value, integral;
+		// float scalar = 1f;
+
+		public Vec3 Update(Vec3 target, float p = 1, float i = 0.1f) {
+			Vec3 error = value - target;
+			integral += error;
+			Vec3 delta = ((p * error) + (i * integral));
 			return value -= delta * Time.Elapsedf;
 		}
 	}

@@ -20,7 +20,7 @@ Renderer.ClearColor = new Color(0f, 0f, 0f);
 
 Oriels.Mono mono = Oriels.Mono.inst;
 mono.Init();
-while (SK.Step(() => {
+SK.Run(() => {
   mono.Frame();
-}));
-SK.Shutdown();
+});
+// SK.Shutdown();

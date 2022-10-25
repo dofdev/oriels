@@ -76,7 +76,7 @@ public class Space {
     // World.BoundsPose.position.y
 
 
-    shed.Draw(Matrix.TRS(new Vec3(0, -1.6f, 0), Quat.Identity, Vec3.One));
+    shed.Draw(Matrix.Identity);
 
 
     // draw a grid of cube pillars spaced out evenly along the XZ plane
