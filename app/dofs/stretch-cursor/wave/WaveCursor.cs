@@ -46,7 +46,7 @@ class WaveCursor : dof {
 
   public float deadzone = 0.3f;
   public float strength { 
-		get { return PullRequest.ToFloat(ref Mono.inst.wcReach, 0); } // 3f
+		get { return Mono.inst.wcReach.value; } // 1f
 	}
   public Handed handed  = Handed.Left;
 
@@ -76,7 +76,10 @@ class WaveCursor : dof {
 	Vec3[] zL = new Vec3[81];
 	Vec3[] zR = new Vec3[81];
   public void Demo(Quat ori) {
-		Trail(mm, cursor.smooth + ori * new Vec3(0, 0, 0.08f));
+		Trail(
+			mm, 
+			cursor.smooth + ori * new Vec3(0, 0, Mono.inst.wcRadius.value * U.cm)
+		);
 
 		// Trail(xL, smoothPos + cursor.orientation * new Vec3(-1, 0, 0) * 0.1f);
 		// Trail(xR, smoothPos + cursor.orientation * new Vec3( 1, 0, 0) * 0.1f);
@@ -87,7 +90,7 @@ class WaveCursor : dof {
 	}
 
 	void Trail(Vec3[] points, Vec3 nextPos) {
-		float scale = PullRequest.ToFloat(ref Mono.inst.wcScale, 0.001f);
+		float scale = Mono.inst.wcScale.value;
 		while (Vec3.Distance(points[0], nextPos) > 0.03f * scale) {
 			for (int i = points.Length - 1; i > 0; i--) {
 				points[i] = points[i - 1];
@@ -97,7 +100,7 @@ class WaveCursor : dof {
 
 
 		// points[0] = nextPos;
-    int len = (int)(points.Length * PullRequest.ToFloat(ref Mono.inst.wcLength, 0f, 1f));
+    int len = (int)(points.Length * Mono.inst.wcLength.value);
     for (int i = 0; i < len; i++) {
       // if (i > 0) {
       //   Vec3 dir = Vec3.Forward;

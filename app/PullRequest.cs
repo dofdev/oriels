@@ -289,22 +289,22 @@ public static class PullRequest {
 		return MathF.Max(min, MathF.Min(max, v));
 	}
 
-	public static float ToFloat(
-			ref string s, 
-			float min = float.NegativeInfinity, 
-			float max = float.PositiveInfinity
-		) {
-		try {
-			float value = Clamp(float.Parse(s), min, max);
-			// if clamped, update string
-			if (value != float.Parse(s)) {
-				s = value.ToString();
-			}
-			return value;
-		} catch {
-			return 0;
-		}
-	}
+	// public static float ToFloat(
+	// 		ref string s, 
+	// 		float min = float.NegativeInfinity, 
+	// 		float max = float.PositiveInfinity
+	// 	) {
+	// 	try {
+	// 		float value = Clamp(float.Parse(s), min, max);
+	// 		// if clamped, update string
+	// 		if (value != float.Parse(s)) {
+	// 			s = value.ToString();
+	// 		}
+	// 		return value;
+	// 	} catch {
+	// 		return 0;
+	// 	}
+	// }
 
 	public class PID {
 		public float p, i;

@@ -52,9 +52,9 @@ class Trackballer : dof {
 		// Ball anchor
 		HandJoint ballJoint = hand.Get(FingerId.Index, JointId.KnuckleMajor);
 		Vec3 anchorPos = ballJoint.position + hand.palm.orientation * new Vec3(
-			PullRequest.ToFloat(ref Mono.inst.tbX, -10f, 10f) * U.cm * (handed == Handed.Left ? -1 : 1),
-			PullRequest.ToFloat(ref Mono.inst.tbY, -10f, 10f) * U.cm,
-			PullRequest.ToFloat(ref Mono.inst.tbZ, -10f, 10f) * U.cm
+			Mono.inst.tbX.value * U.cm * (handed == Handed.Left ? -1 : 1),
+			Mono.inst.tbY.value * U.cm,
+			Mono.inst.tbZ.value * U.cm
 		);
 		anchorPos += compliance.Update(
 			Vec3.Zero, 
@@ -130,7 +130,7 @@ class Trackballer : dof {
 				// offset.z = 0; 
 
 				offset = hand.palm.orientation * offset;
-				compliance.value += offset * PullRequest.ToFloat(ref Mono.inst.tbCompliance, 0f, 1f);
+				compliance.value += offset * Mono.inst.tbCompliance.value;
 				compliance.integral = Vec3.Zero;
 			}
 		}
@@ -168,12 +168,12 @@ class Trackballer : dof {
 
 
 		cursorPos.x = PullRequest.Clamp(
-			cursorPos.x + (delta * Vec3.Right).z * 0.1f,
+			cursorPos.x + (momentum * Vec3.Right).z * 0.1f,
 			width / -2f, 
 			width / 2f
 		);
 		cursorPos.y = PullRequest.Clamp(
-			cursorPos.y + (delta * Vec3.Right).y * -0.1f,
+			cursorPos.y + (momentum * Vec3.Right).y * -0.1f,
 			height / -2f, 
 			height / 2f
 		);

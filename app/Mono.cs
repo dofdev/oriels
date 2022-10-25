@@ -136,35 +136,34 @@ public class Mono {
 		UI.SetThemeColor(UIColor.Primary, new Color(0.5f, 0.5f, 0.5f));
 		UI.PushTextStyle(style);
 
-
 		// if (UI.Button("Draw Oriel Axis")) { oriel.drawAxis = !oriel.drawAxis; }
-
 		// if (UI.Button("Reset Oriel Quat")) { oriel.ori = Quat.Identity; }
 		// if (UI.Button("Scale w/Height")) { oriel.scaleWithHeight = !oriel.scaleWithHeight; }
 		// UI.HSlider("Scale", ref oriel.scale, 0.1f, 1f, 0.1f);
 		// UI.HSlider("Multiplier", ref oriel.multiplier, 0.1f, 1f, 0.1f);
 		// // UI.Label("Player.y");
 		// UI.HSlider("Player.y", ref greenyard.height, 1f, 6f, 0.2f);
-
 		// UI.Label("pos.y");
 		// UI.HSlider("pos.y", ref playerY, -1f, 1f, 0.1f);
 
-		UI.Label("wavecursor.");
-		UI.Input("wavecursor.reach", ref wcReach, fieldSize, TextContext.Number);
+		UI.Label("°wavecursor");
+		UI.Input("wavecursor.reach", ref wcReach.str, fieldSize, TextContext.Number);
 		UI.SameLine(); UI.Label("reach"); 
-		UI.Input("wavecursor.length", ref wcLength, fieldSize, TextContext.Number);
+		UI.Input("wavecursor.length", ref wcLength.str, fieldSize, TextContext.Number);
 		UI.SameLine(); UI.Label("length"); 
-		UI.Input("wavecursor.scale", ref wcScale, fieldSize, TextContext.Number);
+		UI.Input("wavecursor.scale", ref wcScale.str, fieldSize, TextContext.Number);
 		UI.SameLine(); UI.Label("scale");
+		UI.Input("wavecursor.radius", ref wcRadius.str, fieldSize, TextContext.Number);
+		UI.SameLine(); UI.Label("radius");
 
-		UI.Label("trackballer.");
-		UI.Input("trackballer.compliance", ref tbCompliance, fieldSize, TextContext.Number);
+		UI.Label("°trackballer");
+		UI.Input("trackballer.compliance", ref tbCompliance.str, fieldSize, TextContext.Number);
 		UI.SameLine(); UI.Label("compliance");
-		UI.Input("trackballer.x", ref tbX, fieldSize, TextContext.Number);
+		UI.Input("trackballer.x", ref tbX.str, fieldSize, TextContext.Number);
 		UI.SameLine(); UI.Label("x");
-		UI.Input("trackballer.y", ref tbY, fieldSize, TextContext.Number);
+		UI.Input("trackballer.y", ref tbY.str, fieldSize, TextContext.Number);
 		UI.SameLine(); UI.Label("y");
-		UI.Input("trackballer.z", ref tbZ, fieldSize, TextContext.Number);
+		UI.Input("trackballer.z", ref tbZ.str, fieldSize, TextContext.Number);
 		UI.SameLine(); UI.Label("z");
 
 		// flipIndex
@@ -173,25 +172,50 @@ public class Mono {
 		UI.WindowEnd();
 	}
 
-	public string wcReach  = "1.0";
-	public string wcLength = "0.666";
-	public string wcScale  = "0.333";
+	public Design wcReach  = new Design("1.0", 0);
+	public Design wcLength = new Design("0.666", 0f, 1f);
+	public Design wcScale  = new Design("0.333", 0.001f);
+	public Design wcRadius = new Design("4", 0);
 
-	public string tbCompliance = "0.0";
-	public string tbX = "1.0";
-	public string tbY = "2.0";
-	public string tbZ = "-4.0";
-
+	public Design tbCompliance = new Design("0.0", 0f, 1f);
+	public Design tbX = new Design("1.0", -10f, 10f);
+	public Design tbY = new Design("2.0", -10f, 10f);
+	public Design tbZ = new Design("-4.0", -10f, 10f);
 
 	// public float playerY = 0;
 
 }
 
 // convert into a class
-class Design {
-	public string txt;
-	public int integer;
-	public float floating;
+// which also simplifies injection and persistence
+public class Design {
+	public string str;
+
+	float min, max;
+	public Design(string str, 
+			float min = float.NegativeInfinity, 
+			float max = float.PositiveInfinity
+		) {
+		this.str = str;
+		this.min = min;
+		this.max = max;
+	}
+
+	public float value {
+		get {
+			try {
+				float value = PullRequest.Clamp(float.Parse(str), min, max);
+				// if clamped, update string
+				if (value != float.Parse(str)) {
+					str = value.ToString();
+				}
+				return value;
+			} catch {
+				return 0;
+			}
+		}
+	}
+	// public int integer;
 }
 
 
