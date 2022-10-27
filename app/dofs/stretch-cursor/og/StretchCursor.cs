@@ -1,6 +1,8 @@
 namespace Oriels;
 
 class StretchCursor : dof {
+	public bool Active { get; set; }
+
 	// input
 	Vec3 vTo;
 	Vec3 vFrom;

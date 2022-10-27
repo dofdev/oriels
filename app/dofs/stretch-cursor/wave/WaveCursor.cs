@@ -1,6 +1,10 @@
 namespace Oriels;
 
 class WaveCursor : dof {
+	public bool Active { get; set; }
+
+	// input
+	public Handed handed = Handed.Left;
 
 	public class Cursor
 	{
@@ -25,14 +29,15 @@ class WaveCursor : dof {
 			float fR = Flexion(hand, FingerId.Ring);
 			float fL = Flexion(hand, FingerId.Little);
 
-			float stretch = (fI + fI + fM + fM + fM + fR + fR + fL) / 8f; // based on finger length
+			// Biased by finger length
+			float stretch = (fI + fI + fM + fM + fM + fR + fR + fL) / 8f; 
 
 			Vec3 dir = PullRequest.Direction(
 				hand.Get(FingerId.Index, JointId.Tip).position,
 				hand.Get(FingerId.Index, JointId.KnuckleMajor).position
 			);
 
-			cursor.raw = hand.Get(FingerId.Index, JointId.Tip).position + dir * stretch * strength;
+			cursor.raw = hand.Get(FingerId.Index, JointId.Tip).position + dir * stretch * reach.value;
 			cursor.pos.x = (float)xF.Filter(cursor.raw.x, (double)Time.Elapsedf);
 			cursor.pos.y = (float)yF.Filter(cursor.raw.y, (double)Time.Elapsedf);
 			cursor.pos.z = (float)zF.Filter(cursor.raw.z, (double)Time.Elapsedf);
@@ -44,11 +49,14 @@ class WaveCursor : dof {
     }
   }
 
-  public float deadzone = 0.3f;
-  public float strength { 
-		get { return Mono.inst.wcReach.value; } // 1f
-	}
-  public Handed handed  = Handed.Left;
+	// design
+	public Design deadzone = new Design { str="0.3", term="0+1t", min=0, max=1 };
+	public Design reach = new Design { str="1.0", term="0+m", min=0 };
+
+	// demo
+	public Design snakeLength = new Design { str="0.5", term="0+1t", min=0, max=1 };
+	public Design snakeScale  = new Design { str="0.333", term="0+", min=0 };
+	public Design snakeRadius = new Design { str="4", term="0+cm", unit=U.cm, min=0 };
 
 
   float Flexion(Hand hand, FingerId finger) {
@@ -63,34 +71,19 @@ class WaveCursor : dof {
       )
     ) + 1f) / 2;
 
-    return Math.Max(flexion - deadzone, 0f) / (1 - deadzone);
+    return Math.Max(flexion - deadzone.value, 0f) / (1 - deadzone.value);
   }
 
 
-  Vec3[] mm = new Vec3[81];
-	
-  Vec3[] xL = new Vec3[81];
-  Vec3[] xR = new Vec3[81];
-	Vec3[] yL = new Vec3[81];
-	Vec3[] yR = new Vec3[81];
-	Vec3[] zL = new Vec3[81];
-	Vec3[] zR = new Vec3[81];
+  Vec3[] mm = new Vec3[128];
   public void Demo(Quat ori) {
-		Trail(
-			mm, 
-			cursor.smooth + ori * new Vec3(0, 0, Mono.inst.wcRadius.value * U.cm)
-		);
-
-		// Trail(xL, smoothPos + cursor.orientation * new Vec3(-1, 0, 0) * 0.1f);
-		// Trail(xR, smoothPos + cursor.orientation * new Vec3( 1, 0, 0) * 0.1f);
-		// Trail(yL, smoothPos + cursor.orientation * new Vec3(0, -1, 0) * 0.1f);
-		// Trail(yR, smoothPos + cursor.orientation * new Vec3(0,  1, 0) * 0.1f);
-		// Trail(zL, smoothPos + cursor.orientation * new Vec3(0, 0, -1) * 0.1f);
-		// Trail(zR, smoothPos + cursor.orientation * new Vec3(0, 0,  1) * 0.1f);
+		Vec3 tPos = cursor.smooth + ori * Vec3.Forward * snakeRadius.value;
+		Lines.Add(cursor.smooth, tPos, Color.White, 0.001f);
+		Trail(mm, tPos);
 	}
 
 	void Trail(Vec3[] points, Vec3 nextPos) {
-		float scale = Mono.inst.wcScale.value;
+		float scale = snakeScale.value;
 		while (Vec3.Distance(points[0], nextPos) > 0.03f * scale) {
 			for (int i = points.Length - 1; i > 0; i--) {
 				points[i] = points[i - 1];
@@ -100,7 +93,7 @@ class WaveCursor : dof {
 
 
 		// points[0] = nextPos;
-    int len = (int)(points.Length * Mono.inst.wcLength.value);
+    int len = (int)(points.Length * snakeLength.value);
     for (int i = 0; i < len; i++) {
       // if (i > 0) {
       //   Vec3 dir = Vec3.Forward;

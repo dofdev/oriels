@@ -1,6 +1,10 @@
 namespace Oriels;
 
 class Trackballer : dof {
+	public bool Active { get; set; }
+
+	// input
+	public Handed handed = Handed.Left;
 
   // data
   public Btn btnIn, btnOut;
@@ -52,9 +56,9 @@ class Trackballer : dof {
 		// Ball anchor
 		HandJoint ballJoint = hand.Get(FingerId.Index, JointId.KnuckleMajor);
 		Vec3 anchorPos = ballJoint.position + hand.palm.orientation * new Vec3(
-			Mono.inst.tbX.value * U.cm * (handed == Handed.Left ? -1 : 1),
-			Mono.inst.tbY.value * U.cm,
-			Mono.inst.tbZ.value * U.cm
+			aX.value * (handed == Handed.Left ? -1 : 1),
+			aY.value,
+			aZ.value
 		);
 		anchorPos += compliance.Update(
 			Vec3.Zero, 
@@ -130,8 +134,13 @@ class Trackballer : dof {
 				// offset.z = 0; 
 
 				offset = hand.palm.orientation * offset;
-				compliance.value += offset * Mono.inst.tbCompliance.value;
+				compliance.value += offset * compliant.value;
 				compliance.integral = Vec3.Zero;
+			} else {
+				PullRequest.ToAxisAngle(momentum, out Vec3 axis, out float angle);
+				if (angle < stop.value) {
+					momentum = Quat.Slerp(momentum, Quat.Identity, Time.Elapsedf * 10f);
+				}
 			}
 		}
 
@@ -144,7 +153,12 @@ class Trackballer : dof {
 	}
 
 	// design
-	public Handed handed = Handed.Left;
+	public Design stop = new Design { str="0.05", term="0+", min=0 };
+	public Design compliant = new Design { str="0.2", term="0+1t", min=0, max=1 };
+	public Design aX = new Design { str=" 1.0", term="-0+cm", unit=U.cm, min=-10f, max=10f };
+	public Design aY = new Design { str=" 2.0", term="-0+cm", unit=U.cm, min=-10f, max=10f };
+	public Design aZ = new Design { str="-4.0", term="-0+cm", unit=U.cm, min=-10f, max=10f };
+	
   public float[] layer = new float[] { 0.00333f, 0.02f, 0.0666f };
 	
 

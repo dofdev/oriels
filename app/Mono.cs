@@ -16,8 +16,6 @@ public class Mono {
 	// -------------------------------------------------
 
 	public dof[] dofs;
-	int dofIndex = 0;
-	dof dof => dofs[dofIndex];
 
 	public ColorCube colorCube = new ColorCube();
 
@@ -43,24 +41,27 @@ public class Mono {
 		Renderer.SetClip(0.02f, 1000f);
 
 		dofs = new dof[] {
-			// new StretchFinger(),
-			new WaveCursor()  { handed = Handed.Left  }, 
-			new WaveCursor()  { handed = Handed.Right },
-			new Trackballer() { handed = Handed.Left  },
-			new Trackballer() { handed = Handed.Right },
-			// new StretchCursor() { },
-			// new StretchCursor() { },
+			new Chiral() {
+				dofs = new dof[] {
+					new WaveCursor()  { handed = Handed.Left  },
+					new WaveCursor()  { handed = Handed.Right }
+				}
+			},
+			new Chiral() {
+				dofs = new dof[] {
+					new Trackballer() { handed = Handed.Left  },
+					new Trackballer() { handed = Handed.Right }
+				}
+			},
 		};
 	}
 
 	public void Init() {
 		compositor.Init();
 
-		dofs[0].Init();
-		dofs[1].Init();
-		dofs[2].Init();
-		dofs[3].Init();
-
+		for (int i = 0; i < dofs.Length; i++) {
+			dofs[i].Init();
+		}
 
 		matDev = Material.Default.Copy();
 		matDev.SetTexture("diffuse", Tex.DevTex);
@@ -97,21 +98,29 @@ public class Mono {
 
 		// -------------------------------------------------
 
-		// // dof.Frame();    
-		dofs[0].Frame();
-		dofs[1].Frame();
-		dofs[2].Frame();
-		dofs[3].Frame();
+		for (int i = 0; i < dofs.Length; i++) {
+			if (dofs[i].Active) {
+				dofs[i].Frame();
+			}
+		}  
 
-		WaveCursor lwc = (WaveCursor)dofs[0];
-		WaveCursor rwc = (WaveCursor)dofs[1];
-		Trackballer ltb = (Trackballer)dofs[2];
-		Trackballer rtb = (Trackballer)dofs[3];
+		// <Heresy>
+		WaveCursor lwc = (WaveCursor)((Chiral)dofs[0]).dofs[0];
+		WaveCursor rwc = (WaveCursor)((Chiral)dofs[0]).dofs[1];
+		Trackballer ltb = (Trackballer)((Chiral)dofs[1]).dofs[0];
+		Trackballer rtb = (Trackballer)((Chiral)dofs[1]).dofs[1];
 
-		lwc.Demo(ltb.ori);
-		rwc.Demo(rtb.ori);
+		if (lwc.Active) {
+			lwc.Demo(ltb.ori);
+		}
+		if (rwc.Active) {
+			rwc.Demo(rtb.ori);
+		}
 
-		rtb.Demo();
+		if (rtb.Active) {
+			rtb.Demo();
+		}
+		// </Heresy>
 
 		// rBlock.Step(); lBlock.Step();
 
@@ -127,8 +136,10 @@ public class Mono {
 		ShowWindowButton();
 	}
 
+	int dofIndex = 0;
 	Pose windowPoseButton = new Pose(-0.5f, 1.3f, 0, Quat.FromAngles(0, -90f, 0));
 	TextStyle style = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, Color.White);
+	TextStyle style2 = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, new Color(0.5f, 0.5f, 0.5f));
 	Vec2 fieldSize = new Vec2(6f * U.cm, 3f * U.cm);
 	void ShowWindowButton() {
 		UI.WindowBegin("design vars", ref windowPoseButton);
@@ -146,60 +157,128 @@ public class Mono {
 		// UI.Label("pos.y");
 		// UI.HSlider("pos.y", ref playerY, -1f, 1f, 0.1f);
 
-		UI.Label("°wavecursor");
-		UI.Input("wavecursor.reach", ref wcReach.str, fieldSize, TextContext.Number);
-		UI.SameLine(); UI.Label("reach"); 
-		UI.Input("wavecursor.length", ref wcLength.str, fieldSize, TextContext.Number);
-		UI.SameLine(); UI.Label("length"); 
-		UI.Input("wavecursor.scale", ref wcScale.str, fieldSize, TextContext.Number);
-		UI.SameLine(); UI.Label("scale");
-		UI.Input("wavecursor.radius", ref wcRadius.str, fieldSize, TextContext.Number);
-		UI.SameLine(); UI.Label("radius");
+		if (UI.Button("prev") && dofIndex > 0) {
+			dofIndex--;
+		}
+		UI.SameLine();
+		if (UI.Button("next") && dofIndex < dofs.Length - 1) {
+			dofIndex++;
+		}
+		
 
-		UI.Label("°trackballer");
-		UI.Input("trackballer.compliance", ref tbCompliance.str, fieldSize, TextContext.Number);
-		UI.SameLine(); UI.Label("compliance");
-		UI.Input("trackballer.x", ref tbX.str, fieldSize, TextContext.Number);
-		UI.SameLine(); UI.Label("x");
-		UI.Input("trackballer.y", ref tbY.str, fieldSize, TextContext.Number);
-		UI.SameLine(); UI.Label("y");
-		UI.Input("trackballer.z", ref tbZ.str, fieldSize, TextContext.Number);
-		UI.SameLine(); UI.Label("z");
+		dof dof = dofs[dofIndex];
+		Type type = dof.GetType();
+		// active toggle
+		Color tint = dof.Active ? new Color(0, 1, 0) : new Color(1, 0, 0);
+		UI.PushTint(tint);
+		if (UI.Button(dof.Active ? "on" : "off")) {
+			dof.Active = !dof.Active;
+		}
+		UI.PopTint();
+		if (type == typeof(Chiral)) {
+			Chiral chiral = (Chiral)dof;
 
-		// flipIndex
-		// flipGrip
+			System.Reflection.FieldInfo[] fields = typeof(Chiral).GetFields();
+			foreach (System.Reflection.FieldInfo field in fields) {
+				if (field.FieldType == typeof(Handed)) {
+					Handed handed = (Handed)field.GetValue(chiral);
+					if (UI.Button("<") && (int)handed > 0) {
+						handed = (Handed)((int)handed - 1);
+						field.SetValue(chiral, handed);
+					}
+					UI.SameLine();
+					if (UI.Button(">") && (int)handed < 2) {
+						handed = (Handed)((int)handed + 1);
+						field.SetValue(chiral, handed);
+					}
+					UI.SameLine(); UI.Label(handed.ToString());
+				}
+			}
+
+			RenderDof(chiral.dofs[0]);
+		} else {
+			RenderDof(dof);
+		}
 
 		UI.WindowEnd();
 	}
 
-	public Design wcReach  = new Design("1.0", 0);
-	public Design wcLength = new Design("0.666", 0f, 1f);
-	public Design wcScale  = new Design("0.333", 0.001f);
-	public Design wcRadius = new Design("4", 0);
+	void RenderDof(dof dof) {
+		Type type = dof.GetType();
+		UI.Label("°" + type.Name);
+		System.Reflection.FieldInfo[] fields = type.GetFields();
+		for (int j = 0; j < fields.Length; j++) {
+			System.Reflection.FieldInfo field = fields[j];
+			if (field.FieldType == typeof(Design)) {
+				Design design = (Design)field.GetValue(dof);
+				UI.Input(field.Name, ref design.str, fieldSize, TextContext.Number);
 
-	public Design tbCompliance = new Design("0.0", 0f, 1f);
-	public Design tbX = new Design("1.0", -10f, 10f);
-	public Design tbY = new Design("2.0", -10f, 10f);
-	public Design tbZ = new Design("-4.0", -10f, 10f);
+				UI.SameLine(); 
+				UI.PushTextStyle(style2); 
+				UI.Label(design.term, new Vec2(4f * U.cm, 3f * U.cm));
+				UI.PopTextStyle();
 
-	// public float playerY = 0;
-
+				UI.SameLine(); UI.Label(field.Name);
+			}
+		}
+	}
 }
 
-// convert into a class
-// which also simplifies injection and persistence
+// Chiral : handedness implies symmetry
+public class Chiral : dof {
+	private bool active;
+	public bool Active {
+		get { return this.active; }
+		set { 
+			this.active = value;
+			for (int i = 0; i < this.dofs.Length; i++) {
+				dof dof = this.dofs[i];
+				if ((int)this.handed == 2 || i == (int)this.handed) {
+					dof.Active = value;
+				} else {
+					dof.Active = false;
+				}
+			}
+		} 
+	}
+	public dof[] dofs = new dof[2];
+	// public Design handed = new Design { str = "2", min = 0, max = 2};
+	public Handed handed = Handed.Max;
+
+	public void Init() {
+		dofs[0].Init();
+		dofs[1].Init();
+	}
+
+	public void Frame() {
+		// sync the left design variables to the right
+		System.Reflection.FieldInfo[] fields = dofs[0].GetType().GetFields();
+		foreach (System.Reflection.FieldInfo field in fields) {
+			if (field.FieldType == typeof(Design)) {
+				Design design = (Design)field.GetValue(dofs[0]); // define type?
+				field.SetValue(dofs[1], design);
+			}
+		}
+
+		for (int i = 0; i < dofs.Length; i++) {
+			dof dof = dofs[i];
+			if ((int)handed == 2 || i == (int)handed) {
+				dof.Frame();
+				dof.Active = true;
+			}
+			else {
+				dof.Active = false;
+			}
+		}
+	}
+}
+
 public class Design {
 	public string str;
-
-	float min, max;
-	public Design(string str, 
-			float min = float.NegativeInfinity, 
-			float max = float.PositiveInfinity
-		) {
-		this.str = str;
-		this.min = min;
-		this.max = max;
-	}
+	public string term;
+	public float min = float.NegativeInfinity;
+	public float max = float.PositiveInfinity;
+	public float unit = U.m;
 
 	public float value {
 		get {
@@ -207,20 +286,43 @@ public class Design {
 				float value = PullRequest.Clamp(float.Parse(str), min, max);
 				// if clamped, update string
 				if (value != float.Parse(str)) {
+					// if (str.Contains(".")) {
+					// 	str = "";
+					// }
 					str = value.ToString();
 				}
-				return value;
+				return value * unit;
 			} catch {
 				return 0;
 			}
 		}
 	}
-	// public int integer;
+	// public int integer {};
 }
 
 
 /* 
 	COMMENTS
+
+	ranges 
+		0+1
+		1-0
+		1-0+1
+
+		-0+
+
+		0+&&-
+		0+||-
+	
+	units 
+		m
+		cm
+		mm
+		t
+
+	demo
+		virtual shapes -> that can be slotted
+		physics boxes
 	
 	debug bool
 		rendering the raw output
