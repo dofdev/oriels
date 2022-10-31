@@ -286,14 +286,13 @@ public class Design {
 				float value = PullRequest.Clamp(float.Parse(str), min, max);
 				// if clamped, update string
 				if (value != float.Parse(str)) {
-					// if (str.Contains(".")) {
-					// 	str = "";
-					// }
-					str = value.ToString();
+					if (Input.Key(Key.Return).IsJustActive()) {
+						str = value.ToString();
+					}
 				}
 				return value * unit;
 			} catch {
-				return 0;
+				return MathF.Max(0, min) * unit;
 			}
 		}
 	}
