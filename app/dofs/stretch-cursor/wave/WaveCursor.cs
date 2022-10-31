@@ -46,8 +46,34 @@ class WaveCursor : dof {
 			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(cursor.raw, Quat.Identity, 0.01f), new Color(1, 0, 0));
 			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(cursor.pos, Quat.Identity, 0.01f), new Color(0, 1, 0));
 			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(cursor.smooth, Quat.Identity, 0.01f), new Color(0, 0, 1));
+
+
+			// pinch is more than just the thumb and index finger
+
+			handBtn.Step(
+				PinchStep(hand, FingerId.Little, littleBtn) ||
+				PinchStep(hand, FingerId.Ring, ringBtn) ||
+				PinchStep(hand, FingerId.Middle, middleBtn) ||
+				PinchStep(hand, FingerId.Index, indexBtn)
+			);
+			if (handBtn.held) {
+				shapePos = cursor.pos;
+			}
+
+			Mesh.Cube.Draw(
+				Mono.inst.matHolo,
+				Matrix.TS(shapePos, 10 * U.cm),
+				new Color(0.5f, 0.55f, 0.75f)
+			);
     }
   }
+	Btn littleBtn = new Btn();
+	Btn ringBtn = new Btn();
+	Btn middleBtn = new Btn();
+	Btn indexBtn = new Btn();
+	Btn handBtn = new Btn();
+	Vec3 shapePos = new Vec3(0, 1.3f, -0.5f);
+
 
 	// design
 	public Design deadzone = new Design { str="0.3", term="0+1t", min=0, max=1 };
@@ -55,7 +81,7 @@ class WaveCursor : dof {
 
 	// demo
 	public Design snakeLength = new Design { str="0.5", term="0+1t", min=0, max=1 };
-	public Design snakeScale  = new Design { str="0.333", term="0+", min=0 };
+	public Design snakeScale  = new Design { str="0.333", term=">0", min=0.01f };
 	public Design snakeRadius = new Design { str="4", term="0+cm", unit=U.cm, min=0 };
 
 
@@ -73,6 +99,15 @@ class WaveCursor : dof {
 
     return Math.Max(flexion - deadzone.value, 0f) / (1 - deadzone.value);
   }
+
+	bool PinchStep(Hand hand, FingerId finger, Btn btn) {
+		HandJoint thumb = hand.Get(FingerId.Thumb, JointId.Tip);
+		HandJoint fingy = hand.Get(finger, JointId.Tip);
+		float dist = Vec3.Distance(thumb.position, fingy.position);
+		btn.Step(dist < 1 * U.cm, dist < 2 * U.cm);
+
+		return btn.held;
+	}
 
 
   Vec3[] mm = new Vec3[128];
