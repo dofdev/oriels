@@ -113,9 +113,9 @@ public class Con {
 public struct Btn {
   public bool frameDown, held, frameUp;
 
-  public void Step(bool down, bool sticky = false) {
-		if (held) {
-			down = sticky;
+  public void Step(bool down, bool? sticky = null) {
+		if (sticky != null && held) {
+			down = (bool)sticky;
 		}
 
     frameDown = down && !held;
