@@ -60,11 +60,11 @@ class WaveCursor : dof {
 				shapePos = cursor.pos;
 			}
 
-			Mesh.Cube.Draw(
-				Mono.inst.matHolo,
-				Matrix.TS(shapePos, 10 * U.cm),
-				new Color(0.5f, 0.55f, 0.75f)
-			);
+			// Mesh.Cube.Draw(
+			// 	Mono.inst.matHolo,
+			// 	Matrix.TS(shapePos, 10 * U.cm),
+			// 	new Color(0.5f, 0.55f, 0.75f)
+			// );
     }
   }
 	Btn littleBtn = new Btn();
