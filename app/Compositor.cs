@@ -6,7 +6,7 @@ public class Compositor {
 	// as a process would not be hosted by a compositor...
 	Backrooms.Mono backrooms = new Backrooms.Mono();
 	Greenyard.Mono greenyard = new Greenyard.Mono();
-	bool other = false;
+	// bool other = false;
 
 	public void Init() {
 		backrooms.Init();

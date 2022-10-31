@@ -149,7 +149,7 @@ public class Mono {
 
 
 
-    return;
+    // return;
     // ENEMIES
 
     // destroy enemies that are too close to the playerPos

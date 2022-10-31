@@ -86,30 +86,30 @@ public class Board {
 
 
 
-    // pillars to hover through
-    // spawn in front every 1m away from last
-    if (Vec3.Distance(pos, lastSpawnPos) > 1f) {
-      // odd or even
-      float chirality = pillarIndex % 2 == 0 ? 1f : -1f;
-      pillars[pillarIndex] = pos + Quat.LookDir(dir) * new Vec3(chirality * 8 * Mono.inst.noise.uvalue, 0, -24);
+    // // pillars to hover through
+    // // spawn in front every 1m away from last
+    // if (Vec3.Distance(pos, lastSpawnPos) > 1f) {
+    //   // odd or even
+    //   float chirality = pillarIndex % 2 == 0 ? 1f : -1f;
+    //   pillars[pillarIndex] = pos + Quat.LookDir(dir) * new Vec3(chirality * 8 * Mono.inst.noise.uvalue, 0, -24);
 
-      lastSpawnPos = pos;
+    //   lastSpawnPos = pos;
 
-      pillarIndex++;
-      if (pillarIndex >= pillars.Length) { pillarIndex = 0; }
-    }
+    //   pillarIndex++;
+    //   if (pillarIndex >= pillars.Length) { pillarIndex = 0; }
+    // }
 
-    for (int i = 0; i < pillars.Length; i++) {
-      meshCube.Draw(Material.Default,
-        Matrix.TRS(
-          pillars[i],
-          Quat.Identity,
-          new Vec3(0.1f, 20f, 0.1f)
-        )
-      );
-    }
+    // for (int i = 0; i < pillars.Length; i++) {
+    //   meshCube.Draw(Material.Default,
+    //     Matrix.TRS(
+    //       pillars[i],
+    //       Quat.Identity,
+    //       new Vec3(0.1f, 20f, 0.1f)
+    //     )
+    //   );
+    // }
   }
-  Vec3[] pillars = new Vec3[64];
-  int pillarIndex = 0;
-  Vec3 lastSpawnPos = Vec3.Zero;
+  // Vec3[] pillars = new Vec3[64];
+  // int pillarIndex = 0;
+  // Vec3 lastSpawnPos = Vec3.Zero;
 }

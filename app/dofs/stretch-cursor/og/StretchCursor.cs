@@ -4,8 +4,8 @@ class StretchCursor : dof {
 	public bool Active { get; set; }
 
 	// input
-	Vec3 vTo;
-	Vec3 vFrom;
+	Vec3 vTo = new Vec3(0, 0, 0);
+	Vec3 vFrom = new Vec3(0, 0, 0);
 
 	// data
 	float stretch;
