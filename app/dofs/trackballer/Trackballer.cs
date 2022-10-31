@@ -6,8 +6,9 @@ class Trackballer : dof {
 	// input
 	public Handed handed = Handed.Left;
 
-  // data
-  public Btn btnIn, btnOut;
+	// data
+	public Btn btnPull = new Btn();
+	public Btn btnPush = new Btn();
 	bool onTheBall;
   public Quat ori = Quat.Identity;
 
@@ -19,10 +20,6 @@ class Trackballer : dof {
 
 	PullRequest.Vec3PID compliance = new PullRequest.Vec3PID();
 
-	PullRequest.OneEuroFilter xF = new PullRequest.OneEuroFilter(0.0001f, 0.1f);
-	PullRequest.OneEuroFilter yF = new PullRequest.OneEuroFilter(0.0001f, 0.1f);
-	PullRequest.OneEuroFilter zF = new PullRequest.OneEuroFilter(0.0001f, 0.1f);
-
 	Model model = Model.FromFile("thumb_pad.glb");
 	Mesh mesh;
 
@@ -30,7 +27,7 @@ class Trackballer : dof {
 		mesh = model.GetMesh("Pad");
 	}
 
-  public void Frame() {
+	public void Frame() {
     Hand hand = Input.Hand(handed);
     if (hand.tracked.IsActive() && !hand.tracked.IsJustActive()) {
 			UpdateMomentum(hand);
@@ -55,15 +52,15 @@ class Trackballer : dof {
 
 		// Ball anchor
 		HandJoint ballJoint = hand.Get(FingerId.Index, JointId.KnuckleMajor);
-		Vec3 anchorPos = ballJoint.position + hand.palm.orientation * new Vec3(
+		Vec3 anchorOrigin = ballJoint.position + hand.palm.orientation * new Vec3(
 			aX.value * (handed == Handed.Left ? -1 : 1),
 			aY.value,
 			aZ.value
 		);
-		anchorPos += compliance.Update(
+		Vec3 anchorPos = anchorOrigin + compliance.Update(
 			Vec3.Zero, 
 			onTheBall ? 1f   : 10f, 
-			onTheBall ? 0.1f : 1f // 10x less integral when on the ball?
+			onTheBall ? 0.5f : 5f // 10x less integral when on the ball?
 		);
 		// compliance;
 		// compliance = Vec3.Lerp(compliance, Vec3.Zero, Time.Elapsedf * 10f);
@@ -94,72 +91,78 @@ class Trackballer : dof {
 			oldPad.Transform(verts[closestIndex].pos)
 		);
 
-		// ?
-		// localPad.x = (float)xF.Filter(localPad.x, (double)Time.Elapsedf);
-		// localPad.y = (float)yF.Filter(localPad.y, (double)Time.Elapsedf);
-		// localPad.z = (float)zF.Filter(localPad.z, (double)Time.Elapsedf);
 
-		// Lines.Add(thumbTip, thumbKnuckle, Color.White, 0.002f);
-		Mesh.Sphere.Draw(
-			Mono.inst.matHolo,
-			Matrix.TRS(anchor.Transform(point), hand.palm.orientation, 0.002f),
+		// Pull
+		float pull = point.Length / pullClick.value;
+		btnPull.Frame(pull > 1f, pull > 0.333f); // magic sticky var
+
+		float pullScalar = btnPull.held ? MathF.Max((pull - 0.333f) / 0.666f, 0) : MathF.Max(1 - pull, 0);
+		Mesh.Sphere.Draw(Mono.inst.matHolo,
+			Matrix.TRS(anchorPos, thumbJoint.orientation, pullScalar * radius.value),
+			new Color(0, 1, 1) * (btnPull.held ? 1f : 0.0666f)
+		);
+		Lines.Add(
+			anchor.Transform(point), anchorPos,
+			new Color(0, 1, 1), 1f * U.mm
+		);
+		Mesh.Sphere.Draw(Mono.inst.matHolo,
+			Matrix.TRS(anchor.Transform(point), thumbJoint.orientation, 2f * U.mm),
 			new Color(0, 1, 1)
 		);
 
-		float dist = point.Length;
-		// if (btnIn.held)  { btnIn.Step(dist < layer[1]); } 
-		// else             { btnIn.Step(dist < layer[0]); }
-		float inT = btnIn.held ? 1 : 0.333f;
 
-		if (btnOut.held) { btnOut.Step(dist > layer[1]); } 
-		else             { btnOut.Step(dist > layer[2]); }
-		float outT = btnOut.held ? 1 : 0.333f;
+		// Push
+		float push = compliance.value.Length / pushClick.value;
+		btnPush.Frame(push > 1f, push > 0.333f); // magic sticky var
 
-		if (btnIn.held) {
-			delta = momentum = Quat.Identity;
+		float pushScalar = btnPush.held ? MathF.Max((MathF.Min(push, 1f) - 0.333f) / 0.666f, 0) : MathF.Max(1 - push, 0);
+		Mesh.Sphere.Draw(Mono.inst.matHolo,
+			Matrix.TRS(anchorPos, ori, (radius.value * 2) * pushScalar),
+			new Color(1, 0, 0) * (btnPush.held ? 1f : 0.2f)
+		);
+
+
+		onTheBall = point.Length < radius.value;
+		if (onTheBall) {
+			delta = Quat.Delta(
+				oldPoint.Normalized,
+				point.Normalized
+			).Relative(hand.palm.orientation);
+
+			momentum = Quat.Slerp(momentum, delta, Time.Elapsedf * 10f);
+
+			Vec3 contact = point.Normalized * radius.value;
+			Vec3 offset  = point - contact;
+
+			// no z axis
+			// offset.z = 0; 
+			offset = hand.palm.orientation * offset;
+			compliance.value += offset * compliant.value;
+			compliance.integral = Vec3.Zero;
 		} else {
-			onTheBall = dist < layer[1];
-			if (onTheBall) {
-				delta = Quat.Delta(
-					oldPoint.Normalized,
-					point.Normalized
-				).Relative(hand.palm.orientation);
-
-				momentum = Quat.Slerp(momentum, delta, Time.Elapsedf * 10f);
-
-				Vec3 contact = point.Normalized * layer[1];
-				Vec3 offset  = point - contact;
-
-				// no z axis
-				// offset.z = 0; 
-
-				offset = hand.palm.orientation * offset;
-				compliance.value += offset * compliant.value;
-				compliance.integral = Vec3.Zero;
-			} else {
-				PullRequest.ToAxisAngle(momentum, out Vec3 axis, out float angle);
-				if (angle < stop.value) {
-					momentum = Quat.Slerp(momentum, Quat.Identity, Time.Elapsedf * 10f);
-				}
+			PullRequest.ToAxisAngle(momentum, out Vec3 axis, out float angle);
+			if (angle < stop.value) {
+				momentum = Quat.Slerp(momentum, Quat.Identity, Time.Elapsedf * 10f);
 			}
 		}
 
-		// Draw
+		// Draw ball result
 		Mesh.Sphere.Draw(
 			Mono.inst.matHolo,
-			Matrix.TRS(anchorPos, ori, layer[1] * 2),
-			new Color(inT, 0, 0)
+			Matrix.TRS(anchorPos, ori, radius.value * 2),
+			new Color(0.8f, 0, 0)
 		);
 	}
 
 	// design
-	public Design stop = new Design { str="0.05", term="0+", min=0 };
-	public Design compliant = new Design { str="0.2", term="0+1t", min=0, max=1 };
+	public Design radius    = new Design { str="2", term=">0cm", unit=U.cm, min=0.5f };
+	public Design pullClick = new Design { str="6.66", term=">0cm", unit=U.cm, min=0.1f };
+	public Design pushClick = new Design { str="1.5", term=">0cm", unit=U.cm, min=0.1f };
 	public Design aX = new Design { str=" 1.0", term="-0+cm", unit=U.cm, min=-10f, max=10f };
 	public Design aY = new Design { str=" 2.0", term="-0+cm", unit=U.cm, min=-10f, max=10f };
 	public Design aZ = new Design { str="-4.0", term="-0+cm", unit=U.cm, min=-10f, max=10f };
-	
-  public float[] layer = new float[] { 0.00333f, 0.02f, 0.0666f };
+	public Design compliant = new Design { str="0.2", term="0+1t", min=0, max=1 };
+	public Design stop = new Design { str="0.05", term="0+", min=0 };
 	
 
 	Vec3 cursorPos = new Vec3(0f, 0f, 0f);

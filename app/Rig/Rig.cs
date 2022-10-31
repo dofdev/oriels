@@ -105,15 +105,15 @@ public class Con {
     pose.position = pos = device.pose.position;
     pose.orientation = ori = Quat.Identity; // device.pose.orientation;
     backhandDir = ori * (chirality ? Vec3.Right : -Vec3.Right);
-    gripBtn.Step(device.grip > 0.5f);
-    triggerBtn.Step(device.trigger > 0.5f);
+    gripBtn.Frame(device.grip > 0.5f);
+    triggerBtn.Frame(device.trigger > 0.5f);
   }
 }
 
 public struct Btn {
   public bool frameDown, held, frameUp;
 
-  public void Step(bool down, bool? sticky = null) {
+  public void Frame(bool down, bool? sticky = null) {
 		if (sticky != null && held) {
 			down = (bool)sticky;
 		}
@@ -122,11 +122,4 @@ public struct Btn {
     frameUp = !down && held;
     held = down;
   }
-
-	// public void Pinch(bool neg, bool pos) {
-	// 	bool pinch = held;
-	// 	if (pinch) {
-	// 		pinch = dist < 2 * U.cm;
-	// 	}
-	// }
 }

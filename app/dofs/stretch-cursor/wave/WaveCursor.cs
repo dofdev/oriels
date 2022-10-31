@@ -50,7 +50,7 @@ class WaveCursor : dof {
 
 			// pinch is more than just the thumb and index finger
 
-			handBtn.Step(
+			handBtn.Frame(
 				PinchStep(hand, FingerId.Little, littleBtn) ||
 				PinchStep(hand, FingerId.Ring, ringBtn) ||
 				PinchStep(hand, FingerId.Middle, middleBtn) ||
@@ -104,7 +104,7 @@ class WaveCursor : dof {
 		HandJoint thumb = hand.Get(FingerId.Thumb, JointId.Tip);
 		HandJoint fingy = hand.Get(finger, JointId.Tip);
 		float dist = Vec3.Distance(thumb.position, fingy.position);
-		btn.Step(dist < 1 * U.cm, dist < 2 * U.cm);
+		btn.Frame(dist < 1 * U.cm, dist < 2 * U.cm);
 
 		return btn.held;
 	}
