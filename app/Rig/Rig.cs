@@ -42,22 +42,33 @@ public class Rig {
   }
 
 	bool gotBounds = false;
+	Matrix bounds = Matrix.T(0, -1.3f, 0);
 	public void Step() {
-		Matrix bounds = Matrix.T(0, 1.3f, 0);
 		if (!gotBounds && World.HasBounds) {
 			gotBounds = true;
 			bounds = World.BoundsPose.ToMatrix();
-			// Renderer.CameraRoot = World.BoundsPose.ToMatrix();
 		}
+		Vec2 stickL = Input.Controller(Handed.Left).stick;
+		Vec2 stickR = Input.Controller(Handed.Right).stick;
+		Quat delta = Quat.FromAngles(
+			Vec3.Up * stickR.x * 120f * Time.Elapsedf
+		) * ori;
+    Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f; // Input.Head -> Head() ?
+		pos -= headPos;
+		pos = delta * pos;
+		pos += headPos;
+		ori = delta * ori;
 
-    Renderer.CameraRoot = Matrix.TR(pos, ori) * bounds;
+		Vec3 move = -stickL.X0Y * Time.Elapsedf * 0.5f;
+		pos += (Input.Head.orientation * move).X0Z;
+
+		Renderer.CameraRoot = Matrix.TR(pos, ori) * bounds.Inverse;
 
     // Controllers
     rCon.Step(true);
     lCon.Step(false);
 
     // Shoulders
-    Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f; // Input.Head -> Head() ?
     Vec3 shoulderDir = (
       (lCon.pos.X0Z - headPos.X0Z).Normalized +
       (rCon.pos.X0Z - headPos.X0Z).Normalized
@@ -102,9 +113,20 @@ public class Con {
 public struct Btn {
   public bool frameDown, held, frameUp;
 
-  public void Step(bool down) {
+  public void Step(bool down, bool sticky = false) {
+		if (held) {
+			down = sticky;
+		}
+
     frameDown = down && !held;
     frameUp = !down && held;
     held = down;
   }
+
+	// public void Pinch(bool neg, bool pos) {
+	// 	bool pinch = held;
+	// 	if (pinch) {
+	// 		pinch = dist < 2 * U.cm;
+	// 	}
+	// }
 }
