@@ -304,12 +304,12 @@ public class Oriel {
       }
     }
 
-    Mesh.Sphere.Draw(Mono.inst.matHolo,
+    Mesh.Sphere.Draw(Mono.inst.matHoloframe,
       Matrix.TRS(cursor, cursorOri, new Vec3(0.02f, 0.02f, 0.02f)),
       cursorColor
     );
 
-    Mesh.Sphere.Draw(Mono.inst.matHolo,
+    Mesh.Sphere.Draw(Mono.inst.matHoloframe,
       Matrix.TS(cursor, new Vec3(1f, 1f, 1f) * cursorRadius * 2),
       new Color(0.1f, 0.1f, 0.1f)
     );

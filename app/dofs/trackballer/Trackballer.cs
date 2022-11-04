@@ -48,7 +48,7 @@ class Trackballer : dof {
 			thumbJoint.orientation,
 			new Vec3(handed == Handed.Left ? -1f : 1f, 1f, 1f) * 0.1666f
 		);
-		mesh.Draw(Mono.inst.matHolo, pad, new Color(0, 1, 1));
+		mesh.Draw(Mono.inst.matHoloframe, pad, new Color(0, 1, 1));
 
 		// Ball anchor
 		HandJoint ballJoint = hand.Get(FingerId.Index, JointId.KnuckleMajor);
@@ -97,7 +97,7 @@ class Trackballer : dof {
 		btnPull.Frame(pull > 1f, pull > 0.333f); // magic sticky var
 
 		float pullScalar = btnPull.held ? MathF.Max((pull - 0.333f) / 0.666f, 0) : MathF.Max(1 - pull, 0);
-		Mesh.Sphere.Draw(Mono.inst.matHolo,
+		Mesh.Sphere.Draw(Mono.inst.matHoloframe,
 			Matrix.TRS(anchorPos, thumbJoint.orientation, pullScalar * radius.value),
 			new Color(0, 1, 1) * (btnPull.held ? 1f : 0.0666f)
 		);
@@ -105,7 +105,7 @@ class Trackballer : dof {
 			anchor.Transform(point), anchorPos,
 			new Color(0, 1, 1), 1f * U.mm
 		);
-		Mesh.Sphere.Draw(Mono.inst.matHolo,
+		Mesh.Sphere.Draw(Mono.inst.matHoloframe,
 			Matrix.TRS(anchor.Transform(point), thumbJoint.orientation, 2f * U.mm),
 			new Color(0, 1, 1)
 		);
@@ -116,7 +116,7 @@ class Trackballer : dof {
 		btnPush.Frame(push > 1f, push > 0.333f); // magic sticky var
 
 		float pushScalar = btnPush.held ? MathF.Max((MathF.Min(push, 1f) - 0.333f) / 0.666f, 0) : MathF.Max(1 - push, 0);
-		Mesh.Sphere.Draw(Mono.inst.matHolo,
+		Mesh.Sphere.Draw(Mono.inst.matHoloframe,
 			Matrix.TRS(anchorPos, ori, (radius.value * 2) * pushScalar),
 			new Color(1, 0, 0) * (btnPush.held ? 1f : 0.2f)
 		);
@@ -148,7 +148,7 @@ class Trackballer : dof {
 
 		// Draw ball result
 		Mesh.Sphere.Draw(
-			Mono.inst.matHolo,
+			Mono.inst.matHoloframe,
 			Matrix.TRS(anchorPos, ori, radius.value * 2),
 			new Color(0.8f, 0, 0)
 		);
@@ -178,7 +178,7 @@ class Trackballer : dof {
 		float width  = 52 * U.cm;
 		float height = 29f * U.cm;
 		Mesh.Quad.Draw(
-			Mono.inst.matHolo,
+			Mono.inst.matHoloframe,
 			Matrix.S(new Vec3(width, height, 1)) * panel,
 			new Color(1, 1, 1)
 		);

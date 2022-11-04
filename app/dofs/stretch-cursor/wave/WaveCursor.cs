@@ -43,9 +43,9 @@ class WaveCursor : dof {
 			cursor.pos.z = (float)zF.Filter(cursor.raw.z, (double)Time.Elapsedf);
 			cursor.smooth = Vec3.Lerp(cursor.smooth, cursor.pos, Time.Elapsedf * 6f);
 
-			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(cursor.raw, Quat.Identity, 0.01f), new Color(1, 0, 0));
-			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(cursor.pos, Quat.Identity, 0.01f), new Color(0, 1, 0));
-			Mesh.Sphere.Draw(Mono.inst.matHolo, Matrix.TRS(cursor.smooth, Quat.Identity, 0.01f), new Color(0, 0, 1));
+			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.raw, Quat.Identity, 0.01f), new Color(1, 0, 0));
+			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.pos, Quat.Identity, 0.01f), new Color(0, 1, 0));
+			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.smooth, Quat.Identity, 0.01f), new Color(0, 0, 1));
 
 
 			// pinch is more than just the thumb and index finger
@@ -141,7 +141,7 @@ class WaveCursor : dof {
       Vec3 from = i > 0 ? points[i - 1] : nextPos;
       Quat ori = Quat.LookDir(Vec3.Direction(points[i], from));
       Mesh.Cube.Draw(
-        Mono.inst.matHolo,
+        Mono.inst.matHoloframe,
         Matrix.TRS(
 					points[i] + ori * new Vec3(0, 0, 0.01f) * scale,
 					ori,

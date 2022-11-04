@@ -13,8 +13,8 @@ public class Space {
   BufferData data = new BufferData();
 
   Material matFloor = new Material(Shader.Default);
-  Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("/shaders/room.hlsl"));
-  Model leek = Model.FromFile("houseleek_plant.glb", Shader.FromFile("/shaders/room.hlsl"));
+  Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("shaders/room.hlsl"));
+  Model leek = Model.FromFile("houseleek_plant.glb", Shader.FromFile("shaders/room.hlsl"));
   Mesh cube = Mesh.Cube;
 
 	Solid floor;
@@ -104,6 +104,34 @@ public class Space {
 
 		shed.Draw(Matrix.Identity);
 
-		leek.Draw(Matrix.TRS(new Vec3(2.5f, 0, -2.5f) * 1.2f, Quat.FromAngles(180f, 30f, 0f), 1.2f));
+		// leek.Draw(Matrix.TRS(new Vec3(2.5f, 0, -2.5f) * 1.2f, Quat.FromAngles(180f, 30f, 0f), 1.2f));
+
+		// draw grid of pillars
+		float radius = 9;
+		Vec3 pillarsOffset = new Vec3(0, 0, -10);
+		for (float x = -radius; x < radius; x++) {
+			for (float z = -radius; z < radius; z++) {
+				float height = 3f;
+				Mesh.Cube.Draw(
+					Mono.inst.matHolo,
+					Matrix.TRS(
+						new Vec3(pillarsOffset.x + x, (height * 0.5f), pillarsOffset.z - z),
+						Quat.FromAngles(0, 0, 0),
+						new Vec3(0.1f, height, 0.1f)
+					),
+					new Color(1f, 1f, 1f, 1f)
+				);
+
+				Mesh.Cube.Draw(
+					Mono.inst.matHolo,
+					Matrix.TRS(
+						new Vec3(pillarsOffset.x + x, height, pillarsOffset.z - z),
+						Quat.FromAngles(0, 0, 0),
+						new Vec3(0.95f, 1f, 0.95f)
+					),
+					new Color(0.3f, 1f, 0.2f, 1f)
+				);
+			}
+		}
 	}
 }

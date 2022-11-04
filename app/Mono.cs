@@ -7,7 +7,10 @@ public class Mono {
 	public PullRequest.Noise noise = new PullRequest.Noise(939949595);
 
 	public Material matDev;
-	public Material matHolo;
+	public Material matHoloframe = new Material(Shader.FromFile("shaders/above.hlsl"));
+	Material matHoloframeUnder = new Material(Shader.FromFile("shaders/below.hlsl"));
+	public Material matHolo = new Material(Shader.FromFile("shaders/above.hlsl"));
+	Material matHoloUnder = new Material(Shader.FromFile("shaders/below.hlsl"));
 
 	public Rig rig = new Rig();
 	public Space space = new Space();
@@ -65,13 +68,24 @@ public class Mono {
 
 		matDev = Material.Default.Copy();
 		matDev.SetTexture("diffuse", Tex.DevTex);
-		matHolo = Material.Default.Copy();
-		matHolo.Transparency = Transparency.Add;
-		matHolo.DepthWrite = false;
-		// matHolo.DepthTest = DepthTest.Always;
-		matHolo.FaceCull = Cull.None;
-		// matHolo.SetTexture("diffuse", Tex.DevTex);
-		matHolo.Wireframe = true;
+
+		matHolo.SetColor("clearcolor", Renderer.ClearColor);
+		matHoloUnder.SetColor("clearcolor", Renderer.ClearColor);
+		matHoloUnder.FaceCull = Cull.None;
+		matHolo.Chain = matHoloUnder;
+
+
+		matHoloframe.SetColor("clearcolor", Color.Black);
+		matHoloframe.Transparency = Transparency.Add;
+		matHoloframe.DepthWrite = false;
+		matHoloframe.FaceCull = Cull.None;
+		matHoloframe.Wireframe = true;
+		matHoloframeUnder.SetColor("clearcolor", Color.Black);
+		matHoloframeUnder.Transparency = Transparency.Add;
+		matHoloframeUnder.DepthWrite = false;
+		matHoloframeUnder.FaceCull = Cull.None;
+		matHoloframeUnder.Wireframe = true;
+		matHoloframe.Chain = matHoloframeUnder;
 	}
 
 	public void Frame() {
@@ -120,6 +134,7 @@ public class Mono {
 		if (rtb.Active) {
 			rtb.Demo();
 		}
+
 		// </Heresy>
 
 		// rBlock.Step(); lBlock.Step();
@@ -322,6 +337,11 @@ public class Design {
 	demo
 		virtual shapes -> that can be slotted
 		physics boxes
+
+	mirror
+		mirroring vectors(line segments) is really easy
+		easier than rendering.. actually just render twice with the material chain
+		stereonick mentioned
 	
 	debug bool
 		rendering the raw output
