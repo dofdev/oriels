@@ -88,6 +88,9 @@ public class Mono {
 		matHoloframe.Chain = matHoloframeUnder;
 	}
 
+	Pose shape = new Pose(new Vec3(0, 1f, -3f), Quat.FromAngles(45, 0, 45));
+	bool shapeHeld = false;
+
 	public void Frame() {
 
 		// Input.HandClearOverride(Handed.Left);
@@ -134,6 +137,23 @@ public class Mono {
 		if (rtb.Active) {
 			rtb.Demo();
 		}
+
+		if (!shapeHeld) {
+			shapeHeld = rtb.btnPush.frameDown;
+		}
+		if (shapeHeld) {
+			shape.position = rwc.cursor.smooth;
+			shape.orientation = rtb.ori;
+			shapeHeld = !rtb.btnPull.frameDown;
+		}
+		// I'd rather have it be pose.pos & pose.ori
+		// as it's a bit of space hog
+
+		Mesh.Cube.Draw(
+			Mono.inst.matHoloframe,
+			shape.ToMatrix(0.5f),
+			new Color(0.5f, 0.55f, 0.75f) * 0.3f
+		);
 
 		// </Heresy>
 
@@ -314,6 +334,27 @@ public class Design {
 	// public int integer {};
 }
 
+public class Cursor {
+	PullRequest.OneEuroFilter xF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
+	PullRequest.OneEuroFilter yF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
+	PullRequest.OneEuroFilter zF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
+	Vec3 _raw;
+	public Vec3 raw {
+		get => _raw;
+		set {
+			_raw = value;
+			pos = new Vec3(
+				(float)xF.Filter(raw.x, (double)Time.Elapsedf),
+				(float)yF.Filter(raw.y, (double)Time.Elapsedf),
+				(float)zF.Filter(raw.z, (double)Time.Elapsedf)
+			);
+			smooth = Vec3.Lerp(smooth, pos, Time.Elapsedf * 6f);
+		}
+	}
+	public Vec3 pos { get; private set; }
+	public Vec3 smooth { get; private set; }
+}
+
 
 /* 
 	COMMENTS
@@ -335,7 +376,8 @@ public class Design {
 		t
 
 	demo
-		virtual shapes -> that can be slotted
+		seperate the demos from the dofs, and make them rebindable (assigning input using reflection?)
+		virtual shapes(scalable) -> that can be slotted
 		physics boxes
 
 	mirror

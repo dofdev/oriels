@@ -6,18 +6,8 @@ class WaveCursor : dof {
 	// input
 	public Handed handed = Handed.Left;
 
-	public class Cursor
-	{
-		public Vec3 raw;
-		public Vec3 pos;
-		public Vec3 smooth;
-	}
-
 	// data
   public Cursor cursor = new Cursor();
-	PullRequest.OneEuroFilter xF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
-	PullRequest.OneEuroFilter yF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
-	PullRequest.OneEuroFilter zF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
 
 	public void Init() {}
 
@@ -38,52 +28,16 @@ class WaveCursor : dof {
 			);
 
 			cursor.raw = hand.Get(FingerId.Index, JointId.Tip).position + dir * stretch * reach.value;
-			cursor.pos.x = (float)xF.Filter(cursor.raw.x, (double)Time.Elapsedf);
-			cursor.pos.y = (float)yF.Filter(cursor.raw.y, (double)Time.Elapsedf);
-			cursor.pos.z = (float)zF.Filter(cursor.raw.z, (double)Time.Elapsedf);
-			cursor.smooth = Vec3.Lerp(cursor.smooth, cursor.pos, Time.Elapsedf * 6f);
 
 			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.raw, Quat.Identity, 0.01f), new Color(1, 0, 0));
 			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.pos, Quat.Identity, 0.01f), new Color(0, 1, 0));
 			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.smooth, Quat.Identity, 0.01f), new Color(0, 0, 1));
-
-
-			// pinch is more than just the thumb and index finger
-
-			handBtn.Frame(
-				PinchStep(hand, FingerId.Little, littleBtn) ||
-				PinchStep(hand, FingerId.Ring, ringBtn) ||
-				PinchStep(hand, FingerId.Middle, middleBtn) ||
-				PinchStep(hand, FingerId.Index, indexBtn)
-			);
-			if (handBtn.held) {
-				shapePos = cursor.pos;
-			}
-
-			// Mesh.Cube.Draw(
-			// 	Mono.inst.matHolo,
-			// 	Matrix.TS(shapePos, 10 * U.cm),
-			// 	new Color(0.5f, 0.55f, 0.75f)
-			// );
     }
   }
-	Btn littleBtn = new Btn();
-	Btn ringBtn = new Btn();
-	Btn middleBtn = new Btn();
-	Btn indexBtn = new Btn();
-	Btn handBtn = new Btn();
-	Vec3 shapePos = new Vec3(0, 1.3f, -0.5f);
-
 
 	// design
 	public Design deadzone = new Design { str="0.3", term="0+1t", min=0, max=1 };
 	public Design reach = new Design { str="1.0", term="0+m", min=0 };
-
-	// demo
-	public Design snakeLength = new Design { str="0.5", term="0+1t", min=0, max=1 };
-	public Design snakeScale  = new Design { str="0.333", term=">0", min=0.01f };
-	public Design snakeRadius = new Design { str="4", term="0+cm", unit=U.cm, min=0 };
-
 
   float Flexion(Hand hand, FingerId finger) {
     float flexion = (Vec3.Dot(
@@ -100,15 +54,10 @@ class WaveCursor : dof {
     return Math.Max(flexion - deadzone.value, 0f) / (1 - deadzone.value);
   }
 
-	bool PinchStep(Hand hand, FingerId finger, Btn btn) {
-		HandJoint thumb = hand.Get(FingerId.Thumb, JointId.Tip);
-		HandJoint fingy = hand.Get(finger, JointId.Tip);
-		float dist = Vec3.Distance(thumb.position, fingy.position);
-		btn.Frame(dist < 1 * U.cm, dist < 2 * U.cm);
-
-		return btn.held;
-	}
-
+	// demo
+	public Design snakeLength = new Design { str="0.5", term="0+1t", min=0, max=1 };
+	public Design snakeScale  = new Design { str="0.333", term=">0", min=0.01f };
+	public Design snakeRadius = new Design { str="4", term="0+cm", unit=U.cm, min=0 };
 
   Vec3[] mm = new Vec3[128];
   public void Demo(Quat ori) {

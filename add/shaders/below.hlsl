@@ -76,8 +76,6 @@ float4 ps(psIn input) : SV_TARGET {
 	// bluer
 	col.r *= 1 - (t / 10);
 	col.g *= 1 - (t / 10);
-
-	col.rgb = lerp(col.rgb, float3(0.3, 1, 0.2), (-input.world.y / 20));
 		
 	return lerp(clearcolor, col, t);
 

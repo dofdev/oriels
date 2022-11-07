@@ -61,7 +61,13 @@ public class Space {
     floor.AddBox(new Vec3(scale, 0.1f, scale), 1, new Vec3(0, scale / 2, 0));
     matFloor.SetTexture("diffuse", Tex.FromFile("floor.png"));
     matFloor.SetFloat("tex_scale", 32);
-  }
+
+		meshBeam = Mesh.GeneratePlane(new Vec2(0.1f, 1));
+		Vertex[] verts = meshBeam.GetVerts();
+		verts[0].col   = new Color(1f, 0.5f, 0.5f);
+		meshBeam.SetVerts(verts);
+	}
+	Mesh meshBeam;
 
   public float scale;
   public Vec3 floorScale;
@@ -106,17 +112,42 @@ public class Space {
 
 		// leek.Draw(Matrix.TRS(new Vec3(2.5f, 0, -2.5f) * 1.2f, Quat.FromAngles(180f, 30f, 0f), 1.2f));
 
-		// draw grid of pillars
+		
 		float radius = 9;
 		Vec3 pillarsOffset = new Vec3(0, 0, -10);
 		for (float x = -radius; x < radius; x++) {
 			for (float z = -radius; z < radius; z++) {
-				float height = 3f;
+
+				float noise = Mono.inst.noise.D2((int)x, (int)z);
+				float xpos = pillarsOffset.x + x;
+				float zpos = pillarsOffset.z - z;
+				
+				if (Vec3.Distance(new Vec3(xpos, 0, zpos), Vec3.Zero) < radius / 2) {
+					Mesh.Cube.Draw(
+						Mono.inst.matHolo,
+						Matrix.TS(
+							new Vec3(
+								xpos + x, 
+								radius / 2,
+								zpos + z / 2
+							) + Quat.FromAngles(noise * 90, noise * 360, 0) * Vec3.Forward * 2f,
+							new Vec3(2, 1, 2) * (0.5f + noise)
+						),
+						Color.White
+					);
+					continue;
+				}
+
+				float height = 1 + noise;
+				float angle = noise * 360f;
+				Vec3 offset = Quat.FromAngles(0, angle, 0) * Vec3.Forward * noise * 0.5f;
+				xpos += offset.x;
+				zpos += offset.z;
 				Mesh.Cube.Draw(
 					Mono.inst.matHolo,
 					Matrix.TRS(
-						new Vec3(pillarsOffset.x + x, (height * 0.5f), pillarsOffset.z - z),
-						Quat.FromAngles(0, 0, 0),
+						new Vec3(xpos, (height * 0.5f), zpos),
+						Quat.FromAngles(0, angle, 0),
 						new Vec3(0.1f, height, 0.1f)
 					),
 					new Color(1f, 1f, 1f, 1f)
@@ -125,13 +156,79 @@ public class Space {
 				Mesh.Cube.Draw(
 					Mono.inst.matHolo,
 					Matrix.TRS(
-						new Vec3(pillarsOffset.x + x, height, pillarsOffset.z - z),
-						Quat.FromAngles(0, 0, 0),
-						new Vec3(0.95f, 1f, 0.95f)
+						new Vec3(xpos, height, zpos),
+						Quat.FromAngles(0, angle, 0),
+						new Vec3(0.95f, height, 0.95f)
 					),
-					new Color(0.3f, 1f, 0.2f, 1f)
+					new Color(0.3f, 0.7f + (noise * 0.3f), 0.2f, 1f)
 				);
 			}
 		}
+
+		// meshBeam.Draw(
+		// 	Mono.inst.matHolo,
+		// 	Matrix.TRS(
+		// 		new Vec3(0, 1, -3),
+		// 		Quat.FromAngles(90f, 0, 0),
+		// 		1
+		// 	)
+		// );
+
+		tree.Frame();
+	}
+	Tree tree = new Tree();
+	// Tree[] trees = new Tree[128];
+
+	class Tree {
+		float r; // damage
+		float g; // resources
+		float b; // peak
+		// color(r, max(g, b), b)
+		// height = b
+
+		public void Frame() {
+
+		}
+		
+		/* 
+
+			sapling
+				e 
+
+				e = lerp(e, g * lft, lft / x)
+				r += e
+				g -= e
+				b -= min(g, 0)
+				reliant on ideal conditions being there to ease off of the seed dependency
+					(scrappy can outlast the g)
+
+			tree 
+				r += min(g, 0) + background radiation * lft
+				g += b * lft
+				b += 
+				r 0->b
+				g = clamp(g, 0, 1)
+				b = clamp(b, 0, 1)
+
+				e = (r / neighbors) * lft
+				g -= e
+
+				if g > 1 - r 
+					seed(g)
+					g = 0
+
+				tilt towards best spot
+					* rand.dir * r * smoothstart (r * r * r * r * r) ?
+					
+				if r > b
+					b += lft
+
+				if b > 1
+					poof
+
+			seed
+				g = what was passed down
+				pos = parent.pos + Quat.FromAngles(0, noise.value * 360f, 0) * parent.r // lol
+		*/
 	}
 }

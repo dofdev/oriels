@@ -58,8 +58,6 @@ float4 ps(psIn input) : SV_TARGET {
 		col.b = col.b * 0.3;
 
 		col.rgb *= 0.1;
-	} else {
-		col.rgb = lerp(col.rgb, float3(0.3, 1, 0.2), (input.world.y / 20));
 	}
 
 	// dist magnitude from center X0Z
