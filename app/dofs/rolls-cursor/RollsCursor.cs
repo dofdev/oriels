@@ -23,7 +23,7 @@ class RollsCursor : dof {
 			// Biased by finger length
 			float stretch = (fI + fI + fM + fM + fM + fR + fR + fL) / 8f;
 
-			Vec3 to   = Roll(hand, JointId.Tip,          fI, fM, fR, fL);
+			Vec3 to   = Roll(hand, JointId.KnuckleMid,   fI, fM, fR, fL);
 			Vec3 from = Roll(hand, JointId.KnuckleMajor, fI, fM, fR, fL);
 
 			Vec3 dir = PullRequest.Direction(to, from);
@@ -39,18 +39,16 @@ class RollsCursor : dof {
 	// design
 	public Design reach = new Design { str = "1.0", term = "0+m",  min = 0 };
 
-	// Roll
-	// based on flexion
-	// with a "recursive" lerp
-	// i - m - r - l
-	// im - mr - rl
-	// imr - mrl
-	// imrl	
 	public Vec3 Roll(Hand hand, JointId jointId, float fI, float fM, float fR, float fL) {
 		Vec3 i = hand.Get(FingerId.Index,  jointId).position;
 		Vec3 m = hand.Get(FingerId.Middle, jointId).position;
 		Vec3 r = hand.Get(FingerId.Ring,   jointId).position;
 		Vec3 l = hand.Get(FingerId.Little, jointId).position;
+
+		fI = PullRequest.Clamp(fI, 0.0001f, 1f);
+		fM = PullRequest.Clamp(fM, 0.0001f, 1f);
+		fR = PullRequest.Clamp(fR, 0.0001f, 1f);
+		fL = PullRequest.Clamp(fL, 0.0001f, 1f);
 
 		Vec3 im   = Vec3.Lerp(i  , m  , fM / (fM + fI));
 		Vec3 mr   = Vec3.Lerp( m ,  r , fR / (fR + fM));
