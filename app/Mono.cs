@@ -45,16 +45,16 @@ public class Mono {
 
 		dofs = new dof[] {
 			new Chiral(new dof[] {
-				new RollsCursor() { handed = Handed.Left  },
-				new RollsCursor() { handed = Handed.Right }
-			}),
-			new Chiral(new dof[] {
 				new WaveCursor()  { handed = Handed.Left  },
 				new WaveCursor()  { handed = Handed.Right }
 			}),
 			new Chiral(new dof[] {
 				new Trackballer() { handed = Handed.Left  },
 				new Trackballer() { handed = Handed.Right }
+			}),
+			new Chiral(new dof[] {
+				new RollsCursor() { handed = Handed.Left  },
+				new RollsCursor() { handed = Handed.Right }
 			}),
 		};
 	}
@@ -122,30 +122,30 @@ public class Mono {
 		}  
 
 		// <Heresy>
-		// WaveCursor lwc = (WaveCursor)((Chiral)dofs[0]).dofs[0];
-		// WaveCursor rwc = (WaveCursor)((Chiral)dofs[0]).dofs[1];
-		// Trackballer ltb = (Trackballer)((Chiral)dofs[1]).dofs[0];
-		// Trackballer rtb = (Trackballer)((Chiral)dofs[1]).dofs[1];
+		WaveCursor  lwc = (WaveCursor)((Chiral)dofs[0]).dofs[0];
+		WaveCursor  rwc = (WaveCursor)((Chiral)dofs[0]).dofs[1];
+		Trackballer ltb = (Trackballer)((Chiral)dofs[1]).dofs[0];
+		Trackballer rtb = (Trackballer)((Chiral)dofs[1]).dofs[1];
 
-		// if (lwc.Active) {
-		// 	lwc.Demo(ltb.ori);
-		// }
-		// if (rwc.Active) {
-		// 	rwc.Demo(rtb.ori);
-		// }
+		if (lwc.Active) {
+			lwc.Demo(ltb.ori);
+		}
+		if (rwc.Active) {
+			rwc.Demo(rtb.ori);
+		}
 
-		// if (rtb.Active) {
-		// 	rtb.Demo();
-		// }
+		if (rtb.Active) {
+			rtb.Demo();
+		}
 
-		// if (!shapeHeld) {
-		// 	shapeHeld = rtb.btnPush.frameDown;
-		// }
-		// if (shapeHeld) {
-		// 	shape.position = rwc.cursor.smooth;
-		// 	shape.orientation = rtb.ori;
-		// 	shapeHeld = !rtb.btnPull.frameDown;
-		// }
+		if (!shapeHeld) {
+			shapeHeld = rtb.btnPush.frameDown;
+		}
+		if (shapeHeld) {
+			shape.position = rwc.cursor.smooth;
+			shape.orientation = rtb.ori;
+			shapeHeld = !rtb.btnPull.frameDown;
+		}
 		
 		// I'd rather have it be pose.pos & pose.ori
 		// as it's a bit of space hog
