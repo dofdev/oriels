@@ -83,6 +83,21 @@ public class Rig {
     lWrist = new Pose(lCon.pos + lCon.ori * new Vec3(0, 0, 0.052f), lCon.ori);
   }
 
+	public float Flexion(Hand hand, FingerId finger, float deadzone = 0.3f) {
+		float flexion = (Vec3.Dot(
+			PullRequest.Direction(
+				hand.Get(finger, JointId.Tip).position,
+				hand.Get(finger, JointId.KnuckleMinor).position
+			),
+			PullRequest.Direction(
+				hand.Get(finger, JointId.KnuckleMid).position,
+				hand.Get(finger, JointId.KnuckleMajor).position
+			)
+		) + 1f) / 2;
+
+		return Math.Max(flexion - deadzone, 0f) / (1 - deadzone);
+	}
+
   public Vec3 Fullstick(bool chirality) {
     Controller con = Con(chirality).device;
     Quat rot = Quat.FromAngles(con.stick.y * -90, 0, con.stick.x * 90);

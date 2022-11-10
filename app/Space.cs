@@ -183,52 +183,53 @@ public class Space {
 		float r; // damage
 		float g; // resources
 		float b; // peak
+		Vec3  pos;
+		float angle;
 		// color(r, max(g, b), b)
 		// height = b
 
 		public void Frame() {
 
 		}
-		
-		/* 
-
-			sapling
-				e 
-
-				e = lerp(e, g * lft, lft / x)
-				r += e
-				g -= e
-				b -= min(g, 0)
-				reliant on ideal conditions being there to ease off of the seed dependency
-					(scrappy can outlast the g)
-
-			tree 
-				r += min(g, 0) + background radiation * lft
-				g += b * lft
-				b += 
-				r 0->b
-				g = clamp(g, 0, 1)
-				b = clamp(b, 0, 1)
-
-				e = (r / neighbors) * lft
-				g -= e
-
-				if g > 1 - r 
-					seed(g)
-					g = 0
-
-				tilt towards best spot
-					* rand.dir * r * smoothstart (r * r * r * r * r) ?
-					
-				if r > b
-					b += lft
-
-				if b > 1
-					poof
-
-			seed
-				g = what was passed down
-				pos = parent.pos + Quat.FromAngles(0, noise.value * 360f, 0) * parent.r // lol
-		*/
 	}
 }
+
+
+/* 
+	COMMENTS
+
+	sapling
+		e 
+
+		e = lerp(e, g * lft, lft / x)
+		r += e
+		g -= e
+		b -= min(g, 0)
+		reliant on ideal conditions being there to ease off of the seed dependency
+			(scrappy can outlast the g)
+
+	tree 
+		r += min(g, 0) + background radiation * lft
+		g += b * lft
+		b += 
+		r 0->b
+		g = clamp(g, 0, 1)
+		b = clamp(b, 0, 1)
+
+		e = (r / neighbors) * lft
+		g -= e
+
+		if g > 1 - r 
+			seed(g, pos + Quat.FromAngles(0, noise.value * 360f, 0) * b)
+			g = 0
+
+		tilt towards best spot
+			* rand.dir * r * smoothstart (r * r * r * r * r) ?
+			
+		if r > b
+			b += lft
+
+		if b > 1
+			poof
+
+*/
