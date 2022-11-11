@@ -83,7 +83,7 @@ public class Rig {
     lWrist = new Pose(lCon.pos + lCon.ori * new Vec3(0, 0, 0.052f), lCon.ori);
   }
 
-	public float Flexion(Hand hand, FingerId finger, float deadzone = 0.3f) {
+	public float Flexion(Hand hand, FingerId finger, float deadzone = 0.15f) {
 		float flexion = (Vec3.Dot(
 			PullRequest.Direction(
 				hand.Get(finger, JointId.Tip).position,
@@ -95,7 +95,8 @@ public class Rig {
 			)
 		) + 1f) / 2;
 
-		return Math.Max(flexion - deadzone, 0f) / (1 - deadzone);
+		flexion = Math.Max(flexion - deadzone, 0f) / (1 - deadzone);
+		return flexion * flexion;
 	}
 
   public Vec3 Fullstick(bool chirality) {

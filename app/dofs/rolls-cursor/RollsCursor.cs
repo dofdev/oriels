@@ -20,7 +20,6 @@ class RollsCursor : dof {
 			float fR = rig.Flexion(hand, FingerId.Ring);
 			float fL = rig.Flexion(hand, FingerId.Little);
 
-			// Biased by finger length
 			float stretch = (fI + fM + fR + fL) / 4f;
 
 			Vec3 to   = Roll(hand, JointId.KnuckleMid,   fI, fM, fR, fL);
