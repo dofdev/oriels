@@ -207,10 +207,26 @@ class Trackballer : dof {
 /*
 	COMMENTS
 
+	press in is not reliable
+
+	full thumb mesh and contact point lerp
+
+	pullbtn mouse click scale anim
+
+	thumb inside instead
+	so the natural thumb position doesn't affect the trackballer
+
+	sens for cursor
+
+	be able to stop it easily without jittering
+		use another fingers flexion to be able to brake the trackballer
+
+	finger gun interaction (on the other hand) to move the trackballer
+
 	distinct interactions to account for (relative to palm orientation)
-		y swipe
-		z swipe
-		x spin
+		y swipe (move x)
+		z swipe (move y)
+		x spin  (scroll)
 
 	how reliable is the provided palm orientation?
 	

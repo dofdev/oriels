@@ -50,11 +50,11 @@ class RollsCursor : dof {
 		fL = PullRequest.Clamp(fL, 0.0001f, 1f);
 
 		Vec3 im   = Vec3.Lerp(i  , m  , fM / (fM + fI));
-		Vec3 mr   = Vec3.Lerp( m ,  r , fR / (fR + fM));
-		Vec3 rl   = Vec3.Lerp(  r,   l, fL / (fL + fR));
+		Vec3  mr  = Vec3.Lerp( m ,  r , fR / (fR + fM));
+		Vec3   rl = Vec3.Lerp(  r,   l, fL / (fL + fR));
 
 		Vec3 imr  = Vec3.Lerp(im , mr , fR / (fR + fM + fI));
-		Vec3 mrl  = Vec3.Lerp( mr,  rl, fL / (fL + fR + fM));
+		Vec3  mrl = Vec3.Lerp( mr,  rl, fL / (fL + fR + fM));
 
 		Vec3 imrl = Vec3.Lerp(imr, mrl, fL / (fL + fR + fM + fI));
 
@@ -67,4 +67,8 @@ class RollsCursor : dof {
 /* 
 	COMMENTS
 
+	reach out to nova for any help or perspectives on the problem
+
+	un stagger the roll
+	bias direction on index and pinky
 */
