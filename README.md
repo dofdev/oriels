@@ -12,3 +12,17 @@
 <a href='https://stereokit.net'>
 <img src='zrc/StereoKitLogoLight.svg' width="32px">  
 </a>
+
+<br>
+<br>
+<br>
+
+	start()
+		c# net6.0 sdk
+		git &| github
+		vim || vscode
+
+		dotnet restore
+
+		dotnet build
+		dotnet run
