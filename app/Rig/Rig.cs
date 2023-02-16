@@ -51,7 +51,7 @@ public class Rig {
 		Vec2 stickL = Input.Controller(Handed.Left).stick;
 		Vec2 stickR = Input.Controller(Handed.Right).stick;
 		Quat delta = Quat.FromAngles(
-			Vec3.Up * stickR.x * 120f * Time.Elapsedf
+			Vec3.Up * stickR.x * 120f * Time.Stepf
 		) * ori;
     Vec3 headPos = Input.Head.position + Input.Head.Forward * -0.15f; // Input.Head -> Head() ?
 		pos -= headPos;
@@ -59,7 +59,7 @@ public class Rig {
 		pos += headPos;
 		ori = delta * ori;
 
-		Vec3 move = -stickL.X0Y * Time.Elapsedf * 0.5f;
+		Vec3 move = -stickL.X0Y * Time.Stepf * 0.5f;
 		pos += (Input.Head.orientation * move).X0Z;
 
 		Renderer.CameraRoot = Matrix.TR(pos, ori) * bounds.Inverse;

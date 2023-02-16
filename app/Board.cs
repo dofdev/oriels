@@ -35,13 +35,13 @@ public class Board {
 
 
     // velocity
-    vel *= 1f - (drag * Time.Elapsedf);
-    vel += accel * speed * Time.Elapsedf;
-    vel = MathF.Max(vel - deccel * brake * Time.Elapsedf, 0);
+    vel *= 1f - (drag * Time.Stepf);
+    vel += accel * speed * Time.Stepf;
+    vel = MathF.Max(vel - deccel * brake * Time.Stepf, 0);
 
     // steering
     vector = Quat.LookDir(dir) * Quat.FromAngles(0, lean * tight, 0) * Vec3.Forward;
-    back += vector * vel * Time.Elapsedf;
+    back += vector * vel * Time.Stepf;
     dir = (front - back).Normalized;
 
     front = back + dir * length;

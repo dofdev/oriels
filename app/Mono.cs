@@ -346,11 +346,11 @@ public class Cursor {
 		set {
 			_raw = value;
 			pos = new Vec3(
-				(float)xF.Filter(raw.x, (double)Time.Elapsedf),
-				(float)yF.Filter(raw.y, (double)Time.Elapsedf),
-				(float)zF.Filter(raw.z, (double)Time.Elapsedf)
+				(float)xF.Filter(raw.x, (double)Time.Stepf),
+				(float)yF.Filter(raw.y, (double)Time.Stepf),
+				(float)zF.Filter(raw.z, (double)Time.Stepf)
 			);
-			smooth = Vec3.Lerp(smooth, pos, Time.Elapsedf * 6f);
+			smooth = Vec3.Lerp(smooth, pos, Time.Stepf * 6f);
 		}
 	}
 	public Vec3 pos { get; private set; }

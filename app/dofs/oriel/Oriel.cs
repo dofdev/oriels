@@ -120,7 +120,7 @@ public class Oriel {
     //     (Input.Key(Key.R).IsActive() ? 1 : 0) - (Input.Key(Key.W).IsActive() ? 1 : 0)
     //   );
     //   if (input.Length > 0) {
-    //     cursor += input.Normalized * Time.Elapsedf * 0.4f;
+    //     cursor += input.Normalized * Time.Stepf * 0.4f;
     //   }
     // }
     // cursorOri = Quat.FromAngles(MathF.Sin(Time.Totalf) * 15, 0, 0);
@@ -163,7 +163,7 @@ public class Oriel {
     if (interacting) {
       if (detectCount == 1) { // Grab (face -> crown *face)
         Quat newOri = (cursorOri * qOffset.Inverse).Normalized;
-        ori = Quat.Slerp(ori, newOri, Time.Elapsedf * 9f);
+        ori = Quat.Slerp(ori, newOri, Time.Stepf * 9f);
         // gravity snapping (within 6 degrees) *horizontal
         // always? *here **tilt = nosnap
         if (Vec3.Dot(-Vec3.Up, ori * -Vec3.Up) > 0.9998f) {

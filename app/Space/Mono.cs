@@ -86,7 +86,7 @@ public class Mono {
     );
 
     // fly player towards cursor:
-    // playerPos += (localCursor - playerPos).Normalized * 1f * Time.Elapsedf;
+    // playerPos += (localCursor - playerPos).Normalized * 1f * Time.Stepf;
     pidX.p = moveP; pidY.p = moveP; pidZ.p = moveP; 
     pidX.i = moveI; pidY.i = moveI; pidZ.i = moveI;
     playerPos = new Vec3(
@@ -172,7 +172,7 @@ public class Mono {
       Vec3 toPlayer = (playerPos - enemies[i]).Normalized;
       float variation = Oriels.Mono.inst.noise.D1(i);
       toPlayer *= Quat.FromAngles(0, MathF.Sin(Time.Totalf * variation) * 90 * variation, 0);
-      Vec3 newPos = enemies[i] + toPlayer * Time.Elapsedf * 0.5f;
+      Vec3 newPos = enemies[i] + toPlayer * Time.Stepf * 0.5f;
 
       // if far enough away from other enemies than set new pos
       bool setNewPos = true;

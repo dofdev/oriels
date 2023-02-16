@@ -63,7 +63,7 @@ class Trackballer : dof {
 			onTheBall ? 0.5f : 5f // 10x less integral when on the ball?
 		);
 		// compliance;
-		// compliance = Vec3.Lerp(compliance, Vec3.Zero, Time.Elapsedf * 10f);
+		// compliance = Vec3.Lerp(compliance, Vec3.Zero, Time.Stepf * 10f);
 		Matrix anchor = Matrix.TR(anchorPos, hand.palm.orientation);
 		Matrix anchorInv = anchor.Inverse;
 
@@ -129,7 +129,7 @@ class Trackballer : dof {
 				point.Normalized
 			).Relative(hand.palm.orientation);
 
-			momentum = Quat.Slerp(momentum, delta, Time.Elapsedf * 10f);
+			momentum = Quat.Slerp(momentum, delta, Time.Stepf * 10f);
 
 			Vec3 contact = point.Normalized * radius.value;
 			Vec3 offset  = point - contact;
@@ -142,7 +142,7 @@ class Trackballer : dof {
 		} else {
 			PullRequest.ToAxisAngle(momentum, out Vec3 axis, out float angle);
 			if (angle < stop.value) {
-				momentum = Quat.Slerp(momentum, Quat.Identity, Time.Elapsedf * 10f);
+				momentum = Quat.Slerp(momentum, Quat.Identity, Time.Stepf * 10f);
 			}
 		}
 

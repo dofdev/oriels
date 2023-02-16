@@ -31,9 +31,9 @@ public class Mono {
 	public void Frame() {
 		Oriels.Rig rig = Oriels.Mono.inst.rig;
 
-		// angle.x -= rig.rCon.device.stick.y * 90f * Time.Elapsedf;
+		// angle.x -= rig.rCon.device.stick.y * 90f * Time.Stepf;
 		// angle.x = PullRequest.Clamp(angle.x, -89, 89);
-		angle.y -= rig.rCon.device.stick.x * 90f * Time.Elapsedf;
+		angle.y -= rig.rCon.device.stick.x * 90f * Time.Stepf;
 
 		Vec3 input = new Vec3(
 			rig.lCon.device.stick.x,
@@ -49,7 +49,7 @@ public class Mono {
 			).Normalized * input;
 			
 			input.y = 0;
-			offset += input * Time.Elapsedf;
+			offset += input * Time.Stepf;
 		}
 		offset.y = -height;
 

@@ -31,7 +31,7 @@ public static class PullRequest {
 		ToAxisAngle(q, out axis, out angle);
 		return axis * angle;
 		// * (float)(Math.PI / 180); // radians -> degrees
-		// / Time.Elapsedf; // delta -> velocity
+		// / Time.Stepf; // delta -> velocity
 	}
 
 	public static void ToAxisAngle(this Quat q, out Vec3 axis, out float angle) {
@@ -321,7 +321,7 @@ public static class PullRequest {
 			float error = value - target;
 			integral += error;
 			float delta = ((p * error) + (i * integral));
-			return value -= delta * Time.Elapsedf;
+			return value -= delta * Time.Stepf;
 		}
 	}
 
@@ -333,7 +333,7 @@ public static class PullRequest {
 			Vec3 error = value - target;
 			integral += error;
 			Vec3 delta = ((p * error) + (i * integral));
-			return value -= delta * Time.Elapsedf;
+			return value -= delta * Time.Stepf;
 		}
 	}
 
@@ -345,15 +345,15 @@ public static class PullRequest {
 
 		public void Step(float to = 1, bool bounce = false) {
 			float dir = to - t;
-			vel += dir * spring * Time.Elapsedf;
+			vel += dir * spring * Time.Stepf;
 
 			if (Math.Sign(vel) != Math.Sign(dir)) {
-				vel *= 1 - (dampen * Time.Elapsedf);
+				vel *= 1 - (dampen * Time.Stepf);
 			} else {
-				vel *= 1 - (dampen * 0.33f * Time.Elapsedf);
+				vel *= 1 - (dampen * 0.33f * Time.Stepf);
 			}
 
-			float newt = t + vel * Time.Elapsedf;
+			float newt = t + vel * Time.Stepf;
 			if (bounce && (newt < 0 || newt > 1)) {
 				vel *= -0.5f;
 				newt = Math.Clamp(newt, 0, 1);

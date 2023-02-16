@@ -126,7 +126,7 @@ public class BlockCon {
           spinDelta = Quat.Slerp(
             spinDelta.Normalized,
             (newRot.Inverse * conRotDelta * newRot).Normalized,
-            Time.Elapsedf / 0.1f
+            Time.Stepf / 0.1f
           );
         }
         spinRot *= spinDelta * spinDelta;
@@ -139,16 +139,16 @@ public class BlockCon {
         blocks[index].solid.Move(toPos, toRot);
 
         Quat newHeldRot = blocks[index].solid.GetPose().orientation;
-        angularMomentum = Vec3.Lerp(angularMomentum, PullRequest.AngularDisplacement((newHeldRot * oldHeldRot.Inverse).Normalized), Time.Elapsedf / 0.1f);
+        angularMomentum = Vec3.Lerp(angularMomentum, PullRequest.AngularDisplacement((newHeldRot * oldHeldRot.Inverse).Normalized), Time.Stepf / 0.1f);
         oldHeldRot = newHeldRot;
 
         delta = (cursor + (con.ori * heldRot * spinRot).Normalized * offset) - blocks[index].solid.GetPose().position;
-        momentum = Vec3.Lerp(momentum, delta, Time.Elapsedf / 0.1f);
+        momentum = Vec3.Lerp(momentum, delta, Time.Stepf / 0.1f);
       }
     } else {
       if (index >= 0) {
-        blocks[index].solid.SetAngularVelocity(angularMomentum / Time.Elapsedf);
-        blocks[index].solid.SetVelocity(momentum / Time.Elapsedf);
+        blocks[index].solid.SetAngularVelocity(angularMomentum / Time.Stepf);
+        blocks[index].solid.SetVelocity(momentum / Time.Stepf);
       }
       index = -1;
     }

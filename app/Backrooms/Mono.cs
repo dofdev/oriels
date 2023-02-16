@@ -14,33 +14,33 @@ public class Mono {
 	Vec3 angle = new Vec3(0, 0, 0);
 
 	Thing[] thing;
-	Model model = Model.FromFile("/backrooms/backrooms.glb");
+	Model model = Model.FromFile("backrooms/backrooms.glb");
 
 	public void Init() {
 		thing = new Thing[] {
 			new Thing(
 				model.GetMesh("Carpet"), 
-				new Material(Shader.FromFile("/shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("shaders/oriel.hlsl")),
 				"backrooms/Carpet.png"
 			),
 			new Thing(
 				model.GetMesh("Walls"), 
-				new Material(Shader.FromFile("/shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("shaders/oriel.hlsl")),
 				"backrooms/Walls.png"
 			),
 			new Thing(
 				model.GetMesh("Ceiling"),
-				new Material(Shader.FromFile("/shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("shaders/oriel.hlsl")),
 				"backrooms/Ceiling.png"
 			),
 			new Thing(
 				model.GetMesh("Vents"),
-				new Material(Shader.FromFile("/shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("shaders/oriel.hlsl")),
 				"backrooms/Vents.png"
 			),
 			new Thing(
 				model.GetMesh("Lights"),
-				new Material(Shader.FromFile("/shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("shaders/oriel.hlsl")),
 				"backrooms/Lights.png"
 			),
 		};
@@ -49,9 +49,9 @@ public class Mono {
 	public void Frame() {
 		Oriels.Rig rig = Oriels.Mono.inst.rig;
 
-		// angle.x -= rig.rCon.device.stick.y * 90f * Time.Elapsedf;
+		// angle.x -= rig.rCon.device.stick.y * 90f * Time.Stepf;
 		// angle.x = PullRequest.Clamp(angle.x, -89, 89);
-		angle.y -= rig.rCon.device.stick.x * 90f * Time.Elapsedf;
+		angle.y -= rig.rCon.device.stick.x * 90f * Time.Stepf;
 
 		Vec3 input = new Vec3(
 			rig.lCon.device.stick.x,
@@ -67,7 +67,7 @@ public class Mono {
 			).Normalized * input;
 
 			input.y = 0;
-			offset += input * Time.Elapsedf;
+			offset += input * Time.Stepf;
 		}
 		offset.y = -height;
 

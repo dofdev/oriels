@@ -106,7 +106,7 @@ public class DriftGrind {
     //       pos = -(rCon.pos - Input.Head.position) + grindPos - (Input.Head.position - pos);
     //       vel = Vec3.Zero;
 
-    //       railT += Time.Elapsedf * grindVel.Magnitude * grindDir; // scale based on length of rail * calculate and cache on place
+    //       railT += Time.Stepf * grindVel.Magnitude * grindDir; // scale based on length of rail * calculate and cache on place
     //       // bool clamped = false;
     //       // float railTpreClamp = railT;
     //       // if
@@ -124,7 +124,7 @@ public class DriftGrind {
 
     //       cube.Draw(mat, Matrix.TS(grindPos, new Vec3(0.1f, 0.1f, 0.1f)));
     //       // cube.Draw(mat, Matrix.TS(toPos, new Vec3(0.1f, 0.1f, 0.1f) * 0.333f));
-    //       // pos = Vec3.Lerp(pos, Bezier.Sample(net.me.cubics[0].p0, net.me.cubics[0].p1, net.me.cubics[0].p2, net.me.cubics[0].p3, railT) - (subCon.aim.position - pos), Time.Elapsedf * 6f);
+    //       // pos = Vec3.Lerp(pos, Bezier.Sample(net.me.cubics[0].p0, net.me.cubics[0].p1, net.me.cubics[0].p2, net.me.cubics[0].p3, railT) - (subCon.aim.position - pos), Time.Stepf * 6f);
     //       // how to reliably determine and control which direction to go? (velocity)
     //     }
     //   }
@@ -149,12 +149,12 @@ public class DriftGrind {
 
     // pos.x = (float)Math.Sin(Time.Total * 0.1f) * 0.5f;
 
-    // pos += vel * Time.Elapsedf;
+    // pos += vel * Time.Stepf;
 
     // float preX = pos.x; pos.x = Math.Clamp(pos.x, -scene.scale / 2, scene.scale / 2); if (pos.x != preX) { vel.x = 0; }
     // float preY = pos.y; pos.y = Math.Clamp(pos.y, 0f, scene.scale / 2); if (pos.y != preY) { vel.y = 0; }
     // float preZ = pos.z; pos.z = Math.Clamp(pos.z, -scene.scale / 2, scene.scale / 2); if (pos.z != preZ) { vel.z = 0; }
 
-    // vel *= 1 - Time.Elapsedf * 0.2f;
+    // vel *= 1 - Time.Stepf * 0.2f;
   }
 }
