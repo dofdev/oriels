@@ -1,0 +1,24 @@
+# 2019.10.28 -> 2023.02.16 ->
+
+dragPos = mainHand.pos
+if (mainHand.button.down)
+  lastPos = dragPos
+  
+if (mainHand.button.held)
+  cursor += (dragPos - lastPos) * 12
+  
+lastPos = dragPos
+
+// x orbital-view
+dragPos = mainHand.pos // * head.rot
+newRot = orielRot * head.rot
+
+if (mainHand.button.down)
+  lastPos = dragPos
+
+if (mainHand.button.held)
+  cursor += newRot * ((dragPos - lastPos) * 12)
+  cursor = newRot * rot.inverse(oldRot) * cursor
+
+lastPos = dragPos
+oldRot = newRot

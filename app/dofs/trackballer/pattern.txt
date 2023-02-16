@@ -1,0 +1,29 @@
+# 2020.04.21 -> 2023.02.16 ->
+
+newRot = hand.rot * heldRot * spinRot
+if (offCon.triggerBtn.held && held != null)
+  newDelta = Inverse(newRot) * offHand.rotDelta
+  newDelta *= newRot
+  spinDelta = Slerp(
+    spinDelta,
+    newDelta,
+    Time.deltaTime / 0.1f
+  )
+  
+spinRot *= spinDelta
+
+// lower the speed the higher the friction
+friction = 1 - Clamp01(
+  Angular(spinDelta).magnitude / deltaTime / 15
+)
+friction = friction * friction * friction;
+spinDelta = Slerp(
+  Quaternion.identity,
+  spinDelta,
+  1 - (friction * Time.deltaTime)
+)
+heldRotDelta = newRot * Inverse(oldRot)
+
+held.rot = hand.rot * heldRot * spinRot
+// or
+held.angularVel = Angular(heldRotDelta) / deltaTime

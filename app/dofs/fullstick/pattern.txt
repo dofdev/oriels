@@ -1,0 +1,5 @@
+# 2019.11.03 -> 2023.02.16 ->
+
+rot = (stick.y * 90, 0, stick.x * 90)
+dir = stick.pressed ? down : up
+output = hand.rotation * rot * dir

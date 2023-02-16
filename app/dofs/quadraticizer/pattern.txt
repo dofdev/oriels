@@ -1,0 +1,8 @@
+# 2021.10.15 -> 2023.02.16 ->
+
+a = offHand.pos
+hit = raycast(offHand.fwd, midPlane)
+dist = distance(hit, midPlane)
+b = mainHand.pos + mainHand.rot * fwd * dist
+c = backhanded stretch-cursor
+pos = lerp(lerp(a, b, t), lerp(b, c, t), t)
