@@ -2,7 +2,7 @@
 
 oriel.pos = head.rot * fwd
 
-// amplified
+# amplified
 oriel.pos = head.rot * fwd
 strength = ~4
 oriel.rot = rot.euler(0, head.euler.y * -strength, 0)

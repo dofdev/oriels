@@ -1,6 +1,6 @@
 # 2021.10.18 -> 2023.02.16 ->
 
-// 4 independent spatial cursors
+# 4 independent spatial cursors
 p0 = leftHand.pos
 p1 = leftTwistCursor.pos
 p2 = rightTwistCursor.pos

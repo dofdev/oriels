@@ -9,7 +9,7 @@ if (mainHand.button.held)
   
 lastPos = dragPos
 
-// x orbital-view
+# x orbital-view
 dragPos = mainHand.pos // * head.rot
 newRot = orielRot * head.rot
 
