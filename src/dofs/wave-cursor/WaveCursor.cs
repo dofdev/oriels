@@ -21,14 +21,14 @@ class WaveCursor : dof {
 			float fL = rig.Flexion(hand, FingerId.Little);
 
 			// Biased by finger length
-			float stretch = (fI + fI + fM + fM + fM + fR + fR + fL) / 8f;
+			float wave = (fI + fI + fM + fM + fM + fR + fR + fL) / 8f;
 
 			Vec3 to   = hand.Get(FingerId.Index, JointId.Tip).position;
 			Vec3 from = hand.Get(FingerId.Index, JointId.KnuckleMajor).position;
 
-			Vec3 dir = PullRequest.Direction(to, from);
+			Vec3 dir = Vec3.Direction(to, from);
 
-			cursor.raw = to + dir * stretch * reach.value;
+			cursor.raw = to + dir * wave * crest.value;
 
 			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.raw,    Quat.Identity, 0.01f), new Color(1, 0, 0));
 			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.pos,    Quat.Identity, 0.01f), new Color(0, 1, 0));
@@ -37,7 +37,7 @@ class WaveCursor : dof {
   }
 
 	// design
-	public Design reach = new Design { str="1.0", term="0+m",  min=0 };
+	public Design crest = new Design { str="1.0", term="0+m",  min=0 };
 
 
 	// demo
@@ -92,4 +92,18 @@ class WaveCursor : dof {
 /* 
 	COMMENTS
 
+	!uses a naive flexion method
+	that needs a refactor to 
+	to both track for 
+		finger & knuckle flexion
+	
+	as they are intertwined at the intersection
+	in way that can't be ignored and must be derived!
+	in order to have a principled wave-cursor 
+		(let alone a rolls-cursor)
+	
+
+	sidetest: may be useful for interactions!
+	where you can use the finger flexion for grabbing
+	and knuckle flexion for cursor extension
 */
