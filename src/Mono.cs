@@ -173,7 +173,7 @@ public class Mono {
 	}
 
 	int dofIndex = 0;
-	Pose windowPoseButton = new Pose(-0.5f, 1.3f, 0, Quat.FromAngles(0, -90f, 0));
+	Pose windowPoseButton = new Pose(0, 1f, -0.5f, Quat.FromAngles(0, 0, 0));
 	TextStyle style = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, Color.White);
 	TextStyle style2 = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, new Color(0.5f, 0.5f, 0.5f));
 	Vec2 fieldSize = new Vec2(6f * U.cm, 3f * U.cm);

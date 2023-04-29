@@ -83,21 +83,39 @@ public class Rig {
     lWrist = new Pose(lCon.pos + lCon.ori * new Vec3(0, 0, 0.052f), lCon.ori);
   }
 
-	public float Flexion(Hand hand, FingerId finger, float deadzone = 0.15f) {
-		float flexion = (Vec3.Dot(
-			PullRequest.Direction(
-				hand.Get(finger, JointId.Tip).position,
-				hand.Get(finger, JointId.KnuckleMinor).position
+	public float Flexion(Hand hand, FingerId id) {
+		float fingerFlex = (Vec3.Dot(
+			Vec3.Direction(
+				hand.Get(id, JointId.Tip).position,
+				hand.Get(id, JointId.KnuckleMinor).position
 			),
-			PullRequest.Direction(
-				hand.Get(finger, JointId.KnuckleMid).position,
-				hand.Get(finger, JointId.KnuckleMajor).position
+			Vec3.Direction(
+				hand.Get(id, JointId.KnuckleMid).position,
+				hand.Get(id, JointId.KnuckleMajor).position
 			)
 		) + 1f) / 2;
 
-		flexion = Math.Max(flexion - deadzone, 0f) / (1 - deadzone);
+    float fingerTrim = 0.15f;
+		fingerFlex = Math.Max(fingerFlex - fingerTrim, 0f) / (1 - fingerTrim);
+
+    float knuckleFlex = (Vec3.Dot(
+      Vec3.Direction(
+        hand.Get(id, JointId.KnuckleMid).position,
+        hand.Get(id, JointId.KnuckleMajor).position
+      ),
+      Vec3.Direction(
+        hand.Get(id, JointId.KnuckleMajor).position,
+        hand.Get(id, JointId.Root).position
+      )
+    ) + 1f) / 2;
+
+    float knuckleTrim = 0.666f;
+    knuckleFlex = Math.Max(knuckleFlex - knuckleTrim, 0f) / (1 - knuckleTrim);
+
+    float flexion = knuckleFlex + fingerFlex;
 		return flexion * flexion;
 	}
+  
 
   public Vec3 Fullstick(bool chirality) {
     Controller con = Con(chirality).device;

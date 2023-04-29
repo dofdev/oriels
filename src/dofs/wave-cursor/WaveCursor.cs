@@ -92,18 +92,4 @@ class WaveCursor : dof {
 /* 
 	COMMENTS
 
-	!uses a naive flexion method
-	that needs a refactor to 
-	to both track for 
-		finger & knuckle flexion
-	
-	as they are intertwined at the intersection
-	in way that can't be ignored and must be derived!
-	in order to have a principled wave-cursor 
-		(let alone a rolls-cursor)
-	
-
-	sidetest: may be useful for interactions!
-	where you can use the finger flexion for grabbing
-	and knuckle flexion for cursor extension
 */
