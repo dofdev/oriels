@@ -13,8 +13,8 @@ public class Space {
   BufferData data = new BufferData();
 
   Material matFloor = new Material(Shader.Default);
-  Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("shaders/room.hlsl"));
-  Model leek = Model.FromFile("houseleek_plant.glb", Shader.FromFile("shaders/room.hlsl"));
+  Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("room.hlsl"));
+  Model leek = Model.FromFile("houseleek_plant.glb", Shader.FromFile("room.hlsl"));
   Mesh cube = Mesh.Cube;
 
 	Solid floor;

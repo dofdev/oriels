@@ -28,7 +28,7 @@ public class Mono {
   Mesh meshCube;
   // Model skyboxModel = Model.FromFile("fantasy_skybox.glb");
   // Mesh skybox;
-  // Material skyboxMat = new Material(Shader.FromFile("/shaders/oriel.hlsl"));
+  // Material skyboxMat = new Material(Shader.FromFile("/oriel.hlsl"));
 
   public Mono() {
 

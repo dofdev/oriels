@@ -20,27 +20,27 @@ public class Mono {
 		thing = new Thing[] {
 			new Thing(
 				model.GetMesh("Carpet"), 
-				new Material(Shader.FromFile("shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("oriel.hlsl")),
 				"backrooms/Carpet.png"
 			),
 			new Thing(
 				model.GetMesh("Walls"), 
-				new Material(Shader.FromFile("shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("oriel.hlsl")),
 				"backrooms/Walls.png"
 			),
 			new Thing(
 				model.GetMesh("Ceiling"),
-				new Material(Shader.FromFile("shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("oriel.hlsl")),
 				"backrooms/Ceiling.png"
 			),
 			new Thing(
 				model.GetMesh("Vents"),
-				new Material(Shader.FromFile("shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("oriel.hlsl")),
 				"backrooms/Vents.png"
 			),
 			new Thing(
 				model.GetMesh("Lights"),
-				new Material(Shader.FromFile("shaders/oriel.hlsl")),
+				new Material(Shader.FromFile("oriel.hlsl")),
 				"backrooms/Lights.png"
 			),
 		};

@@ -3,6 +3,8 @@
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net6.0</TargetFramework>
+    <SKAssetFolder>add</SKAssetFolder>
+    <SKAssetDestination>add</SKAssetDestination>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -15,25 +17,5 @@
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
-
-  <ItemGroup>
-    <None Remove="add/shaders/oriel.hlsl" />
-    <None Remove="add/shaders/colorcube.hlsl" />
-    <None Remove="add/shaders/panes.hlsl" />
-    <None Remove="add/shaders/frame.hlsl" />
-    <None Remove="add/shaders/room.hlsl" />
-    <None Remove="add/shaders/above.hlsl" />
-    <None Remove="add/shaders/below.hlsl" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <SKShader Include="add/shaders/oriel.hlsl" />
-    <SKShader Include="add/shaders/colorcube.hlsl" />
-    <SKShader Include="add/shaders/panes.hlsl" />
-    <SKShader Include="add/shaders/frame.hlsl" />
-    <SKShader Include="add/shaders/room.hlsl" />
-    <SKShader Include="add/shaders/above.hlsl" />
-    <SKShader Include="add/shaders/below.hlsl" />
-  </ItemGroup>
 
 </Project>

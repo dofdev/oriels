@@ -7,10 +7,10 @@ public class Mono {
 	public PullRequest.Noise noise = new PullRequest.Noise(939949595);
 
 	public Material matDev;
-	public Material matHoloframe = new Material(Shader.FromFile("shaders/above.hlsl"));
-	Material matHoloframeUnder = new Material(Shader.FromFile("shaders/below.hlsl"));
-	public Material matHolo = new Material(Shader.FromFile("shaders/above.hlsl"));
-	Material matHoloUnder = new Material(Shader.FromFile("shaders/below.hlsl"));
+	public Material matHoloframe = new Material(Shader.FromFile("above.hlsl"));
+	Material matHoloframeUnder = new Material(Shader.FromFile("below.hlsl"));
+	public Material matHolo = new Material(Shader.FromFile("above.hlsl"));
+	Material matHoloUnder = new Material(Shader.FromFile("below.hlsl"));
 
 	public Rig rig = new Rig();
 	public Space space = new Space();
