@@ -15,6 +15,7 @@ if (!SK.Initialize(settings))
 
 Input.HandSolid(Handed.Max, false);
 Input.HandVisible(Handed.Max, true);
+// Input.HandMaterial(Handed.Max, Material.Default);
 Renderer.EnableSky = false;
 Renderer.ClearColor = new Color(0f / 256f, 162f / 256f, 206f / 256f);
 
