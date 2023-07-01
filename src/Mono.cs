@@ -82,6 +82,75 @@ public class Mono {
 
 
 	Spatial spatial = new Spatial();
+	Cursor cursor = new Cursor();
+	public class Drawer {
+		public Pose pose;
+		public float open; // 0 - 1
+
+		public Drawer(Pose pose) {
+			this.pose = pose;
+
+			mat.FaceCull = Cull.None;
+		}
+
+		public void Frame(Cursor cursor, float pinch) {
+			float width = 0.4f;
+			float height = 0.15f;
+
+			Matrix matrix = pose.ToMatrix();
+			Vec3 localCursor = matrix.Inverse.Transform(cursor.pos);
+
+			bool inBounds = localCursor.x > width  / -2f && localCursor.x < width  / 2f &&
+			                localCursor.y > height / -2f && localCursor.y < height / 2f;
+
+			if (!opening) {
+				if (open > 0) {
+					float delta = localCursor.z - oldZ;
+
+					if (inBounds && localCursor.z < open && delta < -0.5f * Time.Stepf)
+						open = 0;
+				}
+
+				if (open == 0 && inBounds && localCursor.z > 0 && oldZ <= 0) {
+					opening = true;
+				}
+			}
+
+			if (opening) {
+				open = MathF.Max(localCursor.z, 0);
+
+				if (!inBounds || pinch == 0 || open > 0.4f) {
+					opening = false;
+				}
+				// Lines.Add(
+				// 	pose.position,
+				// 	pose.position + pose.orientation * V.XYZ(0, 0, 0.1f), // -1?
+				// 	new Color(0, 1, 0),
+				// 	0.002f
+				// );
+			}
+
+			openSmooth.Update(open);
+			model.FindNode("Cube").Mesh.Draw(mat, 
+				Matrix.T(V.XYZ(0, 0, 0.5f)) * 
+				Matrix.S(V.XYZ(width, height, MathF.Max(openSmooth.value, 0.01f))) * 
+				pose.ToMatrix(),
+				new Color(0.8f, 0.8f, 0.8f, 0.5f)
+			);
+
+			oldZ = localCursor.z;
+		}
+		float oldZ = 0;
+		bool opening = false;
+
+		PR.PID openSmooth = new PR.PID(10f, 0.01f);
+
+		Model model  = Model.FromFile("drawer.glb", Shader.Default);
+		Material mat = Material.Default.Copy();
+	}
+	Drawer drawerA = new Drawer(new Pose(new Vec3(-0.5f, 0.6f, -0.8f), Quat.Identity));
+	Drawer drawerB = new Drawer(new Pose(new Vec3(0, 0.6f, -0.8f), Quat.Identity));
+	Drawer drawerC = new Drawer(new Pose(new Vec3(0.5f, 0.6f, -0.8f), Quat.Identity));
 
 	public void Frame() {
 
@@ -102,6 +171,33 @@ public class Mono {
     // rGlove.Step();
 
     compositor.Frame();
+																						// spatial.Frame();
+		{
+			float deadzone = 0.01f;
+			float strength = 6f;
+
+			Hand hand = Input.Hand(Handed.Right);
+			Vec3 indexTip = hand.Get(FingerId.Index, JointId.Tip).position;
+			Vec3 thumbTip = hand.Get(FingerId.Thumb, JointId.Tip).position;
+
+			Vec3 delta    = indexTip - thumbTip;
+			float mag     = delta.Magnitude;
+			float pinch   = MathF.Max(mag - deadzone, 0);
+
+			Vec3 dir = delta.Normalized;
+
+			cursor.raw = indexTip + dir * pinch * strength;
+
+			Lines.Add(indexTip, thumbTip, new Color(0, 0, 1), 0.002f);
+			Mesh.Sphere.Draw(matHolo, Matrix.TS(cursor.pos, 0.01f), new Color(0.5f, 0.5f, 0.5f));
+			// V.XYZ(0, 0, );
+
+			drawerA.Frame(cursor, pinch);
+			drawerB.Frame(cursor, pinch);
+			drawerC.Frame(cursor, pinch);
+		}
+
+
 
 		// Input.Subscribe(InputSource.Hand, BtnState.Any, Action<Hand, BtnState.Any, Pointer>);
 
@@ -148,7 +244,6 @@ public class Mono {
 			new Color(0.5f, 0.55f, 0.75f) * 0.3f
 		);
 
-		spatial.Frame();
 
 		// </Heresy>
 
@@ -180,12 +275,12 @@ public class Mono {
 	}
 
 	int dofIndex = 0;
-	Pose windowPoseButton = new Pose(0, 1f, -0.5f, Quat.FromAngles(0, 0, 0));
+	Pose windowPose = new Pose(0, 1.5f, -0.5f, Quat.FromAngles(0, 0, 0));
 	TextStyle style = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, Color.White);
 	TextStyle style2 = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, new Color(0.5f, 0.5f, 0.5f));
 	Vec2 fieldSize = new Vec2(6f * U.cm, 3f * U.cm);
 	void ShowWindowButton() {
-		UI.WindowBegin("design vars", ref windowPoseButton);
+		UI.WindowBegin("design vars", ref windowPose);
 		UI.SetThemeColor(UIColor.Background, new Color(0f, 0f, 0f));
 		UI.SetThemeColor(UIColor.Primary, new Color(0.5f, 0.5f, 0.5f));
 		UI.PushTextStyle(style);

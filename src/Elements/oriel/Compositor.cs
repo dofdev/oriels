@@ -28,6 +28,18 @@ public class Compositor {
 	public void Frame() {
 		Mono mono = Mono.inst;
 
+		// Renderer.RenderTo(tex, 
+		// 	Matrix.TR(V.XYZ(0, 1, 0), Quat.FromAngles(0, 180, 0)),
+		// 	Matrix.Perspective(60, 1, 0.1f, 100), 
+		// 	RenderLayer.All // & ~RenderLayer.Layer1
+		// );
+
+		
+
+		// Default.MeshQuad.Draw(mat, 
+		// 	Matrix.TR(V.XYZ(0, 1, 0), Quat.FromAngles(0, 0, 0))
+		// );
+
     // backrooms.oriel.Frame();
     // greenyard.oriel.Frame();
 
@@ -77,16 +89,6 @@ public class Compositor {
     // );
     // Model model = Model.FromFile("oriel.glb");
     // ~ Mesh mesh = model.GetMesh("oriel");
-
-		Renderer.RenderTo(tex, 
-			Matrix.TR(V.XYZ(0, 1, 0), Quat.FromAngles(0, 180, 0)),
-			Matrix.Perspective(60, 1, 0.1f, 100), 
-			RenderLayer.All // & ~RenderLayer.Layer1
-		);
-
-		Default.MeshQuad.Draw(mat, 
-			Matrix.TR(V.XYZ(0, 1, 0), Quat.FromAngles(0, 0, 0))
-		);
   }
 
 	void Place() {
