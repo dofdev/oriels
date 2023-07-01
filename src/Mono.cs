@@ -83,71 +83,6 @@ public class Mono {
 
 	Spatial spatial = new Spatial();
 	Cursor cursor = new Cursor();
-	public class Drawer {
-		public Pose pose;
-		public float open; // 0 - 1
-
-		public Drawer(Pose pose) {
-			this.pose = pose;
-
-			mat.FaceCull = Cull.None;
-		}
-
-		public void Frame(Cursor cursor, float pinch) {
-			float width = 0.4f;
-			float height = 0.15f;
-
-			Matrix matrix = pose.ToMatrix();
-			Vec3 localCursor = matrix.Inverse.Transform(cursor.pos);
-
-			bool inBounds = localCursor.x > width  / -2f && localCursor.x < width  / 2f &&
-			                localCursor.y > height / -2f && localCursor.y < height / 2f;
-
-			if (!opening) {
-				if (open > 0) {
-					float delta = localCursor.z - oldZ;
-
-					if (inBounds && localCursor.z < open && delta < -0.5f * Time.Stepf)
-						open = 0;
-				}
-
-				if (open == 0 && inBounds && localCursor.z > 0 && oldZ <= 0) {
-					opening = true;
-				}
-			}
-
-			if (opening) {
-				open = MathF.Max(localCursor.z, 0);
-
-				if (!inBounds || pinch == 0 || open > 0.4f) {
-					opening = false;
-				}
-				// Lines.Add(
-				// 	pose.position,
-				// 	pose.position + pose.orientation * V.XYZ(0, 0, 0.1f), // -1?
-				// 	new Color(0, 1, 0),
-				// 	0.002f
-				// );
-			}
-
-			openSmooth.Update(open);
-			model.FindNode("Cube").Mesh.Draw(mat, 
-				Matrix.T(V.XYZ(0, 0, 0.5f)) * 
-				Matrix.S(V.XYZ(width, height, MathF.Max(openSmooth.value, 0.01f))) * 
-				pose.ToMatrix(),
-				new Color(0.8f, 0.8f, 0.8f, 0.5f)
-			);
-
-			oldZ = localCursor.z;
-		}
-		float oldZ = 0;
-		bool opening = false;
-
-		PR.PID openSmooth = new PR.PID(10f, 0.01f);
-
-		Model model  = Model.FromFile("drawer.glb", Shader.Default);
-		Material mat = Material.Default.Copy();
-	}
 	Drawer drawerA = new Drawer(new Pose(new Vec3(-0.5f, 0.6f, -0.8f), Quat.Identity));
 	Drawer drawerB = new Drawer(new Pose(new Vec3(0, 0.6f, -0.8f), Quat.Identity));
 	Drawer drawerC = new Drawer(new Pose(new Vec3(0.5f, 0.6f, -0.8f), Quat.Identity));
@@ -171,7 +106,10 @@ public class Mono {
     // rGlove.Step();
 
     compositor.Frame();
-																						// spatial.Frame();
+		
+		spatial.Frame();
+
+		// pinch-cursor?
 		{
 			float deadzone = 0.01f;
 			float strength = 6f;
@@ -246,18 +184,6 @@ public class Mono {
 
 
 		// </Heresy>
-
-
-		// pinch drawers
-		// do this quick and fun
-		// what's inside?
-
-		// friction flip thumb swipe
-		// overcome with >x force impulse
-		// local to palm
-
-
-		// dofchan bows on the back of the ankles that double as trackers
 
 
 		// rBlock.Step(); lBlock.Step();
@@ -540,6 +466,12 @@ public class Cursor {
 
 	side notes
 		need to run it in a way where if it crashes, it doesn't take the whole app down (ask malek?)
+
+		friction flip thumb swipe
+		overcome with >x force impulse
+		local to palm
+
+		dofchan bows on the back of the ankles that double as trackers
 */
 
 
