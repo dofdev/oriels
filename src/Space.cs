@@ -174,24 +174,24 @@ public class Space {
 		// 	)
 		// );
 
-		tree.Frame();
+		// tree.Frame();
 	}
-	Tree tree = new Tree();
+	// Tree tree = new Tree();
 	// Tree[] trees = new Tree[128];
 
-	class Tree {
-		float r; // damage
-		float g; // resources
-		float b; // peak
-		Vec3  pos;
-		float angle;
-		// color(r, max(g, b), b)
-		// height = b
+	// class Tree {
+	// 	float r; // damage
+	// 	float g; // resources
+	// 	float b; // peak
+	// 	Vec3  pos;
+	// 	float angle;
+	// 	// color(r, max(g, b), b)
+	// 	// height = b
 
-		public void Frame() {
+	// 	public void Frame() {
 
-		}
-	}
+	// 	}
+	// }
 }
 
 
