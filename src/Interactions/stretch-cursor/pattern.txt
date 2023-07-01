@@ -1,0 +1,21 @@
+# 2018.10.06 -> 2023.04.10 ->
+
+input
+	vTo
+	vFrom
+
+data
+	stretch
+	cursor
+
+frame
+	delta   = vTo - vFrom
+	mag     = delta.mag
+	stretch = max(mag - deadzone, 0)
+
+	dir     = nor(delta)
+	cursor  = vTo + dir * stretch * strength
+
+design
+	deadzone = 0.1
+	strength = 3

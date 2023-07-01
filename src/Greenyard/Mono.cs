@@ -32,7 +32,7 @@ public class Mono {
 		Oriels.Rig rig = Oriels.Mono.inst.rig;
 
 		// angle.x -= rig.rCon.device.stick.y * 90f * Time.Stepf;
-		// angle.x = PullRequest.Clamp(angle.x, -89, 89);
+		// angle.x = PR.Clamp(angle.x, -89, 89);
 		angle.y -= rig.rCon.device.stick.x * 90f * Time.Stepf;
 
 		Vec3 input = new Vec3(

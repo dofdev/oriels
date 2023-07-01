@@ -1,0 +1,27 @@
+# 2022.10.01 -> 2023.04.10
+
+# !draft
+
+input
+  hand
+
+data
+  cursor
+
+frame
+  fI = hand.flexion(Index)
+  fM = hand.flexion(Middle)
+  fR = hand.flexion(Ring)
+  fL = hand.flexion(Little)
+
+  wave = (fI+fI + fM+fM+fM + fR+fR + fL) / 8
+
+  vTo   = hand.IndexTip
+  vFrom = hand.KnuckleMajor
+
+  dir = nor(vTo - vFrom)
+
+  cursor = vTo + dir * wave * crest
+
+design
+  crest = 1.0 [0+m]
