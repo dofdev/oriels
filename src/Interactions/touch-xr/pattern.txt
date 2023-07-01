@@ -1,0 +1,30 @@
+# 2021.10.29 -> 2023.02.16 ->
+
+# gyro-keyboard
+# tilt through the layers as you type, reducing travel and mistaps
+keyLayers[3]
+tilt = device.rotation.y
+index = int(tilt * 10)
+layer = keyLayers[index]
+
+if tap
+  layer.sample(touch.pos)
+
+# swipe-cursor
+# extend cursor out of phone with swipe
+if absolute
+  offset = touch.y
+
+offset += touch.delta.y
+cursor = phone.pos + phone.up * offset * 3
+
+# touch-stretch-cursor
+# using the distance between your thumbs extend a cursor out
+stretch = dist(touch[0], touch[1])
+dir = calibration
+origin = phone.pos + phone.rot * touch[0].xy
+cursor = origin + phone.rot * dir * stretch * 3
+
+# tilt-touch
+# tilt your phone to move the touch points in 3d space
+touch.xyz = phone.rot * touch.xy

@@ -14,7 +14,6 @@ public class Space {
 
   Material matFloor = new Material(Shader.Default);
   Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("room.hlsl"));
-  Model leek = Model.FromFile("houseleek_plant.glb", Shader.FromFile("room.hlsl"));
   Mesh cube = Mesh.Cube;
 
 	Solid floor;
@@ -24,28 +23,28 @@ public class Space {
 		// recenter the nodes in the leek model
 		// so that the leek is centered at the origin
 		// and the scale is 1
-		Vec3 center = new Vec3(0, 0, 0);
-		foreach (ModelNode node in leek.Nodes) {
-			if (node.Mesh != null) {
-				// average the vertices to find the center
-				foreach (Vertex vertex in node.Mesh.GetVerts()) {
-					center += vertex.pos;
-				}
-				center /= node.Mesh.VertCount;
-			}
-			node.LocalTransform = Matrix.TS(
-				Vec3.Zero,
-				1f
-			);
-			// node.ModelTransform = Matrix.TS(
-			// 	new Vec3(0, 0, 0),
-			// 	1f
-			// );
-		}
-		leek.RootNode.LocalTransform = Matrix.TS(
-			-center,
-			1f
-		);
+		// Vec3 center = new Vec3(0, 0, 0);
+		// foreach (ModelNode node in leek.Nodes) {
+		// 	if (node.Mesh != null) {
+		// 		// average the vertices to find the center
+		// 		foreach (Vertex vertex in node.Mesh.GetVerts()) {
+		// 			center += vertex.pos;
+		// 		}
+		// 		center /= node.Mesh.VertCount;
+		// 	}
+		// 	node.LocalTransform = Matrix.TS(
+		// 		Vec3.Zero,
+		// 		1f
+		// 	);
+		// 	// node.ModelTransform = Matrix.TS(
+		// 	// 	new Vec3(0, 0, 0),
+		// 	// 	1f
+		// 	// );
+		// }
+		// leek.RootNode.LocalTransform = Matrix.TS(
+		// 	-center,
+		// 	1f
+		// );
 
 
 		floor = new Solid(World.BoundsPose.position, Quat.Identity, SolidType.Immovable);
@@ -86,7 +85,7 @@ public class Space {
 
 
 
-		// PullRequest.BlockOut(floor.GetPose().ToMatrix(floorScale), Color.White * 0.333f, matFloor);
+		// PR.BlockOut(floor.GetPose().ToMatrix(floorScale), Color.White * 0.333f, matFloor);
 		// foreach (ModelNode node in shed.Visuals) {
 
 		// Console.WriteLine(i + " - " + node.Name);

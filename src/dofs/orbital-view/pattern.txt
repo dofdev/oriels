@@ -1,8 +1,0 @@
-# 2019.10.17 -> 2023.02.16 ->
-
-oriel.pos = head.rot * fwd
-
-# amplified
-oriel.pos = head.rot * fwd
-strength = ~4
-oriel.rot = rot.euler(0, head.euler.y * -strength, 0)

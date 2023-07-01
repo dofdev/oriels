@@ -4,7 +4,7 @@ public class Mono {
 	private static readonly Lazy<Oriels.Mono> lazy = new Lazy<Oriels.Mono>(() => new Oriels.Mono());
 	public static Oriels.Mono inst { get { return lazy.Value; } }
 
-	public PullRequest.Noise noise = new PullRequest.Noise(939949595);
+	public PR.Noise noise = new PR.Noise(939949595);
 
 	public Material matDev;
 	public Material matHoloframe = new Material(Shader.FromFile("above.hlsl"));
@@ -18,41 +18,28 @@ public class Mono {
 
 	// -------------------------------------------------
 
-	public dof[] dofs;
+	public Interaction[] dofs;
 
 	public ColorCube colorCube = new ColorCube();
 
 	public Glove rGlove = new Glove(true), lGlove = new Glove(false);
 	public Glove Glove(bool chirality) { return chirality ? rGlove : lGlove; }
 
-	public BlockCon rBlock = new BlockCon(true), lBlock = new BlockCon(false);
-	public BlockCon BlockCon(bool chirality) { return chirality ? rBlock : lBlock; }
-	public Block[] blocks = new Block[] {
-		new Block(), new Block(), new Block(), new Block(), new Block(), new Block()
-	};
-
-	public CubicCon cubicCon = new CubicCon();
-	public Cubic[] cubics = new Cubic[] {
-		new Cubic(), new Cubic(), new Cubic(), new Cubic(), new Cubic(), new Cubic()
-	};
-
 	// -------------------------------------------------
 
-	public MonoNet net = new MonoNet();
+	// public MonoNet net = new MonoNet();
 
 	public Mono() {
-		Renderer.SetClip(0.02f, 1000f);
-
-		dofs = new dof[] {
-			new Chiral(new dof[] {
+		dofs = new Interaction[] {
+			new Chiral(new Interaction[] {
 				new WaveCursor()  { handed = Handed.Left  },
 				new WaveCursor()  { handed = Handed.Right }
 			}),
-			new Chiral(new dof[] {
+			new Chiral(new Interaction[] {
 				new Trackballer() { handed = Handed.Left  },
 				new Trackballer() { handed = Handed.Right }
 			}),
-			new Chiral(new dof[] {
+			new Chiral(new Interaction[] {
 				new RollsCursor() { handed = Handed.Left  },
 				new RollsCursor() { handed = Handed.Right }
 			}),
@@ -90,6 +77,11 @@ public class Mono {
 
 	Pose shape = new Pose(new Vec3(0, 1f, -3f), Quat.FromAngles(45, 0, 45));
 	bool shapeHeld = false;
+
+
+
+
+	Spatial spatial = new Spatial();
 
 	public void Frame() {
 
@@ -156,7 +148,22 @@ public class Mono {
 			new Color(0.5f, 0.55f, 0.75f) * 0.3f
 		);
 
+		spatial.Frame();
+
 		// </Heresy>
+
+
+		// pinch drawers
+		// do this quick and fun
+		// what's inside?
+
+		// friction flip thumb swipe
+		// overcome with >x force impulse
+		// local to palm
+
+
+		// dofchan bows on the back of the ankles that double as trackers
+
 
 		// rBlock.Step(); lBlock.Step();
 
@@ -166,8 +173,8 @@ public class Mono {
 
 		// -------------------------------------------------
 
-		net.me.Step();
-		net.send = true;
+		// net.me.Step();
+		// net.send = true;
 
 		ShowWindowButton();
 	}
@@ -202,7 +209,7 @@ public class Mono {
 		}
 		
 
-		dof dof = dofs[dofIndex];
+		Interaction dof = dofs[dofIndex];
 		Type type = dof.GetType();
 		// active toggle
 		Color tint = dof.Active ? new Color(0, 1, 0) : new Color(1, 0, 0);
@@ -239,7 +246,7 @@ public class Mono {
 		UI.WindowEnd();
 	}
 
-	void RenderDof(dof dof) {
+	void RenderDof(Interaction dof) {
 		Type type = dof.GetType();
 		UI.Label("°" + type.Name);
 		System.Reflection.FieldInfo[] fields = type.GetFields();
@@ -261,15 +268,15 @@ public class Mono {
 }
 
 // Chiral : handedness implies symmetry
-public class Chiral : dof {
-	public Chiral(dof[] dofs) => this.dofs = dofs;
+public class Chiral : Interaction {
+	public Chiral(Interaction[] dofs) => this.dofs = dofs;
 	private bool active;
 	public bool Active {
 		get { return this.active; }
 		set { 
 			this.active = value;
 			for (int i = 0; i < this.dofs.Length; i++) {
-				dof dof = this.dofs[i];
+				Interaction dof = this.dofs[i];
 				if ((int)this.handed == 2 || i == (int)this.handed) {
 					dof.Active = value;
 				} else {
@@ -278,7 +285,7 @@ public class Chiral : dof {
 			}
 		} 
 	}
-	public dof[] dofs = new dof[2];
+	public Interaction[] dofs = new Interaction[2];
 	// public Design handed = new Design { str = "2", min = 0, max = 2};
 	public Handed handed = Handed.Max;
 
@@ -298,7 +305,7 @@ public class Chiral : dof {
 		}
 
 		for (int i = 0; i < dofs.Length; i++) {
-			dof dof = dofs[i];
+			Interaction dof = dofs[i];
 			if ((int)handed == 2 || i == (int)handed) {
 				dof.Frame();
 				dof.Active = true;
@@ -320,7 +327,7 @@ public class Design {
 	public float value {
 		get {
 			try {
-				float value = PullRequest.Clamp(float.Parse(str), min, max);
+				float value = PR.Clamp(float.Parse(str), min, max);
 				// if clamped, update string
 				if (value != float.Parse(str)) {
 					if (Input.Key(Key.Return).IsJustActive()) {
@@ -337,9 +344,9 @@ public class Design {
 }
 
 public class Cursor {
-	PullRequest.OneEuroFilter xF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
-	PullRequest.OneEuroFilter yF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
-	PullRequest.OneEuroFilter zF = new PullRequest.OneEuroFilter(0.001f, 0.1f);
+	PR.OneEuroFilter xF = new PR.OneEuroFilter(0.001f, 0.1f);
+	PR.OneEuroFilter yF = new PR.OneEuroFilter(0.001f, 0.1f);
+	PR.OneEuroFilter zF = new PR.OneEuroFilter(0.001f, 0.1f);
 	Vec3 _raw;
 	public Vec3 raw {
 		get => _raw;
@@ -393,3 +400,109 @@ public class Cursor {
 		raw = 0.333f alpha ~
 
 */
+
+
+
+/* 
+	we have a whole inspector thing going on here
+
+	but people are working on better alternatives:
+		malek's foss social xr project
+
+	which was part of the reason that i chopped off the networking parts of this project.
+	as we have vrc for reaching larger audiences + malek's project to develop w/the fossxr community
+	so running our own networking is needlessly redundant, and not my strong suit.
+
+	refocusing this project on just prototyping and hosting our xr tools centrally
+	  to then be ported to wherever they can best be applied ^-^
+
+
+	the inspector is a crutch for the lack of a native spatial interface for prototyping
+	as it's an incredibly limited and an awkward abstraction of what is happening spatially
+
+	expose spatial functions and dofs
+	allow the user to bind them to tracked inputs+
+	*don't need it all to be fully featured and extensible out of the gate
+		just need a better foundation than a paper paradigm inspector
+
+
+	'world origin' needs to be adjustable~
+		otherwise the visualizations will be difficult to decipher in different contexts
+
+	no names! as everything remains in it's original context
+		text for math symbols is fine~
+			but don't use that as an excuse to abstract things back into text
+
+	you can do vector math spatially
+		by wrapping the living vectors with operators~
+			i.e  av + bv  =  cv
+					(-- + --) -> --
+			it's hard to represent this with text :<
+			but just think of different points/lines(vectors) being encapsulated by 
+			underlying larger points/lines(vectors) with symbols or other identifiers
+			with an output, managing to represent the underlying math within the spatial context
+
+
+	side notes
+		need to run it in a way where if it crashes, it doesn't take the whole app down (ask malek?)
+*/
+
+
+public class Spatial {
+	// example, to build out from
+
+	// just adding two vectors
+	// with great interactivity and visual feedback
+
+	float scale = 0.1f;
+	float thickness => 0.01f * scale;
+
+	Vec3 origin = new Vec3(0, 1, -1);
+
+	float t = 1.0f;
+	Vec3 aFrom, aTo;
+	Vec3 a => Vec3.Lerp(aFrom, aTo, MathF.Min(t, 1f));
+	Vec3 bFrom, bTo;
+	Vec3 b => Vec3.Lerp(bFrom, bTo, MathF.Min(t, 1f));
+	Vec3 c => a + b;
+
+	public void Frame() {
+		// origin axis
+		Lines.Add(origin, World(new Vec3(1, 0, 0)), new Color(1, 0, 0), thickness);
+		Lines.Add(origin, World(new Vec3(0, 1, 0)), new Color(0, 1, 0), thickness);
+		Lines.Add(origin, World(new Vec3(0, 0, 1)), new Color(0, 0, 1), thickness);
+		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(origin, thickness), new Color(0.5f, 0.5f, 0.5f));
+
+		Random rand = Random.Shared;
+		if (t >= 1.3f) {
+			aFrom = aTo;
+			bFrom = bTo;
+
+			if (rand.NextSingle() < 0.5f) {
+				aTo = new Vec3(rand.NextSingle(), rand.NextSingle(), rand.NextSingle()) * 0.5f;
+			} else {
+				bTo = new Vec3(rand.NextSingle(), rand.NextSingle(), rand.NextSingle()) * 0.5f;
+			}
+
+			t = 0.0f;
+		}
+		t += Time.Stepf / 2f;
+
+
+		Lines.Add(origin, World(a), new Color(1, 1, 0), thickness);
+		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(World(a), thickness), new Color(1, 1, 0));
+		Lines.Add(origin, World(b), new Color(0, 1, 1), thickness);
+		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(World(b), thickness), new Color(0, 1, 1));
+
+		Lines.Add(World(a), World(c), new Color(0, 1, 1), thickness);
+		Lines.Add(World(b), World(c), new Color(1, 1, 0), thickness);
+		// color between yellow and cyan using HSV
+		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(World(c), thickness), new Color(0.5f, 1, 1));
+	}
+
+	Vec3 World(Vec3 local) {
+		return origin + local * scale;
+	}
+
+	// 
+}

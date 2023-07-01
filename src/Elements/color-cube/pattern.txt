@@ -1,0 +1,5 @@
+# 2019.05.31 -> 2022.10.06 ->
+
+deprecated format
+color.rgb = (pos.x, pos.y, pos.z)
+Render(outline)
