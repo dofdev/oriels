@@ -201,14 +201,23 @@ public class Mono {
 	}
 
 	int dofIndex = 0;
-	Pose windowPose = new Pose(0, 1.5f, -0.5f, Quat.FromAngles(0, 0, 0));
-	TextStyle style = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, Color.White);
+	Pose windowPose = new Pose(0, 1.2f, -0.6f, Quat.FromAngles(0, 180, 0));
+	Material windowMat = new Material(Shader.FromFile("window.hlsl"));
+	TextStyle style  = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, Color.Black);
 	TextStyle style2 = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, new Color(0.5f, 0.5f, 0.5f));
 	Vec2 fieldSize = new Vec2(6f * U.cm, 3f * U.cm);
 	void ShowWindowButton() {
+		windowMat.Transparency = Transparency.Add;
+		windowMat.FaceCull = Cull.None;
+		windowMat.DepthWrite = false;
+		UI.SetElementVisual(UIVisual.WindowBody, Mesh.Quad, windowMat, Vec2.One);
+		UI.SetElementVisual(UIVisual.WindowHead, Mesh.Quad, windowMat, Vec2.One);
 		UI.WindowBegin("design vars", ref windowPose);
-		UI.SetThemeColor(UIColor.Background, new Color(0f, 0f, 0f));
-		UI.SetThemeColor(UIColor.Primary, new Color(0.5f, 0.5f, 0.5f));
+		// UI.SetThemeColor(UIColor.Primary, new Color(1f, 1f, 1f));
+		// UI.HandleBegin("design", ref windowPose, new Bounds(V.XYZ(0.02f, 0.02f, 0.02f)), true, UIMove.FaceUser);
+		UI.SetThemeColor(UIColor.Background, new Color(0.2f, 0.2f, 0.3f));
+		UI.SetThemeColor(UIColor.Primary,    new Color(0.4f, 0.4f, 0.6f));
+		UI.SetThemeColor(UIColor.Common,     new Color(1.0f, 1.0f, 1.0f));
 		UI.PushTextStyle(style);
 
 		// if (UI.Button("Draw Oriel Axis")) { oriel.drawAxis = !oriel.drawAxis; }
@@ -265,6 +274,7 @@ public class Mono {
 		}
 
 		UI.WindowEnd();
+		// UI.HandleEnd();
 	}
 
 	void RenderDof(Interaction dof) {
