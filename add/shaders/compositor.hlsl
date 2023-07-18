@@ -35,18 +35,27 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
 }
 
 float4 ps(psIn input) : SV_TARGET {
-	float depth = diffuse.Sample(diffuse_s, input.uv).r;
+	float4 tex = diffuse.Sample(diffuse_s, input.uv);
+  return tex;
   // 16 bit DepthTexture *non-linear* depth
-  // render depth for debug
+  // render depth for debug by undoing the non-linear depth rcp
+  float reciprocal_value = tex.r;
+  float max_distance = 100.0;
 
-  if (depth > 0.0) {
-    depth = 1.0;
-  }
+  float depth = 1.0 / (reciprocal_value * (1.0 / max_distance) + 1.0);
+
+  return float4(depth, depth, depth, 1);
+
+  // if (depth > 0.0) {
+  //   depth = 1.0;
+  // }
+
+  // depth = rcp(depth);
   
   // float4 og = mul(float4(input.world, 1), sk_viewproj[input.view_id]);
   // float depth = (og * rcp(og.w)).z;
 
-  return float4(depth, depth, depth, 1);
+  // return tex; // float4(tex.a, tex.a, tex.a, 1);
   // float v = -rcp(-val.r);
   // v = val.r;
   // return float4(v, v, v, 1);

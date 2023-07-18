@@ -2,7 +2,7 @@ namespace Oriels;
 
 public class ColorCube {
   static Mesh cube = Default.MeshCube;
-  static Material mat = new Material(Shader.FromFile("colorcube.hlsl"));
+  static Material mat = new Material(Shader.FromFile("shaders/colorcube.hlsl"));
   static Material unlit = Default.MaterialUnlit;
   public float thicc = 0.0025f;
   public float ogSize = 0.05f;

@@ -8,7 +8,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="StereoKit" Version="0.3.7-preview.9" />
+		<PackageReference Include="StereoKit" Version="0.3.7-preview.1619" />
     <!-- <PackageReference Include="System.Speech" Version="5.0.0" /> -->
 	</ItemGroup>
 

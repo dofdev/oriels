@@ -12,7 +12,7 @@ public class Oriel {
   Monolith mono;
 
   public Bounds bounds;
-  Material mat = new Material(Shader.FromFile("oriel.hlsl"));
+  Material mat = new Material(Shader.FromFile("shaders/oriel.hlsl"));
   Mesh mesh = Default.MeshCube;
   public float crown = 0.0666f;
 

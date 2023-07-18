@@ -10,7 +10,7 @@ public class Mono {
 
 	Model greenyardModel = Model.FromFile("greenyard.glb");
 	Mesh[] greenyard;
-	Material greenyardMat = new Material(Shader.FromFile("/oriel.hlsl"));
+	Material greenyardMat = new Material(Shader.FromFile("shaders/oriel.hlsl"));
 
 	Matrix matrix = Matrix.Identity;
 	Vec3 offset = new Vec3(2, 1, -12);

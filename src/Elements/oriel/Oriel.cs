@@ -3,9 +3,9 @@ namespace Oriels;
 public class Oriel {
   Material matClear = new Material(Shader.Default);
   
-  public Material matOriel = new Material(Shader.FromFile("oriel.hlsl"));
-  Material matFrame = new Material(Shader.FromFile("frame.hlsl"));
-  Material matPanes = new Material(Shader.FromFile("panes.hlsl"));
+  public Material matOriel = new Material(Shader.FromFile("shaders/oriel.hlsl"));
+  Material matFrame = new Material(Shader.FromFile("shaders/frame.hlsl"));
+  Material matPanes = new Material(Shader.FromFile("shaders/panes.hlsl"));
 
   public Matrix matrix, matrixInv;
   public Bounds bounds;

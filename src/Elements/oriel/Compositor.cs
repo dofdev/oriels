@@ -8,15 +8,15 @@ public class Compositor {
 	Greenyard.Mono greenyard = new Greenyard.Mono();
 	// bool other = false;
 
-	Tex tex;
-	Material mat = new Material(Shader.FromFile("compositor.hlsl"));
+	Tex tex, depth;
+	Material mat = new Material(Shader.FromFile("shaders/compositor.hlsl"));
 
 	public void Init() {
 		tex = new Tex(TexType.Rendertarget);
 		tex.SetSize(512, 512);
-		tex.AddZBuffer(TexFormat.Depth16); // DepthStencil
-		mat[MatParamName.DiffuseTex] = tex;
-		mat.FaceCull = Cull.Front;
+		depth = tex.AddZBuffer(TexFormat.Depth32); // DepthStencil
+		mat[MatParamName.DiffuseTex] = depth;
+		mat.FaceCull = Cull.None;
 
 		// Renderer.Blit(tex, newMat)
 
@@ -28,17 +28,28 @@ public class Compositor {
 	public void Frame() {
 		Mono mono = Mono.inst;
 
-		// Renderer.RenderTo(tex, 
-		// 	Matrix.TR(V.XYZ(0, 1, 0), Quat.FromAngles(0, 180, 0)),
-		// 	Matrix.Perspective(60, 1, 0.1f, 100), 
-		// 	RenderLayer.All // & ~RenderLayer.Layer1
-		// );
+		if (Input.Key(Key.Space).IsJustActive()) {
+			// add the depth tex color.r's up and see if they are > 0
+			float r = 0;
+			Color32[] cols = depth.GetColors();
+			for (int i = 0; i < cols.Length; i++) {
+				r += cols[i].r;
+			}
+			Console.WriteLine($"r: {r}");
+		}
 
-		
+		Default.MeshQuad.Draw(mat,
+			Matrix.TRS(V.XYZ(-0.90f, 1.16f, 1.44f), Quat.LookDir(0.63f, 0.78f, 0.02f), 0.5f)
+		);
 
-		// Default.MeshQuad.Draw(mat, 
-		// 	Matrix.TR(V.XYZ(0, 1, 0), Quat.FromAngles(0, 0, 0))
-		// );
+		Renderer.RenderTo(tex,
+			Matrix.TR(V.XYZ(-0.90f, 1.16f, 1.44f), Quat.LookDir(0.63f, 0.78f, 0.02f)),
+			Matrix.Perspective(60, 1, 0.1f, 100),
+			RenderLayer.All, // & ~RenderLayer.Layer1
+			RenderClear.All,
+			default(Rect)
+		);
+
 
     // backrooms.oriel.Frame();
     // greenyard.oriel.Frame();
