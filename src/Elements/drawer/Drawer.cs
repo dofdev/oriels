@@ -16,15 +16,18 @@ public class Drawer {
     Matrix matrix = pose.ToMatrix();
     Vec3 localCursor = matrix.Inverse.Transform(cursor.pos);
 
-    bool inBounds = localCursor.x > width  / -2f && localCursor.x < width  / 2f &&
-                    localCursor.y > height / -2f && localCursor.y < height / 2f;
+    bool inBounds = MathF.Abs(localCursor.x) < width  / 2f &&
+                    MathF.Abs(localCursor.y) < height / 2f;
 
     if (!opening) {
       if (open > 0) {
         float delta = localCursor.z - oldZ;
 
-        if (inBounds && localCursor.z < open && delta < -0.5f * Time.Stepf)
+        // if (inBounds && localCursor.z < open && delta < -0.5f * Time.Stepf)
+        //   open = 0;
+        if (inBounds && localCursor.z < open && oldZ >= open) {
           open = 0;
+        }
       }
 
       if (open == 0 && inBounds && localCursor.z > 0 && oldZ <= 0) {
@@ -35,7 +38,7 @@ public class Drawer {
     if (opening) {
       open = MathF.Max(localCursor.z, 0);
 
-      if (pinch == 0 || open > 0.4f) { // !inBounds || 
+      if (pinch == 0 || open > 0.4f || open <= 0.0f) { // !inBounds || 
         opening = false;
       }
     }
@@ -45,7 +48,7 @@ public class Drawer {
       Matrix.T(V.XYZ(0, 0, 0.5f)) * 
       Matrix.S(V.XYZ(width, height, MathF.Max(openSmooth.value, 0.01f))) * 
       pose.ToMatrix(),
-      new Color(0.8f, 0.8f, 0.8f, 0.5f)
+      Color.Hex(0x7D8995FF)
     );
 
     oldZ = localCursor.z;
