@@ -7,10 +7,12 @@ public class Mono {
 	public PR.Noise noise = new PR.Noise(939949595);
 
 	public Material matDev;
-	public Material matHoloframe = new Material(Shader.FromFile("above.hlsl"));
-	Material matHoloframeUnder = new Material(Shader.FromFile("below.hlsl"));
-	public Material matHolo = new Material(Shader.FromFile("above.hlsl"));
-	Material matHoloUnder = new Material(Shader.FromFile("below.hlsl"));
+	public Material matHoloframe = new Material(Shader.FromFile("shaders/above.hlsl"));
+	Material matHoloframeUnder   = new Material(Shader.FromFile("shaders/below.hlsl"));
+	public Material matHoloclear = new Material(Shader.FromFile("shaders/above.hlsl"));
+	Material matHoloclearUnder   = new Material(Shader.FromFile("shaders/below.hlsl"));
+	public Material matHolo      = new Material(Shader.FromFile("shaders/above.hlsl"));
+	Material matHoloUnder        = new Material(Shader.FromFile("shaders/below.hlsl"));
 
 	public Rig rig = new Rig();
 	public Space space = new Space();
@@ -61,6 +63,15 @@ public class Mono {
 		matHoloUnder.FaceCull = Cull.None;
 		matHolo.Chain = matHoloUnder;
 
+		matHoloclear.SetColor("clearcolor", Color.Black);
+		matHoloclear.Transparency = Transparency.Add;
+		matHoloclear.DepthWrite = false;
+		matHoloclear.FaceCull = Cull.None;
+		matHoloclearUnder.SetColor("clearcolor", Color.Black);
+		matHoloclearUnder.Transparency = Transparency.Add;
+		matHoloclearUnder.DepthWrite = false;
+		matHoloclearUnder.FaceCull = Cull.None;
+		matHoloclear.Chain = matHoloclearUnder;
 
 		matHoloframe.SetColor("clearcolor", Color.Black);
 		matHoloframe.Transparency = Transparency.Add;
@@ -81,11 +92,11 @@ public class Mono {
 
 
 
-	Spatial spatial = new Spatial();
+	Spatial spatial = new Spatial(new Vec3(-1, 0.76f, 0.666f));
 	Cursor cursor = new Cursor();
-	Drawer drawerA = new Drawer(new Pose(new Vec3(-0.5f, 0.6f, -0.8f), Quat.Identity));
-	Drawer drawerB = new Drawer(new Pose(new Vec3(0, 0.6f, -0.8f), Quat.Identity));
-	Drawer drawerC = new Drawer(new Pose(new Vec3(0.5f, 0.6f, -0.8f), Quat.Identity));
+	Drawer drawerA = new Drawer(new Pose(new Vec3(-0.8f, 0.6f, 1.4f), Quat.FromAngles(0, 90f, 0)));
+	Drawer drawerB = new Drawer(new Pose(new Vec3(-0.8f, 0.6f, 0.95f), Quat.FromAngles(0, 90f, 0)));
+	Drawer drawerC = new Drawer(new Pose(new Vec3(-0.8f, 0.6f, 0.5f), Quat.FromAngles(0, 90f, 0)));
 
 	public void Frame() {
 
@@ -93,6 +104,10 @@ public class Mono {
 		// Input.HandClearOverride(Handed.Right);
 		// store hand pre override in rig
 		rig.Step();
+		Hand h = Input.Hand(Handed.Right);
+		if (h.pinch.IsActive()) {
+			Console.WriteLine($"{h.pinchPt}, {Input.Head.orientation * -Vec3.Forward}");
+		}
 
 		// Hand hand = Input.Hand(Handed.Right);
     // Controller con = Input.Controller(Handed.Right);
@@ -201,8 +216,8 @@ public class Mono {
 	}
 
 	int dofIndex = 0;
-	Pose windowPose = new Pose(0, 1.2f, -0.6f, Quat.FromAngles(0, 180, 0));
-	Material windowMat = new Material(Shader.FromFile("window.hlsl"));
+	Pose windowPose = new Pose(-0.333f, 1.2f, -0.5f, Quat.FromAngles(0, 180, 0));
+	Material windowMat = new Material(Shader.FromFile("shaders/window.hlsl"));
 	TextStyle style  = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, Color.Black);
 	TextStyle style2 = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, new Color(0.5f, 0.5f, 0.5f));
 	Vec2 fieldSize = new Vec2(6f * U.cm, 3f * U.cm);
@@ -486,15 +501,16 @@ public class Cursor {
 
 
 public class Spatial {
-	// example, to build out from
+	// example, to build out from!
+	// rn it's just adding two vectors
+	// building towards great interactivity and visual feedback
+	public Spatial(Vec3 origin) {
+		this.origin = origin;
+	}
+	public Vec3 origin;
+	float scale = 0.2f;
+	float thickness => 0.02f * scale;
 
-	// just adding two vectors
-	// with great interactivity and visual feedback
-
-	float scale = 0.1f;
-	float thickness => 0.01f * scale;
-
-	Vec3 origin = new Vec3(0, 1, -1);
 
 	float t = 1.0f;
 	Vec3 aFrom, aTo;
@@ -505,9 +521,9 @@ public class Spatial {
 
 	public void Frame() {
 		// origin axis
-		Lines.Add(origin, World(new Vec3(1, 0, 0)), new Color(1, 0, 0), thickness);
-		Lines.Add(origin, World(new Vec3(0, 1, 0)), new Color(0, 1, 0), thickness);
-		Lines.Add(origin, World(new Vec3(0, 0, 1)), new Color(0, 0, 1), thickness);
+		Lines.Add(origin, World(new Vec3(1, 0, 0)), new Color(1, 0, 0), thickness * 0.333f);
+		Lines.Add(origin, World(new Vec3(0, 1, 0)), new Color(0, 1, 0), thickness * 0.333f);
+		Lines.Add(origin, World(new Vec3(0, 0, 1)), new Color(0, 0, 1), thickness * 0.333f);
 		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(origin, thickness), new Color(0.5f, 0.5f, 0.5f));
 
 		Random rand = Random.Shared;
@@ -525,9 +541,10 @@ public class Spatial {
 		}
 		t += Time.Stepf / 2f;
 
-
+		// Lines.Add(origin, World(a), new Color(1, 1, 1, 0.5f), thickness * 2); // they clip with no material way to fix it?
 		Lines.Add(origin, World(a), new Color(1, 1, 0), thickness);
 		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(World(a), thickness), new Color(1, 1, 0));
+		// Lines.Add(origin, World(b), new Color(1, 1, 1, 0.5f), thickness * 2);
 		Lines.Add(origin, World(b), new Color(0, 1, 1), thickness);
 		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(World(b), thickness), new Color(0, 1, 1));
 
@@ -542,4 +559,9 @@ public class Spatial {
 	}
 
 	// 
+}
+
+// Volumetric Lines
+public class Vine {
+
 }

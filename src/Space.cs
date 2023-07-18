@@ -13,7 +13,7 @@ public class Space {
   BufferData data = new BufferData();
 
   Material matFloor = new Material(Shader.Default);
-  Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("room.hlsl"));
+  Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("shaders/room.hlsl"));
   Mesh cube = Mesh.Cube;
 
 	Solid floor;
@@ -117,7 +117,7 @@ public class Space {
 		for (float x = -radius; x < radius; x++) {
 			for (float z = -radius; z < radius; z++) {
 
-				float noise = Mono.inst.noise.D2((int)x, (int)z);
+				float d2 = Mono.inst.noise.D2((int)x, (int)z);
 				float xpos = pillarsOffset.x + x;
 				float zpos = pillarsOffset.z - z;
 				
@@ -129,17 +129,17 @@ public class Space {
 								xpos + x, 
 								radius / 2,
 								zpos + z / 2
-							) + Quat.FromAngles(noise * 90, noise * 360, 0) * Vec3.Forward * 2f,
-							new Vec3(2, 1, 2) * (0.5f + noise)
+							) + Quat.FromAngles(d2 * 90, d2 * 360, 0) * Vec3.Forward * 2f,
+							new Vec3(2, 1, 2) * (0.5f + d2)
 						),
 						Color.White
 					);
 					continue;
 				}
 
-				float height = 1 + noise;
-				float angle = noise * 360f;
-				Vec3 offset = Quat.FromAngles(0, angle, 0) * Vec3.Forward * noise * 0.5f;
+				float height = 1 + d2;
+				float angle = d2 * 360f;
+				Vec3 offset = Quat.FromAngles(0, angle, 0) * Vec3.Forward * d2 * 0.5f;
 				xpos += offset.x;
 				zpos += offset.z;
 				Mesh.Cube.Draw(
@@ -159,22 +159,66 @@ public class Space {
 						Quat.FromAngles(0, angle, 0),
 						new Vec3(0.95f, height, 0.95f)
 					),
-					new Color(0.3f, 0.7f + (noise * 0.3f), 0.2f, 1f)
+					new Color(0.3f, 0.7f + (d2 * 0.3f), 0.2f, 1f)
 				);
 			}
 		}
 
-		// meshBeam.Draw(
-		// 	Mono.inst.matHolo,
-		// 	Matrix.TRS(
-		// 		new Vec3(0, 1, -3),
-		// 		Quat.FromAngles(90f, 0, 0),
-		// 		1
-		// 	)
-		// );
-
-		// tree.Frame();
+		for (int i = 0; i < drops.Length; i++) {
+			if (drops[i] == null) drops[i] = new Drop();
+			
+			drops[i].Frame(i);
+		}
 	}
+	Drop[] drops = new Drop[128];
+	class Drop {
+		public Vec3 pos;
+		float rippleT = 1f;
+		bool falling = false;
+		Mesh mesh_ripple = Model.FromFile("ripple.glb").FindNode("ripple").Mesh;
+
+		public void Frame(int id) {
+			if (!falling) {
+				PR.Noise noise = Mono.inst.noise;		
+				rippleT += Time.Stepf / 0.5f;
+				if (rippleT >= 1.0f + (1.0f + noise.D1(id))) {
+					pos = new Vec3(
+						noise.value  *  10f,
+						10, 
+						-0.5f + noise.uvalue * -10f
+					);
+					falling = true;
+				}
+
+				float t = 1 - MathF.Min(rippleT, 1f);
+				t *= t;
+				t = 1 - t;
+				mesh_ripple.Draw(
+					Mono.inst.matHoloclear,
+					Matrix.TRS(pos, Quat.Identity, new Vec3(0.333f * t, 0.0133f, 0.333f * t)),
+					new Color(1f, 1f, 1f, 1f) * (1f - t)
+				); 
+			}
+
+			if (falling) {
+				// rain's terminal velocity is 9.8 m/s
+				pos.y -= 9.8f * Time.Stepf;
+				if (pos.y <= 0.0f) {
+					pos.y = 0.0f;
+					rippleT = 0f;
+					falling = false;
+				}
+
+				Mesh.Cube.Draw(
+					Mono.inst.matHoloclear,
+					Matrix.TRS(pos, Quat.Identity, new Vec3(0.002f, 0.98f, 0.002f)),
+					new Color(0.8f, 0.8f, 1f) * 0.1333f
+				); 
+			}
+		}
+	}
+
+
 	// Tree tree = new Tree();
 	// Tree[] trees = new Tree[128];
 
