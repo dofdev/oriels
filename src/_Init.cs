@@ -7,7 +7,7 @@ SKSettings settings = new SKSettings {
   assetsFolder = "add",
   depthMode = DepthMode.D32,
   disableUnfocusedSleep = true,
-  displayPreference = DisplayMode.Flatscreen,
+  // displayPreference = DisplayMode.Flatscreen,
   // disableFlatscreenMRSim = true,
 };
 if (!SK.Initialize(settings))

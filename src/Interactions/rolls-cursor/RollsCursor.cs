@@ -8,6 +8,9 @@ class RollsCursor : Interaction {
 
 	// data
 	public Cursor cursor = new Cursor();
+	PR.Delta fIdelta = new PR.Delta();
+	PR.Delta fMdelta = new PR.Delta();
+	PR.Delta fRdelta = new PR.Delta();
 
 	public void Init() { }
 
@@ -22,12 +25,23 @@ class RollsCursor : Interaction {
 
 			float stretch = (fI + fM + fR + fL) / 4f;
 
-			Vec3 to   = Roll(hand, JointId.KnuckleMid,   fI, fM, fR, fL);
-			Vec3 from = Roll(hand, JointId.KnuckleMajor, fI, fM, fR, fL);
+			// Vec3 to   = Roll(hand, JointId.KnuckleMid,   fI, fM, fR, fL);
+			// Vec3 from = Roll(hand, JointId.KnuckleMajor, fI, fM, fR, fL);
 
-			Vec3 dir = PR.Direction(to, from);
+			// Vec3 dir = Vec3.Direction(to, from);
 
-			cursor.raw = to + dir * stretch * reach.value;
+			// cursor.raw = to + dir * stretch * reach.value;
+
+			if (fL == 0.0f) {
+				cursor.raw = hand.Get(FingerId.Index,  JointId.Tip).position;
+			}
+
+			fIdelta.Update(hand.Get(FingerId.Index,  JointId.Tip).position);
+			fMdelta.Update(hand.Get(FingerId.Middle, JointId.Tip).position);
+			fRdelta.Update(hand.Get(FingerId.Ring,   JointId.Tip).position);
+
+			Vec3 delta = (fIdelta.value + fMdelta.value + fRdelta.value) / 3f;
+			cursor.raw += delta * reach.value;
 
 			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.raw,    Quat.Identity, 0.01f), new Color(1, 0, 0));
 			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.pos,    Quat.Identity, 0.01f), new Color(0, 1, 0));
@@ -36,7 +50,7 @@ class RollsCursor : Interaction {
 	}
 
 	// design
-	public Design reach = new Design { str = "1.0", term = "0+m",  min = 0 };
+	public Design reach = new Design { str = "3.0", term = "0+m",  min = 0 };
 
 	public Vec3 Roll(Hand hand, JointId jointId, float fI, float fM, float fR, float fL) {
 		Vec3 i = hand.Get(FingerId.Index,  jointId).position;

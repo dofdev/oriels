@@ -20,7 +20,7 @@ public class Mono {
 
 	// -------------------------------------------------
 
-	public Interaction[] dofs;
+	public Interaction[] interactions;
 
 	public ColorCube colorCube = new ColorCube();
 
@@ -32,7 +32,7 @@ public class Mono {
 	// public MonoNet net = new MonoNet();
 
 	public Mono() {
-		dofs = new Interaction[] {
+		interactions = new Interaction[] {
 			new Chiral(new Interaction[] {
 				new WaveCursor()  { handed = Handed.Left  },
 				new WaveCursor()  { handed = Handed.Right }
@@ -51,8 +51,8 @@ public class Mono {
 	public void Init() {
 		compositor.Init();
 
-		for (int i = 0; i < dofs.Length; i++) {
-			dofs[i].Init();
+		for (int i = 0; i < interactions.Length; i++) {
+			interactions[i].Init();
 		}
 
 		matDev = Material.Default.Copy();
@@ -104,10 +104,10 @@ public class Mono {
 		// Input.HandClearOverride(Handed.Right);
 		// store hand pre override in rig
 		rig.Step();
-		Hand h = Input.Hand(Handed.Right);
-		if (h.pinch.IsActive()) {
-			Console.WriteLine($"{h.pinchPt}, {Input.Head.orientation * -Vec3.Forward}");
-		}
+		// Hand h = Input.Hand(Handed.Right);
+		// if (h.pinch.IsActive()) {
+		// 	Console.WriteLine($"{h.pinchPt}, {Input.Head.orientation * -Vec3.Forward}");
+		// }
 
 		// Hand hand = Input.Hand(Handed.Right);
     // Controller con = Input.Controller(Handed.Right);
@@ -125,30 +125,30 @@ public class Mono {
 		spatial.Frame();
 
 		// pinch-cursor?
-		{
-			float deadzone = 0.01f;
-			float strength = 6f;
+		// {
+		// 	float deadzone = 0.01f;
+		// 	float strength = 6f;
 
-			Hand hand = Input.Hand(Handed.Right);
-			Vec3 indexTip = hand.Get(FingerId.Index, JointId.Tip).position;
-			Vec3 thumbTip = hand.Get(FingerId.Thumb, JointId.Tip).position;
+		// 	Hand hand = Input.Hand(Handed.Right);
+		// 	Vec3 indexTip = hand.Get(FingerId.Index, JointId.Tip).position;
+		// 	Vec3 thumbTip = hand.Get(FingerId.Thumb, JointId.Tip).position;
 
-			Vec3 delta    = indexTip - thumbTip;
-			float mag     = delta.Magnitude;
-			float pinch   = MathF.Max(mag - deadzone, 0);
+		// 	Vec3 delta    = indexTip - thumbTip;
+		// 	float mag     = delta.Magnitude;
+		// 	float pinch   = MathF.Max(mag - deadzone, 0);
 
-			Vec3 dir = delta.Normalized;
+		// 	Vec3 dir = delta.Normalized;
 
-			cursor.raw = indexTip + dir * pinch * strength;
+		// 	cursor.raw = indexTip + dir * pinch * strength;
 
-			Lines.Add(indexTip, thumbTip, new Color(0, 0, 1), 0.002f);
-			Mesh.Sphere.Draw(matHolo, Matrix.TS(cursor.pos, 0.01f), new Color(0.5f, 0.5f, 0.5f));
-			// V.XYZ(0, 0, );
+		// 	Lines.Add(indexTip, thumbTip, new Color(0, 0, 1), 0.002f);
+		// 	Mesh.Sphere.Draw(matHolo, Matrix.TS(cursor.pos, 0.01f), new Color(0.5f, 0.5f, 0.5f));
+		// 	// V.XYZ(0, 0, );
 
-			drawerA.Frame(cursor, pinch);
-			drawerB.Frame(cursor, pinch);
-			drawerC.Frame(cursor, pinch);
-		}
+		// 	drawerA.Frame(cursor, pinch);
+		// 	drawerB.Frame(cursor, pinch);
+		// 	drawerC.Frame(cursor, pinch);
+		// }
 
 
 
@@ -156,17 +156,17 @@ public class Mono {
 
 		// -------------------------------------------------
 
-		for (int i = 0; i < dofs.Length; i++) {
-			if (dofs[i].Active) {
-				dofs[i].Frame();
+		for (int i = 0; i < interactions.Length; i++) {
+			if (interactions[i].Active) {
+				interactions[i].Frame();
 			}
 		}  
 
 		// <Heresy>
-		WaveCursor  lwc = (WaveCursor)((Chiral)dofs[0]).dofs[0];
-		WaveCursor  rwc = (WaveCursor)((Chiral)dofs[0]).dofs[1];
-		Trackballer ltb = (Trackballer)((Chiral)dofs[1]).dofs[0];
-		Trackballer rtb = (Trackballer)((Chiral)dofs[1]).dofs[1];
+		WaveCursor  lwc = (WaveCursor)((Chiral)interactions[0]).dofs[0];
+		WaveCursor  rwc = (WaveCursor)((Chiral)interactions[0]).dofs[1];
+		Trackballer ltb = (Trackballer)((Chiral)interactions[1]).dofs[0];
+		Trackballer rtb = (Trackballer)((Chiral)interactions[1]).dofs[1];
 
 		if (lwc.Active) {
 			lwc.Demo(ltb.ori);
@@ -249,12 +249,12 @@ public class Mono {
 			dofIndex--;
 		}
 		UI.SameLine();
-		if (UI.Button("next") && dofIndex < dofs.Length - 1) {
+		if (UI.Button("next") && dofIndex < interactions.Length - 1) {
 			dofIndex++;
 		}
 		
 
-		Interaction dof = dofs[dofIndex];
+		Interaction dof = interactions[dofIndex];
 		Type type = dof.GetType();
 		// active toggle
 		Color tint = dof.Active ? new Color(0, 1, 0) : new Color(1, 0, 0);

@@ -58,7 +58,7 @@ public class Glove {
       if (lift) {
         pullPoint = con.pos + -direction * stretch;
       } else {
-        direction = PR.Direction(con.pos, pullPoint);
+        direction = Vec3.Direction(con.pos, pullPoint);
       }
     } else {
       pullPoint = con.pos;
@@ -83,7 +83,7 @@ public class Glove {
 
       case Pull.Backhanded:
         pullPoint = otherCon.pos;
-        direction = PR.Direction(con.pos, otherCon.pos);
+        direction = Vec3.Direction(con.pos, otherCon.pos);
         virtualGlove.orientation = con.ori;
         break;
     }

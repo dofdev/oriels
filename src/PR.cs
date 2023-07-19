@@ -49,17 +49,17 @@ public static class PR {
 		}
 	}
 
-	// construct the quaternion that rotates one vector to another
-	// uses the usual trick to get the half angle
-	public static Quat Delta(Vec3 to, Vec3 from) {
-		Vec3 vec = Vec3.Cross(from, to);
-		return new Quat(
-			vec.x,
-			vec.y,
-			vec.z,
-			1 + Vec3.Dot(to, from )
-		).Normalized;
-	}
+	// // construct the quaternion that rotates one vector to another
+	// // uses the usual trick to get the half angle
+	// public static Quat Delta(Vec3 to, Vec3 from) {
+	// 	Vec3 vec = Vec3.Cross(from, to);
+	// 	return new Quat(
+	// 		vec.x,
+	// 		vec.y,
+	// 		vec.z,
+	// 		1 + Vec3.Dot(to, from )
+	// 	).Normalized;
+	// }
 
   // Quat q;
   // public static void Relative(Quat to) => q = to * q * to.Inverse;
@@ -93,12 +93,8 @@ public static class PR {
 		return r.Next(min, max);
 	}
 
-	public static Vec3 Direction(Vec3 to, Vec3 from) {
-		return (to - from).Normalized;
-	}
-
 	public static Vec3 SnapToLine(this Vec3 v, Vec3 a, Vec3 b, bool clamp, out float t, float tMin = 0, float tMax = 1) {
-    Quat q = Quat.LookDir(Direction(b, a));
+    Quat q = Quat.LookDir(Vec3.Direction(b, a));
     Vec3 lv = q.Inverse * (v - a);
     lv.x = lv.y = 0;
 		Vec3 r = q * lv + a;
@@ -305,6 +301,19 @@ public static class PR {
 	// 		return 0;
 	// 	}
 	// }
+
+	public class Delta {
+		public Vec3 value { get; private set; }
+
+		Vec3 last;
+		public Vec3 Update(Vec3 current) {
+			value = current - last;
+			last = current;
+			return value;
+		}
+	}
+
+
 
 	public class PID {
 		public float p, i;
