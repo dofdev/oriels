@@ -15,13 +15,14 @@ class RollsCursor : Interaction {
 	public void Init() { }
 
 	public void Frame() {
-		Rig rig = Mono.inst.rig;
+		Mono mono = Mono.inst;
+
 		Hand hand = Input.Hand(handed);
 		if (hand.tracked.IsActive() && !hand.tracked.IsJustActive()) {
-			float fI = rig.Flexion(hand, FingerId.Index);
-			float fM = rig.Flexion(hand, FingerId.Middle);
-			float fR = rig.Flexion(hand, FingerId.Ring);
-			float fL = rig.Flexion(hand, FingerId.Little);
+			float fI = mono.rig.Flexion(hand, FingerId.Index);
+			float fM = mono.rig.Flexion(hand, FingerId.Middle);
+			float fR = mono.rig.Flexion(hand, FingerId.Ring);
+			float fL = mono.rig.Flexion(hand, FingerId.Little);
 
 			float stretch = (fI + fM + fR + fL) / 4f;
 
@@ -43,9 +44,9 @@ class RollsCursor : Interaction {
 			Vec3 delta = (fIdelta.value + fMdelta.value + fRdelta.value) / 3f;
 			cursor.raw += delta * reach.value;
 
-			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.raw,    Quat.Identity, 0.01f), new Color(1, 0, 0));
-			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.pos,    Quat.Identity, 0.01f), new Color(0, 1, 0));
-			Mesh.Sphere.Draw(Mono.inst.matHoloframe, Matrix.TRS(cursor.smooth, Quat.Identity, 0.01f), new Color(0, 0, 1));
+			Mesh.Sphere.Draw(mono.mat.holoframe, Matrix.TRS(cursor.raw,    Quat.Identity, 0.01f), new Color(1, 0, 0));
+			Mesh.Sphere.Draw(mono.mat.holoframe, Matrix.TRS(cursor.pos,    Quat.Identity, 0.01f), new Color(0, 1, 0));
+			Mesh.Sphere.Draw(mono.mat.holoframe, Matrix.TRS(cursor.smooth, Quat.Identity, 0.01f), new Color(0, 0, 1));
 		}
 	}
 

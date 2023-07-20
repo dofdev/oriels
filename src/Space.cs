@@ -73,6 +73,7 @@ public class Space {
 
 
 	public void Frame() {
+		Mono mono = Mono.inst;
 		// Oriel oriel = Mono.inst.oriel;
 		// data.matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrixInv);
 		// data.dimensions = oriel.bounds.dimensions;
@@ -123,7 +124,7 @@ public class Space {
 				
 				if (Vec3.Distance(new Vec3(xpos, 0, zpos), Vec3.Zero) < radius / 2) {
 					Mesh.Cube.Draw(
-						Mono.inst.matHolo,
+						mono.mat.holo,
 						Matrix.TS(
 							new Vec3(
 								xpos + x, 
@@ -143,7 +144,7 @@ public class Space {
 				xpos += offset.x;
 				zpos += offset.z;
 				Mesh.Cube.Draw(
-					Mono.inst.matHolo,
+					mono.mat.holo,
 					Matrix.TRS(
 						new Vec3(xpos, (height * 0.5f), zpos),
 						Quat.FromAngles(0, angle, 0),
@@ -153,7 +154,7 @@ public class Space {
 				);
 
 				Mesh.Cube.Draw(
-					Mono.inst.matHolo,
+					mono.mat.holo,
 					Matrix.TRS(
 						new Vec3(xpos, height, zpos),
 						Quat.FromAngles(0, angle, 0),
@@ -178,6 +179,8 @@ public class Space {
 		Mesh mesh_ripple = Model.FromFile("ripple.glb").FindNode("ripple").Mesh;
 
 		public void Frame(int id) {
+			Mono mono = Mono.inst;
+			
 			if (!falling) {
 				PR.Noise noise = Mono.inst.noise;		
 				rippleT += Time.Stepf / 0.5f;
@@ -194,7 +197,7 @@ public class Space {
 				t *= t;
 				t = 1 - t;
 				mesh_ripple.Draw(
-					Mono.inst.matHoloclear,
+					mono.mat.holoclear,
 					Matrix.TRS(pos, Quat.Identity, new Vec3(0.333f * t, 0.0133f, 0.333f * t)),
 					new Color(1f, 1f, 1f, 1f) * (1f - t)
 				); 
@@ -210,7 +213,7 @@ public class Space {
 				}
 
 				Mesh.Cube.Draw(
-					Mono.inst.matHoloclear,
+					mono.mat.holoclear,
 					Matrix.TRS(pos, Quat.Identity, new Vec3(0.002f, 0.98f, 0.002f)),
 					new Color(0.8f, 0.8f, 1f) * 0.1333f
 				); 

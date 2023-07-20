@@ -6,13 +6,7 @@ public class Mono {
 
 	public PR.Noise noise = new PR.Noise(939949595);
 
-	public Material matDev;
-	public Material matHoloframe = new Material(Shader.FromFile("shaders/above.hlsl"));
-	Material matHoloframeUnder   = new Material(Shader.FromFile("shaders/below.hlsl"));
-	public Material matHoloclear = new Material(Shader.FromFile("shaders/above.hlsl"));
-	Material matHoloclearUnder   = new Material(Shader.FromFile("shaders/below.hlsl"));
-	public Material matHolo      = new Material(Shader.FromFile("shaders/above.hlsl"));
-	Material matHoloUnder        = new Material(Shader.FromFile("shaders/below.hlsl"));
+	public Mat mat = new Mat();
 
 	public Rig rig = new Rig();
 	public Space space = new Space();
@@ -55,35 +49,7 @@ public class Mono {
 			interactions[i].Init();
 		}
 
-		matDev = Material.Default.Copy();
-		matDev.SetTexture("diffuse", Tex.DevTex);
-
-		matHolo.SetColor("clearcolor", Renderer.ClearColor);
-		matHoloUnder.SetColor("clearcolor", Renderer.ClearColor);
-		matHoloUnder.FaceCull = Cull.None;
-		matHolo.Chain = matHoloUnder;
-
-		matHoloclear.SetColor("clearcolor", Color.Black);
-		matHoloclear.Transparency = Transparency.Add;
-		matHoloclear.DepthWrite = false;
-		matHoloclear.FaceCull = Cull.None;
-		matHoloclearUnder.SetColor("clearcolor", Color.Black);
-		matHoloclearUnder.Transparency = Transparency.Add;
-		matHoloclearUnder.DepthWrite = false;
-		matHoloclearUnder.FaceCull = Cull.None;
-		matHoloclear.Chain = matHoloclearUnder;
-
-		matHoloframe.SetColor("clearcolor", Color.Black);
-		matHoloframe.Transparency = Transparency.Add;
-		matHoloframe.DepthWrite = false;
-		matHoloframe.FaceCull = Cull.None;
-		matHoloframe.Wireframe = true;
-		matHoloframeUnder.SetColor("clearcolor", Color.Black);
-		matHoloframeUnder.Transparency = Transparency.Add;
-		matHoloframeUnder.DepthWrite = false;
-		matHoloframeUnder.FaceCull = Cull.None;
-		matHoloframeUnder.Wireframe = true;
-		matHoloframe.Chain = matHoloframeUnder;
+		mat.Init();
 	}
 
 	Pose shape = new Pose(new Vec3(0, 1f, -3f), Quat.FromAngles(45, 0, 45));
@@ -109,13 +75,6 @@ public class Mono {
 		// 	Console.WriteLine($"{h.pinchPt}, {Input.Head.orientation * -Vec3.Forward}");
 		// }
 
-		// Hand hand = Input.Hand(Handed.Right);
-    // Controller con = Input.Controller(Handed.Right);
-		// Mesh.Cube.Draw(
-		// 	Material.Default,
-		// 	hand.IsJustPinched
-		// )
-
     // Con -> Hand
     // lGlove.Step();
     // rGlove.Step();
@@ -124,31 +83,34 @@ public class Mono {
 		
 		spatial.Frame();
 
+		// we need cursor abstraction
+		// so we can plug in different cursor interactions into different elements!
+
 		// pinch-cursor?
-		// {
-		// 	float deadzone = 0.01f;
-		// 	float strength = 6f;
+		{
+			float deadzone = 0.01f;
+			float strength = 6f;
 
-		// 	Hand hand = Input.Hand(Handed.Right);
-		// 	Vec3 indexTip = hand.Get(FingerId.Index, JointId.Tip).position;
-		// 	Vec3 thumbTip = hand.Get(FingerId.Thumb, JointId.Tip).position;
+			Hand hand = Input.Hand(Handed.Right);
+			Vec3 indexTip = hand.Get(FingerId.Index, JointId.Tip).position;
+			Vec3 thumbTip = hand.Get(FingerId.Thumb, JointId.Tip).position;
 
-		// 	Vec3 delta    = indexTip - thumbTip;
-		// 	float mag     = delta.Magnitude;
-		// 	float pinch   = MathF.Max(mag - deadzone, 0);
+			Vec3 delta    = indexTip - thumbTip;
+			float mag     = delta.Magnitude;
+			float pinch   = MathF.Max(mag - deadzone, 0);
 
-		// 	Vec3 dir = delta.Normalized;
+			Vec3 dir = delta.Normalized;
 
-		// 	cursor.raw = indexTip + dir * pinch * strength;
+			cursor.raw = indexTip + dir * pinch * strength;
 
-		// 	Lines.Add(indexTip, thumbTip, new Color(0, 0, 1), 0.002f);
-		// 	Mesh.Sphere.Draw(matHolo, Matrix.TS(cursor.pos, 0.01f), new Color(0.5f, 0.5f, 0.5f));
-		// 	// V.XYZ(0, 0, );
+			Lines.Add(indexTip, thumbTip, new Color(0, 0, 1), 0.002f);
+			Mesh.Sphere.Draw(mat.holo, Matrix.TS(cursor.pos, 0.01f), new Color(0.5f, 0.5f, 0.5f));
+			// V.XYZ(0, 0, );
 
-		// 	drawerA.Frame(cursor, pinch);
-		// 	drawerB.Frame(cursor, pinch);
-		// 	drawerC.Frame(cursor, pinch);
-		// }
+			drawerA.Frame(cursor, pinch);
+			drawerB.Frame(cursor, pinch);
+			drawerC.Frame(cursor, pinch);
+		}
 
 
 
@@ -192,7 +154,7 @@ public class Mono {
 		// as it's a bit of space hog
 
 		Mesh.Cube.Draw(
-			Mono.inst.matHoloframe,
+			mat.holoframe,
 			shape.ToMatrix(0.5f),
 			new Color(0.5f, 0.55f, 0.75f) * 0.3f
 		);
@@ -212,242 +174,10 @@ public class Mono {
 		// net.me.Step();
 		// net.send = true;
 
-		ShowWindowButton();
+		window.Frame();
 	}
-
-	int dofIndex = 0;
-	Pose windowPose = new Pose(-0.333f, 1.2f, -0.5f, Quat.FromAngles(0, 180, 0));
-	Material windowMat = new Material(Shader.FromFile("shaders/window.hlsl"));
-	TextStyle style  = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, Color.Black);
-	TextStyle style2 = Text.MakeStyle(Font.FromFile("add/fonts/DM-Mono.ttf"), 1f * U.cm, new Color(0.5f, 0.5f, 0.5f));
-	Vec2 fieldSize = new Vec2(6f * U.cm, 3f * U.cm);
-	void ShowWindowButton() {
-		windowMat.Transparency = Transparency.Add;
-		windowMat.FaceCull = Cull.None;
-		windowMat.DepthWrite = false;
-		UI.SetElementVisual(UIVisual.WindowBody, Mesh.Quad, windowMat, Vec2.One);
-		UI.SetElementVisual(UIVisual.WindowHead, Mesh.Quad, windowMat, Vec2.One);
-		UI.WindowBegin("design vars", ref windowPose);
-		// UI.SetThemeColor(UIColor.Primary, new Color(1f, 1f, 1f));
-		// UI.HandleBegin("design", ref windowPose, new Bounds(V.XYZ(0.02f, 0.02f, 0.02f)), true, UIMove.FaceUser);
-		UI.SetThemeColor(UIColor.Background, new Color(0.2f, 0.2f, 0.3f));
-		UI.SetThemeColor(UIColor.Primary,    new Color(0.4f, 0.4f, 0.6f));
-		UI.SetThemeColor(UIColor.Common,     new Color(1.0f, 1.0f, 1.0f));
-		UI.PushTextStyle(style);
-
-		// if (UI.Button("Draw Oriel Axis")) { oriel.drawAxis = !oriel.drawAxis; }
-		// if (UI.Button("Reset Oriel Quat")) { oriel.ori = Quat.Identity; }
-		// if (UI.Button("Scale w/Height")) { oriel.scaleWithHeight = !oriel.scaleWithHeight; }
-		// UI.HSlider("Scale", ref oriel.scale, 0.1f, 1f, 0.1f);
-		// UI.HSlider("Multiplier", ref oriel.multiplier, 0.1f, 1f, 0.1f);
-		// // UI.Label("Player.y");
-		// UI.HSlider("Player.y", ref greenyard.height, 1f, 6f, 0.2f);
-		// UI.Label("pos.y");
-		// UI.HSlider("pos.y", ref playerY, -1f, 1f, 0.1f);
-
-		if (UI.Button("prev") && dofIndex > 0) {
-			dofIndex--;
-		}
-		UI.SameLine();
-		if (UI.Button("next") && dofIndex < interactions.Length - 1) {
-			dofIndex++;
-		}
-		
-
-		Interaction dof = interactions[dofIndex];
-		Type type = dof.GetType();
-		// active toggle
-		Color tint = dof.Active ? new Color(0, 1, 0) : new Color(1, 0, 0);
-		UI.PushTint(tint);
-		if (UI.Button(dof.Active ? "on" : "off")) {
-			dof.Active = !dof.Active;
-		}
-		UI.PopTint();
-		if (type == typeof(Chiral)) {
-			Chiral chiral = (Chiral)dof;
-
-			System.Reflection.FieldInfo[] fields = typeof(Chiral).GetFields();
-			foreach (System.Reflection.FieldInfo field in fields) {
-				if (field.FieldType == typeof(Handed)) {
-					Handed handed = (Handed)field.GetValue(chiral);
-					if (UI.Button("<") && (int)handed > 0) {
-						handed = (Handed)((int)handed - 1);
-						field.SetValue(chiral, handed);
-					}
-					UI.SameLine();
-					if (UI.Button(">") && (int)handed < 2) {
-						handed = (Handed)((int)handed + 1);
-						field.SetValue(chiral, handed);
-					}
-					UI.SameLine(); UI.Label(handed.ToString());
-				}
-			}
-
-			RenderDof(chiral.dofs[0]);
-		} else {
-			RenderDof(dof);
-		}
-
-		UI.WindowEnd();
-		// UI.HandleEnd();
-	}
-
-	void RenderDof(Interaction dof) {
-		Type type = dof.GetType();
-		UI.Label("°" + type.Name);
-		System.Reflection.FieldInfo[] fields = type.GetFields();
-		for (int j = 0; j < fields.Length; j++) {
-			System.Reflection.FieldInfo field = fields[j];
-			if (field.FieldType == typeof(Design)) {
-				Design design = (Design)field.GetValue(dof);
-				UI.Input(field.Name, ref design.str, fieldSize, TextContext.Number);
-
-				UI.SameLine(); 
-				UI.PushTextStyle(style2); 
-				UI.Label(design.term, new Vec2(4f * U.cm, 3f * U.cm));
-				UI.PopTextStyle();
-
-				UI.SameLine(); UI.Label(field.Name);
-			}
-		}
-	}
+	Window window = new Window();
 }
-
-// Chiral : handedness implies symmetry
-public class Chiral : Interaction {
-	public Chiral(Interaction[] dofs) => this.dofs = dofs;
-	private bool active;
-	public bool Active {
-		get { return this.active; }
-		set { 
-			this.active = value;
-			for (int i = 0; i < this.dofs.Length; i++) {
-				Interaction dof = this.dofs[i];
-				if ((int)this.handed == 2 || i == (int)this.handed) {
-					dof.Active = value;
-				} else {
-					dof.Active = false;
-				}
-			}
-		} 
-	}
-	public Interaction[] dofs = new Interaction[2];
-	// public Design handed = new Design { str = "2", min = 0, max = 2};
-	public Handed handed = Handed.Max;
-
-	public void Init() {
-		dofs[0].Init();
-		dofs[1].Init();
-	}
-
-	public void Frame() {
-		// sync the left design variables to the right
-		System.Reflection.FieldInfo[] fields = dofs[0].GetType().GetFields();
-		foreach (System.Reflection.FieldInfo field in fields) {
-			if (field.FieldType == typeof(Design)) {
-				Design design = (Design)field.GetValue(dofs[0]); // define type?
-				field.SetValue(dofs[1], design);
-			}
-		}
-
-		for (int i = 0; i < dofs.Length; i++) {
-			Interaction dof = dofs[i];
-			if ((int)handed == 2 || i == (int)handed) {
-				dof.Frame();
-				dof.Active = true;
-			}
-			else {
-				dof.Active = false;
-			}
-		}
-	}
-}
-
-public class Design {
-	public string str;
-	public string term;
-	public float min = float.NegativeInfinity;
-	public float max = float.PositiveInfinity;
-	public float unit = U.m;
-
-	public float value {
-		get {
-			try {
-				float value = PR.Clamp(float.Parse(str), min, max);
-				// if clamped, update string
-				if (value != float.Parse(str)) {
-					if (Input.Key(Key.Return).IsJustActive()) {
-						str = value.ToString();
-					}
-				}
-				return value * unit;
-			} catch {
-				return MathF.Max(0, min) * unit;
-			}
-		}
-	}
-	// public int integer {};
-}
-
-public class Cursor {
-	PR.OneEuroFilter xF = new PR.OneEuroFilter(0.001f, 0.1f);
-	PR.OneEuroFilter yF = new PR.OneEuroFilter(0.001f, 0.1f);
-	PR.OneEuroFilter zF = new PR.OneEuroFilter(0.001f, 0.1f);
-	Vec3 _raw;
-	public Vec3 raw {
-		get => _raw;
-		set {
-			_raw = value;
-			pos = new Vec3(
-				(float)xF.Filter(raw.x, (double)Time.Stepf),
-				(float)yF.Filter(raw.y, (double)Time.Stepf),
-				(float)zF.Filter(raw.z, (double)Time.Stepf)
-			);
-			smooth = Vec3.Lerp(smooth, pos, Time.Stepf * 6f);
-		}
-	}
-	public Vec3 pos { get; private set; }
-	public Vec3 smooth { get; private set; }
-}
-
-
-/* 
-	COMMENTS
-
-	ranges 
-		0+1
-		1-0
-		1-0+1
-
-		-0+
-
-		0+&&-
-		0+||-
-	
-	units 
-		m
-		cm
-		mm
-		t
-
-	demo
-		seperate the demos from the dofs, and make them rebindable (assigning input using reflection?)
-		virtual shapes(scalable) -> that can be slotted
-		physics boxes
-
-	mirror
-		mirroring vectors(line segments) is really easy
-		easier than rendering.. actually just render twice with the material chain
-		stereonick mentioned
-	
-	debug bool
-		rendering the raw output
-		particularly for hand tracking dofs (so Moses can better test them!)
-		raw = 0.333f alpha ~
-
-*/
-
-
 
 /* 
 	we have a whole inspector thing going on here
@@ -498,70 +228,3 @@ public class Cursor {
 
 		dofchan bows on the back of the ankles that double as trackers
 */
-
-
-public class Spatial {
-	// example, to build out from!
-	// rn it's just adding two vectors
-	// building towards great interactivity and visual feedback
-	public Spatial(Vec3 origin) {
-		this.origin = origin;
-	}
-	public Vec3 origin;
-	float scale = 0.2f;
-	float thickness => 0.02f * scale;
-
-
-	float t = 1.0f;
-	Vec3 aFrom, aTo;
-	Vec3 a => Vec3.Lerp(aFrom, aTo, MathF.Min(t, 1f));
-	Vec3 bFrom, bTo;
-	Vec3 b => Vec3.Lerp(bFrom, bTo, MathF.Min(t, 1f));
-	Vec3 c => a + b;
-
-	public void Frame() {
-		// origin axis
-		Lines.Add(origin, World(new Vec3(1, 0, 0)), new Color(1, 0, 0), thickness * 0.333f);
-		Lines.Add(origin, World(new Vec3(0, 1, 0)), new Color(0, 1, 0), thickness * 0.333f);
-		Lines.Add(origin, World(new Vec3(0, 0, 1)), new Color(0, 0, 1), thickness * 0.333f);
-		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(origin, thickness), new Color(0.5f, 0.5f, 0.5f));
-
-		Random rand = Random.Shared;
-		if (t >= 1.3f) {
-			aFrom = aTo;
-			bFrom = bTo;
-
-			if (rand.NextSingle() < 0.5f) {
-				aTo = new Vec3(rand.NextSingle(), rand.NextSingle(), rand.NextSingle()) * 0.5f;
-			} else {
-				bTo = new Vec3(rand.NextSingle(), rand.NextSingle(), rand.NextSingle()) * 0.5f;
-			}
-
-			t = 0.0f;
-		}
-		t += Time.Stepf / 2f;
-
-		// Lines.Add(origin, World(a), new Color(1, 1, 1, 0.5f), thickness * 2); // they clip with no material way to fix it?
-		Lines.Add(origin, World(a), new Color(1, 1, 0), thickness);
-		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(World(a), thickness), new Color(1, 1, 0));
-		// Lines.Add(origin, World(b), new Color(1, 1, 1, 0.5f), thickness * 2);
-		Lines.Add(origin, World(b), new Color(0, 1, 1), thickness);
-		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(World(b), thickness), new Color(0, 1, 1));
-
-		Lines.Add(World(a), World(c), new Color(0, 1, 1), thickness);
-		Lines.Add(World(b), World(c), new Color(1, 1, 0), thickness);
-		// color between yellow and cyan using HSV
-		Mesh.Sphere.Draw(Material.Unlit, Matrix.TS(World(c), thickness), new Color(0.5f, 1, 1));
-	}
-
-	Vec3 World(Vec3 local) {
-		return origin + local * scale;
-	}
-
-	// 
-}
-
-// Volumetric Lines
-public class Vine {
-
-}

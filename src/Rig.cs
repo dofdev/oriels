@@ -146,3 +146,24 @@ public struct Btn {
     held = down;
   }
 }
+
+public class Cursor {
+	PR.OneEuroFilter xF = new PR.OneEuroFilter(0.001f, 0.1f);
+	PR.OneEuroFilter yF = new PR.OneEuroFilter(0.001f, 0.1f);
+	PR.OneEuroFilter zF = new PR.OneEuroFilter(0.001f, 0.1f);
+	Vec3 _raw;
+	public Vec3 raw {
+		get => _raw;
+		set {
+			_raw = value;
+			pos = new Vec3(
+				(float)xF.Filter(raw.x, (double)Time.Stepf),
+				(float)yF.Filter(raw.y, (double)Time.Stepf),
+				(float)zF.Filter(raw.z, (double)Time.Stepf)
+			);
+			smooth = Vec3.Lerp(smooth, pos, Time.Stepf * 6f);
+		}
+	}
+	public Vec3 pos { get; private set; }
+	public Vec3 smooth { get; private set; }
+}

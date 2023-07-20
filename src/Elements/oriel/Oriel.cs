@@ -224,6 +224,8 @@ public class Oriel {
   public float crown = 0.16f;
 
   public void Render() {
+    Mono mono = Mono.inst;
+
     // // matFrame.Wireframe = true;
     // matFrame.DepthTest = DepthTest.Always;
     // matFrame.SetVector("_cursor", cursor);
@@ -304,12 +306,12 @@ public class Oriel {
       }
     }
 
-    Mesh.Sphere.Draw(Mono.inst.matHoloframe,
+    Mesh.Sphere.Draw(mono.mat.holoframe,
       Matrix.TRS(cursor, cursorOri, new Vec3(0.02f, 0.02f, 0.02f)),
       cursorColor
     );
 
-    Mesh.Sphere.Draw(Mono.inst.matHoloframe,
+    Mesh.Sphere.Draw(mono.mat.holoframe,
       Matrix.TS(cursor, new Vec3(1f, 1f, 1f) * cursorRadius * 2),
       new Color(0.1f, 0.1f, 0.1f)
     );
