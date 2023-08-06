@@ -1,8 +1,8 @@
+<div align="center">
+
 <a href='https://dofdev.org'>
   <img src='https://dofdev.org/res/dofdev-logo.svg'>
 </a>
-
-<div align="center">
 
 ### &times;  
 
