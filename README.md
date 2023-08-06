@@ -1,21 +1,26 @@
+<a href='https://dofdev.org'>
+  <img src='https://dofdev.org/res/dofdev-logo.svg'>
+</a>
+
+<div align="center">
+
+### &times;  
+
+<a href='https://stereokit.net'>
+  <img src='_/StereoKitLogoLight.svg' width="64px">  
+</a>
+	
 # oriels
 *a &deg;dof driven dev space*  
 
-<img src='_/markberg.png' width="50%">
-
-**mapped out by:**  
+mapped by  
 <a href='https://ethanmerchant.com'>@spatialfree</a> &times; <a href='https://twitter.com/opendegree'>@opendegree</a>
 
-<a href='https://dofdev.org'>
-	<img src='_/channel-icon-tranparent.png' width="64px">  
-</a>
-<a href='https://stereokit.net'>
-<img src='_/StereoKitLogoLight.svg' width="32px">  
-</a>
+<img src='_/markberg.png' width="50%">
 
-<br>
-<br>
-<br>
+### <br> ⃝<br><br><br>
+
+</div>
 
 	start()
 		c# net6.0 sdk
