@@ -2,15 +2,20 @@ using System.Runtime.InteropServices;
 
 namespace Oriels;
 [StructLayout(LayoutKind.Sequential)]
-struct BufferData {
+unsafe struct oriel {
   public Matrix matrix;
   public Vec3 dimensions;
-  public float time;
+  public float x;
+}
+[StructLayout(LayoutKind.Sequential)]
+unsafe struct oriel_buffer {
+	[MarshalAs(UnmanagedType.ByValArray, SizeConst = 819)]
+  public oriel[] oriels;
 }
 
 public class Space {
-  MaterialBuffer<BufferData> buffer;
-  BufferData data = new BufferData();
+  MaterialBuffer<oriel_buffer> buffer;
+  oriel_buffer data = new oriel_buffer();
 
   Material matFloor = new Material(Shader.Default);
   Model shed = Model.FromFile("shed/shed.glb", Shader.FromFile("shaders/room.hlsl"));
@@ -18,7 +23,8 @@ public class Space {
 
 	Solid floor;
   public Space() {
-    buffer = new MaterialBuffer<BufferData>(3); // index
+		data.oriels = new oriel[819]; // match dofdev.hlsli
+    buffer = new MaterialBuffer<oriel_buffer>(3); // index
 
 		// recenter the nodes in the leek model
 		// so that the leek is centered at the origin
@@ -78,8 +84,12 @@ public class Space {
 		// data.matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(oriel.matrixInv);
 		// data.dimensions = oriel.bounds.dimensions;
 
-		data.matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(Matrix.T(Vec3.Up));
-		data.dimensions = new Vec3(0.1f, 0.1f, 0.1f);
+		data.oriels[0].matrix = (Matrix)System.Numerics.Matrix4x4.Transpose(
+			Matrix.T(
+				V.XYZ(0, 1, 1.6f)
+			).Inverse // invert for sdf rendering ~
+		);
+		data.oriels[0].dimensions = new Vec3(0.4f, 0.3f, 0.3f);
 		buffer.Set(data);
 
 

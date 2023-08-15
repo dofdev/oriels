@@ -1,6 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		
 		<OutputType>Exe</OutputType>
 		<TargetFramework>net7</TargetFramework>
     <SKAssetFolder>add</SKAssetFolder>
@@ -8,7 +10,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="StereoKit" Version="0.3.7-preview.1619" />
+		<PackageReference Include="StereoKit" Version="0.3.7-preview.1667" />
     <!-- <PackageReference Include="System.Speech" Version="5.0.0" /> -->
 	</ItemGroup>
 

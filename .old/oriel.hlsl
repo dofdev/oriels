@@ -15,7 +15,7 @@ Texture2D tex; // : register(t0);
 SamplerState tex_s; // : register(s0);
 
 
-cbuffer BufferData : register(b3) {
+cbuffer oriel_buffer : register(b3) {
   float3 position;
   float  time;
 };

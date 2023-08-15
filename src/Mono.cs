@@ -1,24 +1,24 @@
 namespace Oriels;
 
 public class Mono {
-	private static readonly Lazy<Oriels.Mono> lazy = new Lazy<Oriels.Mono>(() => new Oriels.Mono());
-	public static Oriels.Mono inst { get { return lazy.Value; } }
+	private static readonly Lazy<Mono> lazy = new Lazy<Mono>(() => new Mono());
+	public static Mono inst { get { return lazy.Value; } }
 
-	public PR.Noise noise = new PR.Noise(939949595);
+	public PR.Noise noise = new(939949595);
 
-	public Mat mat = new Mat();
+	public Mat mat = new();
 
-	public Rig rig = new Rig();
-	public Space space = new Space();
-	public Compositor compositor = new Compositor();
+	public Rig rig = new();
+	public Space space = new();
+	public Compositor compositor = new();
 
 	// -------------------------------------------------
 
 	public Interaction[] interactions;
 
-	public ColorCube colorCube = new ColorCube();
+	public ColorCube colorCube = new();
 
-	public Glove rGlove = new Glove(true), lGlove = new Glove(false);
+	public Glove rGlove = new(true), lGlove = new(false);
 	public Glove Glove(bool chirality) { return chirality ? rGlove : lGlove; }
 
 	// -------------------------------------------------
@@ -58,11 +58,11 @@ public class Mono {
 
 
 
-	Spatial spatial = new Spatial(new Vec3(-1, 0.76f, 0.666f));
-	Cursor cursor = new Cursor();
-	Drawer drawerA = new Drawer(new Pose(new Vec3(-0.8f, 0.6f, 1.4f), Quat.FromAngles(0, 90f, 0)));
-	Drawer drawerB = new Drawer(new Pose(new Vec3(-0.8f, 0.6f, 0.95f), Quat.FromAngles(0, 90f, 0)));
-	Drawer drawerC = new Drawer(new Pose(new Vec3(-0.8f, 0.6f, 0.5f), Quat.FromAngles(0, 90f, 0)));
+	Spatial spatial = new (new Vec3(-1, 0.76f, 0.666f));
+	Cursor cursor = new();
+	Drawer drawerA = new (new Pose(new Vec3(-0.8f, 0.6f, 1.4f), Quat.FromAngles(0, 90f, 0)));
+	Drawer drawerB = new (new Pose(new Vec3(-0.8f, 0.6f, 0.95f), Quat.FromAngles(0, 90f, 0)));
+	Drawer drawerC = new (new Pose(new Vec3(-0.8f, 0.6f, 0.5f), Quat.FromAngles(0, 90f, 0)));
 
 	public void Frame() {
 

@@ -1,4 +1,5 @@
 #include "stereokit.hlsli"
+#include "dofdev.hlsli"
 
 //--name = dofdev/room
 
@@ -10,12 +11,6 @@ float4       color;
 float        tex_scale;
 Texture2D    diffuse   : register(t0);
 SamplerState diffuse_s : register(s0);
-
-cbuffer BufferData : register(b3) {
-  float4x4 oriel_matrix;
-  float3   dimensions;
-  float    time;
-};
 
 struct vsIn {
 	float4 pos  : SV_Position;
@@ -46,8 +41,8 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
 
 	float3 normal = normalize(mul(input.norm, (float3x3)sk_inst[id].world));
 
-	o.uv         = input.uv * tex_scale;
-	o.color      = color * input.col * sk_inst[id].color;
+	o.uv    = input.uv * tex_scale;
+	o.color = color * input.col * sk_inst[id].color;
 	// o.color.rgb *= Lighting(normal);
 	return o;
 }
@@ -67,8 +62,8 @@ float raymarch(float4x4 m, float3 ro, float3 rd) {
 	float dist = 0.0;
   for (int i = 0; i < 256; i++) {
     float3 pos = ro + dist * rd;
-    float step = sdBox(pos, dimensions / 2.0); 
-    // float step = sdSphere(pos, dimensions.y / 2.0); 
+    float step = sdBox(pos, oriels[0].dimensions / 2.0); 
+    // float step = sdSphere(pos, oriels[0].dimensions.y / 2.0); 
     if (step < 0.0001 || dist > 100) break;              // 100 == distmax
     dist += step;
   }
@@ -101,7 +96,9 @@ float4 ps(psIn input) : SV_TARGET {
 
   float3 ro = input.campos;
   float3 rd = normalize(input.world - ro);
-  float  ol = raymarch(oriel_matrix, ro, rd);
+  float  ol = raymarch(oriels[0].transform, ro, rd);
+  // we don't need to clip here anymore ^-^
+  // *just keeping this for a working reference, for a refactoring later
 
   clip(-(100 - (ol + 1)));
   // if ((100 - (ol + 1)) > 0) {

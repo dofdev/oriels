@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using StereoKit;
 
 // [StructLayout(LayoutKind.Sequential)]
-// struct BufferData {
+// struct oriel_buffer {
 //   public Vec3 position;
 //   public float time;
 // }
@@ -20,7 +20,7 @@ public class Oriel {
   bool draggingOriel = false;
   Vec3 orielOffset = Vec3.Zero;
 
-  // MaterialBuffer<BufferData> buffer;
+  // MaterialBuffer<oriel_buffer> buffer;
 
   public void Start(Monolith mono, int bufferIndex) {
     this.mono = mono;
@@ -28,10 +28,10 @@ public class Oriel {
     bounds = new Bounds(Vec3.Zero, new Vec3(1f, 0.5f, 0.5f));
     bounds.center = new Vec3(0.5f, -0.25f, -1f);
 
-    // buffer = new MaterialBuffer<BufferData>(bufferIndex);
+    // buffer = new MaterialBuffer<oriel_buffer>(bufferIndex);
   }
 
-  // BufferData data = new BufferData();
+  // oriel_buffer data = new oriel_buffer();
   public void Step() {
     Vec3 rGlovePos = mono.rGlove.virtualGlove.position;
     Vec3 lGlovePos = mono.lGlove.virtualGlove.position;

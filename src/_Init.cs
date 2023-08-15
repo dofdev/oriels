@@ -1,5 +1,6 @@
 global using System;
 global using StereoKit;
+using System.Text.RegularExpressions;
 // global using Oriels;
 
 SKSettings settings = new SKSettings {
@@ -19,9 +20,11 @@ Input.HandVisible(Handed.Max, true);
 
 Renderer.Scaling = 2;
 Renderer.Multisample = 0;
-Renderer.SetClip(0.02f, 100f);
+Renderer.SetClip(0.01f, 100f);
 Renderer.EnableSky = false;
 Renderer.ClearColor = new Color(0f / 256f, 162f / 256f, 206f / 256f);
+Renderer.LayerFilter = RenderLayer.All & ~RenderLayer.Layer1 & ~RenderLayer.Layer2;
+Renderer.SetFOV(90f);
 
 Oriels.Mono mono = Oriels.Mono.inst;
 mono.Init();

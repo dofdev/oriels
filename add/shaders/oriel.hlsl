@@ -115,10 +115,9 @@ psOut ps(psIn input) {
 	if (oll < 99) {
 		o.color = float4(1, 1, 1, 1);
 
-		float3 origin2 = origin + oll * direction;
-		float4 og = mul(float4(origin2, 1), sk_viewproj[input.view_id]);
-		// o.depth = og.z;
-		o.depth = (og * rcp(og.w)).z;
+		float3 pos_world = origin + oll * direction;
+		float4 pos_view  = mul(float4(pos_world, 1), sk_viewproj[input.view_id]);
+		o.depth = (pos_view * rcp(pos_view.w)).z;
 		return o;
 	}
 
