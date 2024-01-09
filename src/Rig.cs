@@ -82,8 +82,8 @@ public class Rig {
     lWrist = new Pose(lCon.pos + lCon.ori * new Vec3(0, 0, 0.052f), lCon.ori);
   }
 
-	public float Flexion(Hand hand, FingerId id, float deadzone = 0.15f) {
-		float fingerFlex = (Vec3.Dot(
+  public float FingerFlex(Hand hand, FingerId id, float deadzone = 0.15f) {
+    float fingerFlex = (Vec3.Dot(
 			Vec3.Direction(
 				hand.Get(id, JointId.Tip).position,
 				hand.Get(id, JointId.KnuckleMinor).position
@@ -94,8 +94,10 @@ public class Rig {
 			)
 		) + 1f) / 2;
     float fingerTrim = 0f + deadzone; // 180°
-		fingerFlex = Math.Max(fingerFlex - fingerTrim, 0f) / (1 - fingerTrim);
+		return Math.Max(fingerFlex - fingerTrim, 0f) / (1 - fingerTrim);
+  }
 
+  public float KnuckleFlex(Hand hand, FingerId id, float deadzone = 0.15f) {
     float knuckleFlex = (Vec3.Dot(
       Vec3.Direction(
         hand.Get(id, JointId.KnuckleMid).position,
@@ -107,10 +109,12 @@ public class Rig {
       )
     ) + 1f) / 2;
     float knuckleTrim = 0.5f + deadzone; // 90°
-    knuckleFlex = Math.Max(knuckleFlex - knuckleTrim, 0f) / (1 - knuckleTrim);
+    return Math.Max(knuckleFlex - knuckleTrim, 0f) / (1 - knuckleTrim);
+  }
 
-    float flexion = knuckleFlex + fingerFlex;
-		return flexion * flexion;
+	public float Flexion(Hand hand, FingerId id, float deadzone = 0.15f) {
+    float flexion = KnuckleFlex(hand, id, deadzone) * FingerFlex(hand, id, deadzone);
+		return flexion * flexion; // why assume this curve?
 	}
 }
 

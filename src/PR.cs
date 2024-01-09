@@ -302,14 +302,29 @@ public static class PR {
 	// 	}
 	// }
 
+	public static float Diff(float a, float b) {
+		return MathF.Abs(a - b);
+	}
+
 	public class Delta {
-		public Vec3 value { get; private set; }
+		public float delta { get; private set; }
+
+		float last;
+		public float Step(float current) {
+			delta = current - last;
+			last = current;
+			return delta;
+		}
+	}
+
+	public class DeltaV {
+		public Vec3 delta { get; private set; }
 
 		Vec3 last;
-		public Vec3 Update(Vec3 current) {
-			value = current - last;
+		public Vec3 Step(Vec3 current) {
+			delta = current - last;
 			last = current;
-			return value;
+			return delta;
 		}
 	}
 

@@ -8,9 +8,9 @@ class RollsCursor : Interaction {
 
 	// data
 	public Cursor cursor = new Cursor();
-	PR.Delta fIdelta = new PR.Delta();
-	PR.Delta fMdelta = new PR.Delta();
-	PR.Delta fRdelta = new PR.Delta();
+	PR.DeltaV fIdelta = new PR.DeltaV();
+	PR.DeltaV fMdelta = new PR.DeltaV();
+	PR.DeltaV fRdelta = new PR.DeltaV();
 
 	public void Init() { }
 
@@ -37,11 +37,11 @@ class RollsCursor : Interaction {
 				cursor.raw = hand.Get(FingerId.Index,  JointId.Tip).position;
 			}
 
-			fIdelta.Update(hand.Get(FingerId.Index,  JointId.Tip).position);
-			fMdelta.Update(hand.Get(FingerId.Middle, JointId.Tip).position);
-			fRdelta.Update(hand.Get(FingerId.Ring,   JointId.Tip).position);
+			fIdelta.Step(hand.Get(FingerId.Index,  JointId.Tip).position);
+			fMdelta.Step(hand.Get(FingerId.Middle, JointId.Tip).position);
+			fRdelta.Step(hand.Get(FingerId.Ring,   JointId.Tip).position);
 
-			Vec3 delta = (fIdelta.value + fMdelta.value + fRdelta.value) / 3f;
+			Vec3 delta = (fIdelta.delta + fMdelta.delta + fRdelta.delta) / 3f;
 			cursor.raw += delta * reach.value;
 
 			Mesh.Sphere.Draw(mono.mat.holoframe, Matrix.TRS(cursor.raw,    Quat.Identity, 0.01f), new Color(1, 0, 0));

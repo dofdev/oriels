@@ -21,6 +21,7 @@ struct vsIn {
 };
 struct psIn {
 	float4 pos   : SV_Position;
+  float3 norm  : NORMAL0;
 	float2 uv    : TEXCOORD0;
 	float4 world : WORLD;
 	float4 color : COLOR0;
@@ -38,11 +39,11 @@ psIn vs(vsIn input, uint id : SV_InstanceID) {
 	o.world   = mul(input.pos, sk_inst[id].world);
 	o.pos     = mul(o.world, sk_viewproj[o.view_id]);
 
-	float3 normal = normalize(mul(input.norm, (float3x3)sk_inst[id].world));
+	o.norm = normalize(mul(input.norm, (float3x3)sk_inst[id].world));
 
 	o.uv         = input.uv * tex_scale;
 	o.color      = color * input.col * sk_inst[id].color;
-	o.color.rgb *= Lighting(normal);
+	o.color.rgb *= Lighting(o.norm);
 	return o;
 }
 
@@ -62,5 +63,10 @@ float4 ps(psIn input) : SV_TARGET {
 
 	// dist magnitude from center X0Z
 	float dist = max(1 - (length(input.world.xz) / 10.0), 0.0);
-	return lerp(clearcolor, col, 1 - ((1 - dist) * (1 - dist)));
+	float4 color = lerp(clearcolor, col, 1 - ((1 - dist) * (1 - dist)));
+
+  float glow = sk_finger_glow(input.world.xyz, input.norm);
+	color.rgb += glow * 0.5;
+
+	return color;
 }

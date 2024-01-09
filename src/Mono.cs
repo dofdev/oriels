@@ -56,6 +56,7 @@ public class Mono {
 	bool shapeHeld = false;
 
 
+	Pose testPose = new Pose(new Vec3(0, 1f, -1.5f), Quat.FromAngles(45, 0, 45));
 
 
 	Spatial spatial = new (new Vec3(-1, 0.76f, 0.666f));
@@ -92,20 +93,49 @@ public class Mono {
 			float strength = 6f;
 
 			Hand hand = Input.Hand(Handed.Right);
-			Vec3 indexTip = hand.Get(FingerId.Index, JointId.Tip).position;
-			Vec3 thumbTip = hand.Get(FingerId.Thumb, JointId.Tip).position;
+			// left and right 'click' ~ curl
+			Btn lBtn = new Btn(); // ~ trigger ~ left click
+			float indexCurl = rig.FingerFlex(hand, FingerId.Index, 0.15f);
+			lBtn.Frame(indexCurl < 0.5f);
 
-			Vec3 delta    = indexTip - thumbTip;
-			float mag     = delta.Magnitude;
-			float pinch   = MathF.Max(mag - deadzone, 0);
+			// stay in state until both ring and pinky finger 'agree' on curl or uncurl
+			Btn rBtn = new Btn(); // ~ grip ~ right click
+			float ringCurl = rig.FingerFlex(hand, FingerId.Ring, 0.15f);
+			float pinkyCurl = rig.FingerFlex(hand, FingerId.Little, 0.15f);
+			rBtn.Frame(ringCurl < 0.5f && pinkyCurl < 0.5f);
+
+			// cursor
+			Vec3 midTip   = hand.Get(FingerId.Middle, JointId.Tip).position;
+			Vec3 thumbTip = hand.Get(FingerId.Thumb,  JointId.Tip).position;
+
+			Vec3 delta  = midTip - thumbTip;
+			float mag   = delta.Magnitude;
+			float pinch = MathF.Max(mag - deadzone, 0);
 
 			Vec3 dir = delta.Normalized;
 
-			cursor.raw = indexTip + dir * pinch * strength;
+			cursor.raw = midTip + dir * pinch * strength;
 
-			Lines.Add(indexTip, thumbTip, new Color(0, 0, 1), 0.002f);
-			Mesh.Sphere.Draw(mat.holo, Matrix.TS(cursor.pos, 0.01f), new Color(0.5f, 0.5f, 0.5f));
-			// V.XYZ(0, 0, );
+			Lines.Add(midTip, thumbTip, new Color(0, 0, 1), 0.002f);
+			Mesh.Sphere.Draw(
+				mat.holo,
+				Matrix.TS(cursor.pos, 2*U.cm),
+				new Color(
+					lBtn.held ? 1.0f : 0.0f,
+					0.5f,
+					rBtn.held ? 1.0f : 0.0f
+				)
+			);
+
+			if (rBtn.held) {
+				testPose.position = cursor.smooth;
+			}
+			Mesh.Cube.Draw(
+				mat.holoframe,
+				testPose.ToMatrix(5*U.cm),
+				rBtn.held ? new Color(0.5f, 0.55f, 0.75f) :
+		                new Color(0.5f, 0.55f, 0.75f) * 0.3f
+			);
 
 			drawerA.Frame(cursor, pinch);
 			drawerB.Frame(cursor, pinch);
@@ -122,7 +152,7 @@ public class Mono {
 			if (interactions[i].Active) {
 				interactions[i].Frame();
 			}
-		}  
+		}
 
 		// <Heresy>
 		WaveCursor  lwc = (WaveCursor)((Chiral)interactions[0]).dofs[0];

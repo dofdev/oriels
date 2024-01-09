@@ -1,0 +1,16 @@
+# 2023.07.30 -> 2023.07.31 ->
+
+input
+	idxΔ
+  thmΔ
+
+data
+  pinch_ptΔ
+
+frame
+  pinch_ptΔ = (idxΔ + thmΔ + thmΔ) / 3
+
+  in_sign(a, b) => sign(a) == sign(b) ? 1 : 0  
+  pinch_ptΔ.x *= in_sign(idxΔ.x, thmΔ.x)
+  pinch_ptΔ.y *= in_sign(idxΔ.y, thmΔ.y)
+  pinch_ptΔ.z *= in_sign(idxΔ.z, thmΔ.z)

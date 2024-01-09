@@ -21,13 +21,3 @@ mapped by
 ### <br> ⃝<br><br><br>
 
 </div>
-
-	start()
-		c# net6.0 sdk
-		git &| github
-		vim || vscode
-
-		dotnet restore
-
-		dotnet build
-		dotnet run
