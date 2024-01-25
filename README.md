@@ -21,3 +21,11 @@ mapped by
 ### <br> ⃝<br><br><br>
 
 </div>
+
+## start
+<a href="https://dotnet.microsoft.com/en-us/download">dotnet sdk</a> v8.0  
+
+```shell
+# DEVELOPMENT
+dotnet run
+```
