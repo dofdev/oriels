@@ -50,6 +50,8 @@ public class Mono {
 		}
 
 		mat.Init();
+
+		twitter_scroll_mat.SetTexture("diffuse", twitter_scroll_tex);
 	}
 
 	Pose shape = new Pose(new Vec3(0, 1f, -3f), Quat.FromAngles(45, 0, 45));
@@ -64,6 +66,15 @@ public class Mono {
 	Drawer drawerA = new (new Pose(new Vec3(-0.8f, 0.6f, 1.4f), Quat.FromAngles(0, 90f, 0)));
 	Drawer drawerB = new (new Pose(new Vec3(-0.8f, 0.6f, 0.95f), Quat.FromAngles(0, 90f, 0)));
 	Drawer drawerC = new (new Pose(new Vec3(-0.8f, 0.6f, 0.5f), Quat.FromAngles(0, 90f, 0)));
+
+	// Model cursor_model = Model.FromFile("cursor.glb", Shader.Unlit);
+	Tex twitter_scroll_tex = Tex.FromFile("twitter_scroll.png");
+	Material twitter_scroll_mat = new Material(Shader.FromFile("shaders/scroll.hlsl"));
+	float scroll_t = 0f;
+	float scroll_sign = 1f;
+	Vec3 old_index_tip = Vec3.Zero;
+	Vec3 smooth_local_index_delta = Vec3.Zero;
+	bool tension = false;
 
 	public void Frame() {
 
@@ -105,18 +116,71 @@ public class Mono {
 			rBtn.Frame(ringCurl < 0.5f && pinkyCurl < 0.5f);
 
 			// cursor
-			Vec3 midTip   = hand.Get(FingerId.Middle, JointId.Tip).position;
-			Vec3 thumbTip = hand.Get(FingerId.Thumb,  JointId.Tip).position;
+			Vec3   mid_tip = hand.Get(FingerId.Middle, JointId.Tip).position;
+			Vec3 thumb_tip = hand.Get(FingerId.Thumb,  JointId.Tip).position;
+			Vec3 index_tip = hand.Get(FingerId.Index,  JointId.Tip).position;
 
-			Vec3 delta  = midTip - thumbTip;
+			Vec3 delta  = mid_tip - thumb_tip;
 			float mag   = delta.Magnitude;
 			float pinch = MathF.Max(mag - deadzone, 0);
 
 			Vec3 dir = delta.Normalized;
 
-			cursor.raw = midTip + dir * pinch * strength;
+			cursor.raw = mid_tip + dir * pinch * strength;
 
-			Lines.Add(midTip, thumbTip, new Color(0, 0, 1), 0.002f);
+			Vec3 index_delta = index_tip - old_index_tip;
+			Vec3 local_index_delta = hand.palm.orientation.Inverse * index_delta;
+			float snap_t = 0.5f;
+			Vec3 snap = index_tip.SnapToLine(mid_tip, thumb_tip, true, out snap_t, 0.0f, 1.0f);
+			float delta_snap_t = 0.5f;
+			Vec3 delta_snap = snap.SnapToLine(old_index_tip, index_tip, true, out delta_snap_t, 0.0f, 1.0f);
+			if (!tension) {
+				if (Vec3.Distance(snap, delta_snap) < 1.0f * U.cm) {
+					tension = true;
+					smooth_local_index_delta = local_index_delta;
+				} else {
+					scroll_t += smooth_local_index_delta.y;
+					smooth_local_index_delta *= 1.0f - Time.Stepf * 1f;
+				}
+
+				Lines.Add(mid_tip, thumb_tip, new Color(0, 0, 1), 0.002f);
+			} else {
+				if (Vec3.Distance(snap, index_tip) > 2.0f * U.cm) {
+					tension = false;
+				} else {
+					scroll_t += local_index_delta.y;
+
+					smooth_local_index_delta = Vec3.Lerp(
+						smooth_local_index_delta,
+						local_index_delta.y > 0 ? local_index_delta * 2.0f : local_index_delta,
+						Time.Stepf * 60f
+					);
+				}
+
+				// Lines.Add( 
+				// 	hand.palm.position,
+				// 	hand.palm.position + hand.palm.orientation * Vec3.Up*U.cm,
+				// 	new Color(1, 0, 0),
+				// 	0.002f
+				// );
+				Lines.Add(  mid_tip, index_tip, new Color(0, 0, 1), 0.002f);
+				Lines.Add(index_tip, thumb_tip, new Color(0, 0, 1), 0.002f);
+			}
+			// Mesh.Sphere.Draw(
+			// 	mat.holo,
+			// 	Matrix.TS(
+			// 		snap,
+			// 		1*U.cm
+			// 	),
+			// 	new Color(
+			// 		lBtn.held ? 1.0f : 0.0f,
+			// 		0.5f,
+			// 		rBtn.held ? 1.0f : 0.0f
+			// 	)
+			// );
+			// weird place for this
+			old_index_tip = index_tip;
+
 			Mesh.Sphere.Draw(
 				mat.holo,
 				Matrix.TS(cursor.pos, 2*U.cm),
@@ -127,21 +191,65 @@ public class Mono {
 				)
 			);
 
-			if (rBtn.held) {
-				testPose.position = cursor.smooth;
-			}
-			Mesh.Cube.Draw(
-				mat.holoframe,
-				testPose.ToMatrix(5*U.cm),
-				rBtn.held ? new Color(0.5f, 0.55f, 0.75f) :
-		                new Color(0.5f, 0.55f, 0.75f) * 0.3f
-			);
+			// if (rBtn.held) {
+			// 	testPose.position = cursor.smooth;
+			// }
+			// Mesh.Cube.Draw(
+			// 	mat.holoframe,
+			// 	testPose.ToMatrix(5*U.cm),
+			// 	rBtn.held ? new Color(0.5f, 0.55f, 0.75f) :
+		  //               new Color(0.5f, 0.55f, 0.75f) * 0.3f
+			// );
 
 			drawerA.Frame(cursor, pinch);
 			drawerB.Frame(cursor, pinch);
 			drawerC.Frame(cursor, pinch);
-		}
 
+			// Log.Info("spatial");
+			twitter_scroll_mat.SetFloat("ratio", 640f / 4460f);
+			twitter_scroll_mat.SetFloat("scroll_y", (4460f - 640f) / 640f);
+			// scroll_t += scroll_sign * Time.Stepf * 0.1f;
+			if (scroll_t > 1f) {
+				scroll_t = 1f;
+				scroll_sign = -1f;
+			} else if (scroll_t < 0f) {
+				scroll_t = 0f;
+				scroll_sign = 1f;
+			}
+			twitter_scroll_mat.SetFloat("scroll_t", scroll_t);
+			// Plane(Vec3 normal, float d)
+			// Distance along the normal from the origin to the surface of the plane.
+			// Creates a Plane directly from the ax + by + cz + d = 0 formula!
+			Plane plane = new Plane(new Vec3(0, 0, 1), 1.4f);
+			Ray ray = new Ray(mid_tip, dir);
+			plane.Intersect(ray, out Vec3 hit);
+			Pose plane_pose = new Pose(
+				new Vec3(0.0f, 1.0f, -1.4f),
+				Quat.FromAngles(0, 180f, 0)
+			);
+			Matrix plane_matrix = plane_pose.ToMatrix();
+    	Vec3 local_hit = plane_matrix.Inverse.Transform(hit);
+			local_hit.x = Math.Clamp(local_hit.x, -0.5f, 0.5f);
+			local_hit.y = Math.Clamp(local_hit.y, -0.5f, 0.5f);
+
+			// render twitter scroll on a quad
+			Mesh.Quad.Draw(
+				twitter_scroll_mat,
+				Matrix.TRS(
+					new Vec3(0.0f, 1.0f, -1.4f),
+					Quat.FromAngles(0, 180f, 0),
+					new Vec3(1f, 1f, 1f)
+				)
+			);
+			Mesh.Sphere.Draw(
+				Material.Unlit,
+				Matrix.TS(
+					plane_matrix.Transform(local_hit),
+					3.0f * U.cm
+				),
+				new Color(0, 0, 0)
+			);
+		}
 
 
 		// Input.Subscribe(InputSource.Hand, BtnState.Any, Action<Hand, BtnState.Any, Pointer>);
